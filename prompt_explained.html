@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Automation Prompt Analysis</title>
         <link rel="stylesheet" href="css/style.css">
-        <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&family=Montserrat:wght@700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
         <!-- Include Highlight.js for syntax highlighting -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/default.min.css">
         <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
@@ -38,6 +38,7 @@
 </head>
 <body>
     <header>
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">🌙 Dark Mode</button>
         <h1>Automation Prompt Analysis</h1>
         <nav>
             <ul>
@@ -46,15 +47,14 @@
                 <li><a href="prompt_explained.html">Playwright Automation Prompt Explained</a></li>
             </ul>
         </nav>
-        <div class="header-buttons">
-            <button class="download-btn" id="download-md" aria-label="Download as Markdown">
-                📄 Download Markdown
-            </button>
-            <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">🌙 Dark Mode</button>
-        </div>
     </header>
 
         <div class="content">
+        <div class="content-header">
+            <button class="download-btn" id="download-md" aria-label="Download as Markdown">
+                📄 Download Markdown
+            </button>
+        </div>
         <div>
             <p><span class="highlight" id="qa-role">You are a Senior QA Automation Engineer with expert knowledge in Playwright (JavaScript) for functional regression testing.</span></p>
 

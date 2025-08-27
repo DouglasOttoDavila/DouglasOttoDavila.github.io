@@ -85,7 +85,7 @@ nav a.active {
 }
 
 .hero-title {
-  font-family: 'Montserrat', sans-serif;
+  font-family: 'Roboto', sans-serif;
   font-size: 3.5rem;
   color: var(--heading);
   margin: 0 0 1rem 0;
@@ -306,6 +306,7 @@ nav a.active {
 .section-title {
   text-align: center;
   font-size: 2.5rem;
+  font-family: 'Roboto', sans-serif;
   color: var(--heading);
   margin-bottom: 3rem;
   background: linear-gradient(45deg, var(--accent), #00e5ff);
@@ -542,6 +543,7 @@ nav a.active {
 
 .cta-card h2 {
   font-size: 2.2rem;
+  font-family: 'Roboto', sans-serif;
   margin-bottom: 1rem;
   background: linear-gradient(45deg, var(--accent), #00e5ff);
   -webkit-background-clip: text;
