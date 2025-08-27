@@ -527,6 +527,7 @@ nav a.active {
 
 /* Call to Action */
 .cta-section {
+  width: 100%;
   padding: 4rem 2rem;
   background: linear-gradient(135deg, var(--secondary-bg) 0%, var(--primary-bg) 100%);
 }
