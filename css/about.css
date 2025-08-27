@@ -72,6 +72,7 @@ nav a.active {
 
 /* Hero Section */
 .hero-section {
+  width: 100%;
   background: linear-gradient(135deg, var(--primary-bg) 0%, var(--secondary-bg) 100%);
   padding: 4rem 2rem 3rem 2rem;
   text-align: center;
@@ -121,7 +122,7 @@ nav a.active {
 }
 
 .contact-card {
-  max-width: 800px;
+  max-width: 1000px;
   margin: 0 auto;
   background: var(--card-bg);
   border-radius: 20px;
@@ -180,12 +181,13 @@ nav a.active {
 
 /* Summary Section */
 .summary-section {
+  width: 100%;
   padding: 3rem 2rem;
   background: var(--secondary-bg);
 }
 
 .summary-card {
-  max-width: 900px;
+  max-width: 1000px;
   margin: 0 auto;
   background: var(--card-bg);
   border-radius: 20px;
@@ -296,6 +298,7 @@ nav a.active {
 
 /* Experience Timeline */
 .experience-section {
+  width: 100%;
   padding: 4rem 2rem;
   background: var(--secondary-bg);
 }
@@ -312,7 +315,7 @@ nav a.active {
 }
 
 .timeline {
-  max-width: 900px;
+  max-width: 1000px;
   margin: 0 auto;
   position: relative;
 }
@@ -380,6 +383,9 @@ nav a.active {
   border-radius: 15px;
   font-size: 0.9rem;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .position {
