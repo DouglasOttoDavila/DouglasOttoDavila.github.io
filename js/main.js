@@ -117,6 +117,9 @@ class SPARouter {
         } else if (page === 'about') {
             // Initialize about page specific scripts
             this.setupAboutPageAnimations();
+        } else if (page === 'home') {
+            // Initialize home page animations
+            this.setupHomePageAnimations();
         }
     }
 
@@ -246,6 +249,17 @@ class SPARouter {
         document.querySelectorAll('.fade-in, .slide-up').forEach(el => {
             observer.observe(el);
         });
+    }
+
+    setupHomePageAnimations() {
+        // Trigger slide-up animation for intro-card
+        const introCard = document.querySelector('.intro-card');
+        if (introCard) {
+            // Small delay to ensure the element is properly rendered
+            setTimeout(() => {
+                introCard.classList.add('animate');
+            }, 100);
+        }
     }
 
     showError(message) {

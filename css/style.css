@@ -53,6 +53,7 @@ header {
   flex-direction: column;
   align-items: center;
   position: relative;
+  flex-shrink: 0;
 }
 
 .header-content {
@@ -107,7 +108,17 @@ nav a:hover, nav a:focus, nav a.active {
 /* Content Area for SPA */
 #content-area {
   flex: 1;
-  min-height: calc(100vh - 200px);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Content wrapper for prompt-explained page */
+.content {
+  flex: 1;
+  padding: 2rem 1rem 3rem 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 /* Animation classes for about page */
@@ -189,8 +200,12 @@ main {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   padding: 2rem 1rem 3rem 1rem;
+}
+
+/* Home page specific centering */
+main.home-main {
+  justify-content: center;
 }
 
 .intro-card {
@@ -202,6 +217,12 @@ main {
   text-align: center;
   margin-top: 2rem;
   transition: background var(--transition);
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.intro-card.animate {
+  animation: slide-up 0.8s ease-out forwards;
 }
 
 /* Typography */
@@ -258,6 +279,7 @@ footer {
   background: var(--menu-bg);
   border-top: 1px solid #222;
   margin-top: auto;
+  flex-shrink: 0;
 }
 
 /* Responsive Design */
@@ -454,5 +476,17 @@ code {
   .download-btn {
     font-size: 0.9rem;
     padding: 0.35rem 1rem;
+  }
+}
+
+/* Keyframe Animations */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
