@@ -1,0 +1,405 @@
+/* CSS Variables for Theme Support */
+:root {
+  --primary-bg: #181a20;
+  --secondary-bg: #23272f;
+  --accent: #00bcd4;
+  --text: #e0e0e0;
+  --heading: #fff;
+  --card-bg: #22242b;
+  --menu-bg: #23272f;
+  --menu-hover: #00bcd4;
+  --transition: 0.3s;
+}
+
+[data-theme="light"] {
+  --primary-bg: #f5f5f5;
+  --secondary-bg: #fff;
+  --accent: #00796b;
+  --text: #222;
+  --heading: #111;
+  --card-bg: #f0f0f0;
+  --menu-bg: #fff;
+  --menu-hover: #00796b;
+}
+
+/* Base Styles */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Fira Code', 'Consolas', monospace;
+  background: var(--primary-bg);
+  color: var(--text);
+  transition: background var(--transition), color var(--transition);
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header Styles */
+header {
+  background: var(--menu-bg);
+  padding: 1.5rem 0 1rem 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.profile-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--accent);
+  transition: border var(--transition);
+}
+
+.header-text {
+  text-align: left;
+}
+
+/* Navigation Styles */
+nav {
+  margin-top: 0.5rem;
+}
+
+nav ul {
+  list-style: none;
+  display: flex;
+  gap: 2rem;
+  padding: 0;
+  margin: 0;
+}
+
+nav a {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 700;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.1rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  transition: background var(--transition), color var(--transition);
+}
+
+nav a:hover, nav a:focus {
+  background: var(--menu-hover);
+  color: #fff;
+}
+
+/* Header Buttons Container */
+.header-buttons {
+  margin-top: 1rem;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Download Button */
+.download-btn {
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  color: #fff;
+  border-radius: 20px;
+  padding: 0.4rem 1.2rem;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background var(--transition), color var(--transition), border var(--transition), transform 0.2s;
+  font-family: inherit;
+}
+
+.download-btn:hover {
+  background: transparent;
+  color: var(--accent);
+  transform: translateY(-2px);
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+  background: none;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  border-radius: 20px;
+  padding: 0.4rem 1.2rem;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background var(--transition), color var(--transition), border var(--transition);
+}
+
+/* Theme toggle when standalone (not in header-buttons container) */
+header > .theme-toggle {
+  margin-top: 1rem;
+}
+
+.theme-toggle:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* Main Content Styles */
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem 3rem 1rem;
+}
+
+.intro-card {
+  background: var(--card-bg);
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+  padding: 2.5rem 2rem;
+  max-width: 520px;
+  text-align: center;
+  margin-top: 2rem;
+  transition: background var(--transition);
+}
+
+/* Typography */
+h1 {
+  font-family: 'Montserrat', sans-serif;
+  color: var(--heading);
+  font-size: 2.5rem;
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+h2 {
+  color: var(--accent);
+  font-size: 1.3rem;
+  margin: 0.2rem 0 0 0;
+  font-weight: 400;
+}
+
+/* Skills Section */
+.skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  justify-content: center;
+  margin: 1.5rem 0 0.5rem 0;
+}
+
+.skill {
+  background: var(--secondary-bg);
+  color: var(--accent);
+  border-radius: 8px;
+  padding: 0.4rem 1rem;
+  font-size: 0.98rem;
+  font-family: 'Fira Code', monospace;
+  margin-bottom: 0.2rem;
+  border: 1px solid var(--accent);
+  transition: background var(--transition), color var(--transition);
+}
+
+/* About Section */
+.about {
+  margin-top: 1.5rem;
+  color: var(--text);
+  font-size: 1.08rem;
+  line-height: 1.7;
+}
+
+/* Footer Styles */
+footer {
+  text-align: center;
+  padding: 1.2rem 0 0.7rem 0;
+  color: #888;
+  font-size: 0.98rem;
+  background: var(--menu-bg);
+  border-top: 1px solid #222;
+  margin-top: auto;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  .intro-card {
+    padding: 1.2rem 0.5rem;
+  }
+  
+  h1 {
+    font-size: 1.8rem;
+  }
+  
+  h2 {
+    font-size: 1.1rem;
+  }
+  
+  .skills {
+    gap: 0.4rem;
+  }
+  
+  .header-content {
+    gap: 1rem;
+  }
+  
+  .profile-image {
+    width: 60px;
+    height: 60px;
+  }
+}
+
+/* Legacy styles for other pages */
+.container {
+  max-width: 800px;
+  margin: 50px auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.highlight {
+  color: #007BFF;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.highlight:hover {
+  color: #0056b3;
+  background-color: rgba(0, 123, 255, 0.1);
+  border-radius: 3px;
+  padding: 2px 4px;
+  margin: -2px -4px;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: var(--card-bg);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 1.2rem 1rem;
+  max-width: 500px;
+  text-align: center;
+  font-size: 1rem;
+  transition: background var(--transition), color var(--transition);
+}
+
+.modal-content p {
+  margin: 0;
+}
+
+.content {
+  background: var(--card-bg);
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+  padding: 2.5rem 2rem;
+  max-width: 900px;
+  margin: 2rem auto 1.5rem auto;
+  color: var(--text);
+  font-size: 1.08rem;
+  line-height: 1.7;
+  transition: background var(--transition);
+}
+
+.notes {
+  background: var(--secondary-bg);
+  border-radius: 12px;
+  padding: 1.5rem 1.2rem;
+  max-width: 900px;
+  margin: 1.5rem auto 1.5rem auto;
+  color: var(--text);
+  font-size: 1.02rem;
+  border-left: 5px solid var(--accent);
+  transition: background var(--transition), color var(--transition);
+}
+
+.notes h2 {
+  margin-top: 0;
+}
+
+.notes ul {
+  padding-left: 20px;
+}
+
+/* Specific styles for prompt_explained.html page */
+.container {
+  margin-top: 2.5rem;
+  text-align: center;
+}
+
+/* Override h1 styles for prompt_explained page */
+body h1 {
+  font-family: 'Montserrat', sans-serif;
+  color: var(--heading);
+  font-size: 2.2rem;
+  margin-bottom: 0.5rem;
+  letter-spacing: 1px;
+}
+
+/* General heading styles with theme support */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: bold;
+  color: var(--heading);
+  transition: color var(--transition);
+}
+
+section {
+  margin-bottom: 20px;
+}
+
+pre {
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px;
+  overflow: auto;
+  resize: both;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+code {
+  font-family: 'Courier New', Courier, monospace;
+  background-color: #f5f5f5;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+/* Responsive styles for prompt_explained page */
+@media (max-width: 600px) {
+  .content, .notes {
+    padding: 1.2rem 0.5rem;
+  }
+  
+  body h1 {
+    font-size: 1.3rem;
+  }
+  
+  .header-buttons {
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.8rem;
+  }
+  
+  .download-btn, .theme-toggle {
+    font-size: 0.9rem;
+    padding: 0.35rem 1rem;
+  }
+}
