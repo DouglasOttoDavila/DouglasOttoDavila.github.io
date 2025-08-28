@@ -241,25 +241,244 @@ h2 {
   font-weight: 400;
 }
 
-/* Skills Section */
+/* Skills Section - Hover-Triggered Floating Cloud Animation */
 .skills {
+  position: relative;
+  width: 100%;
+  height: 400px;
+  margin: 2rem 0;
+  overflow: hidden;
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.7rem;
+  align-items: center;
   justify-content: center;
-  margin: 1.5rem 0 0.5rem 0;
+  cursor: pointer;
+  transition: all 0.5s ease;
+}
+
+.skills::before {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.8rem;
+  color: var(--text);
+  opacity: 0.6;
+  font-family: 'Roboto', sans-serif;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
 }
 
 .skill {
+  position: absolute;
   background: var(--secondary-bg);
   color: var(--accent);
-  border-radius: 8px;
-  padding: 0.4rem 1rem;
-  font-size: 0.98rem;
+  border-radius: 20px;
+  padding: 0.5rem 1.2rem;
+  font-size: 0.95rem;
   font-family: 'Fira Code', monospace;
-  margin-bottom: 0.2rem;
-  border: 1px solid var(--accent);
-  transition: background var(--transition), color var(--transition);
+  border: 2px solid var(--accent);
+  white-space: nowrap;
+  cursor: pointer;
+  transform-origin: center;
+  box-shadow: 0 4px 15px rgba(0, 188, 212, 0.2);
+  backdrop-filter: blur(5px);
+  
+  /* Initial state - all skills stacked in center */
+  transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1));
+  /* Remove all transform transitions */
+  transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, border-width 0.3s ease, filter 0.3s ease;
+  
+  /* Default scale */
+  --skill-scale: 1;
+}
+
+/* Disable animations when JavaScript is controlling */
+.skill.js-animating {
+  animation: none !important;
+  animation-play-state: paused !important;
+}
+
+.skill:hover {
+  background: var(--accent);
+  color: var(--primary-bg);
+  box-shadow: 0 6px 20px rgba(0, 188, 212, 0.4);
+  z-index: 10;
+  filter: brightness(1.1) saturate(1.2);
+  border-width: 3px;
+  
+  /* Scale effect through CSS variable */
+  --skill-scale: 1.1;
+}
+
+/* Initial spread animation when page loads */
+.skills .skill:nth-child(1) {
+  animation: spreadOut1 1s ease-out forwards, float1 15s infinite ease-in-out 1s;
+}
+
+.skills .skill:nth-child(2) {
+  animation: spreadOut2 1s ease-out forwards, float2 18s infinite ease-in-out 1s;
+}
+
+.skills .skill:nth-child(3) {
+  animation: spreadOut3 1s ease-out forwards, float3 20s infinite ease-in-out 1s;
+}
+
+.skills .skill:nth-child(4) {
+  animation: spreadOut4 1s ease-out forwards, float4 16s infinite ease-in-out 1s;
+}
+
+.skills .skill:nth-child(5) {
+  animation: spreadOut5 1s ease-out forwards, float5 22s infinite ease-in-out 1s;
+}
+
+.skills .skill:nth-child(6) {
+  animation: spreadOut6 1s ease-out forwards, float6 19s infinite ease-in-out 1s;
+}
+
+.skills .skill:nth-child(7) {
+  animation: spreadOut7 1s ease-out forwards, float7 17s infinite ease-in-out 1s;
+}
+
+.skills .skill:nth-child(8) {
+  animation: spreadOut8 1s ease-out forwards, float8 21s infinite ease-in-out 1s;
+}
+
+.skills .skill:nth-child(9) {
+  animation: spreadOut9 1s ease-out forwards, float9 14s infinite ease-in-out 1s;
+}
+
+.skills .skill:nth-child(10) {
+  animation: spreadOut10 1s ease-out forwards, float10 23s infinite ease-in-out 1s;
+}
+
+/* Spread out animations - smooth movement from center to starting positions */
+@keyframes spreadOut1 {
+  from { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+  to { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+}
+
+@keyframes spreadOut2 {
+  from { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+  to { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+}
+
+@keyframes spreadOut3 {
+  from { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+  to { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+}
+
+@keyframes spreadOut4 {
+  from { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+  to { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+}
+
+@keyframes spreadOut5 {
+  from { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+  to { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+}
+
+@keyframes spreadOut6 {
+  from { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+  to { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+}
+
+@keyframes spreadOut7 {
+  from { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+  to { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+}
+
+@keyframes spreadOut8 {
+  from { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+  to { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+}
+
+@keyframes spreadOut9 {
+  from { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+  to { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+}
+
+@keyframes spreadOut10 {
+  from { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+  to { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+}
+@keyframes float1 {
+  0% { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+  25% { transform: translate(120px, -80px) rotate(90deg) scale(var(--skill-scale, 1)); }
+  50% { transform: translate(0, -160px) rotate(180deg) scale(var(--skill-scale, 1)); }
+  75% { transform: translate(-120px, -80px) rotate(270deg) scale(var(--skill-scale, 1)); }
+  100% { transform: translate(0, 0) rotate(360deg) scale(var(--skill-scale, 1)); }
+}
+
+@keyframes float2 {
+  0% { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+  25% { transform: translate(-100px, 100px) rotate(-90deg) scale(var(--skill-scale, 1)); }
+  50% { transform: translate(-200px, 0) rotate(-180deg) scale(var(--skill-scale, 1)); }
+  75% { transform: translate(-100px, -100px) rotate(-270deg) scale(var(--skill-scale, 1)); }
+  100% { transform: translate(0, 0) rotate(-360deg) scale(var(--skill-scale, 1)); }
+}
+
+@keyframes float3 {
+  0% { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+  33% { transform: translate(150px, 120px) rotate(120deg) scale(var(--skill-scale, 1)); }
+  66% { transform: translate(-150px, 120px) rotate(240deg) scale(var(--skill-scale, 1)); }
+  100% { transform: translate(0, 0) rotate(360deg) scale(var(--skill-scale, 1)); }
+}
+
+@keyframes float4 {
+  0% { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+  20% { transform: translate(80px, -120px) rotate(72deg) scale(var(--skill-scale, 1)); }
+  40% { transform: translate(180px, 40px) rotate(144deg) scale(var(--skill-scale, 1)); }
+  60% { transform: translate(50px, 140px) rotate(216deg) scale(var(--skill-scale, 1)); }
+  80% { transform: translate(-130px, 60px) rotate(288deg) scale(var(--skill-scale, 1)); }
+  100% { transform: translate(0, 0) rotate(360deg) scale(var(--skill-scale, 1)); }
+}
+
+@keyframes float5 {
+  0% { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+  25% { transform: translate(-140px, -60px) rotate(-90deg) scale(var(--skill-scale, 1)); }
+  50% { transform: translate(40px, -140px) rotate(-180deg) scale(var(--skill-scale, 1)); }
+  75% { transform: translate(140px, 40px) rotate(-270deg) scale(var(--skill-scale, 1)); }
+  100% { transform: translate(0, 0) rotate(-360deg) scale(var(--skill-scale, 1)); }
+}
+
+@keyframes float6 {
+  0% { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+  30% { transform: translate(110px, 90px) rotate(108deg) scale(var(--skill-scale, 1)); }
+  70% { transform: translate(-110px, -90px) rotate(252deg) scale(var(--skill-scale, 1)); }
+  100% { transform: translate(0, 0) rotate(360deg) scale(var(--skill-scale, 1)); }
+}
+
+@keyframes float7 {
+  0% { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+  25% { transform: translate(90px, 110px) rotate(90deg) scale(var(--skill-scale, 1)); }
+  50% { transform: translate(-90px, 110px) rotate(180deg) scale(var(--skill-scale, 1)); }
+  75% { transform: translate(-90px, -110px) rotate(270deg) scale(var(--skill-scale, 1)); }
+  100% { transform: translate(0, 0) rotate(360deg) scale(var(--skill-scale, 1)); }
+}
+
+@keyframes float8 {
+  0% { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+  20% { transform: translate(-160px, 30px) rotate(-72deg) scale(var(--skill-scale, 1)); }
+  40% { transform: translate(-80px, -130px) rotate(-144deg) scale(var(--skill-scale, 1)); }
+  60% { transform: translate(80px, -130px) rotate(-216deg) scale(var(--skill-scale, 1)); }
+  80% { transform: translate(160px, 30px) rotate(-288deg) scale(var(--skill-scale, 1)); }
+  100% { transform: translate(0, 0) rotate(-360deg) scale(var(--skill-scale, 1)); }
+}
+
+@keyframes float9 {
+  0% { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+  50% { transform: translate(0, 120px) rotate(180deg) scale(var(--skill-scale, 1)); }
+  100% { transform: translate(0, 0) rotate(360deg) scale(var(--skill-scale, 1)); }
+}
+
+@keyframes float10 {
+  0% { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+  16.66% { transform: translate(130px, -50px) rotate(60deg) scale(var(--skill-scale, 1)); }
+  33.33% { transform: translate(130px, 50px) rotate(120deg) scale(var(--skill-scale, 1)); }
+  50% { transform: translate(0, 100px) rotate(180deg) scale(var(--skill-scale, 1)); }
+  66.66% { transform: translate(-130px, 50px) rotate(240deg) scale(var(--skill-scale, 1)); }
+  83.33% { transform: translate(-130px, -50px) rotate(300deg) scale(var(--skill-scale, 1)); }
+  100% { transform: translate(0, 0) rotate(360deg) scale(var(--skill-scale, 1)); }
 }
 
 /* About Section */
@@ -297,7 +516,141 @@ footer {
   }
   
   .skills {
-    gap: 0.4rem;
+    height: 300px;
+    margin: 1.5rem 0;
+  }
+  
+  .skills::before {
+    content: "Tap to see skills float";
+    font-size: 0.75rem;
+  }
+  
+  .skill {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 15px;
+  }
+  
+  /* Mobile auto-start animations */
+  .skills .skill:nth-child(1) {
+    animation: float1-mobile 15s infinite ease-in-out 1s;
+  }
+
+  .skills .skill:nth-child(2) {
+    animation: float2-mobile 18s infinite ease-in-out 1s;
+  }
+
+  .skills .skill:nth-child(3) {
+    animation: float3-mobile 20s infinite ease-in-out 1s;
+  }
+
+  .skills .skill:nth-child(4) {
+    animation: float4-mobile 16s infinite ease-in-out 1s;
+  }
+
+  .skills .skill:nth-child(5) {
+    animation: float5-mobile 22s infinite ease-in-out 1s;
+  }
+
+  .skills .skill:nth-child(6) {
+    animation: float6-mobile 19s infinite ease-in-out 1s;
+  }
+
+  .skills .skill:nth-child(7) {
+    animation: float7-mobile 17s infinite ease-in-out 1s;
+  }
+
+  .skills .skill:nth-child(8) {
+    animation: float8-mobile 21s infinite ease-in-out 1s;
+  }
+
+  .skills .skill:nth-child(9) {
+    animation: float9-mobile 14s infinite ease-in-out 1s;
+  }
+
+  .skills .skill:nth-child(10) {
+    animation: float10-mobile 23s infinite ease-in-out 1s;
+  }
+
+  /* Mobile-specific keyframes with reduced ranges - all start from center */
+  @keyframes float1-mobile {
+    0% { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+    25% { transform: translate(80px, -60px) rotate(90deg) scale(var(--skill-scale, 1)); }
+    50% { transform: translate(0, -120px) rotate(180deg) scale(var(--skill-scale, 1)); }
+    75% { transform: translate(-80px, -60px) rotate(270deg) scale(var(--skill-scale, 1)); }
+    100% { transform: translate(0, 0) rotate(360deg) scale(var(--skill-scale, 1)); }
+  }
+
+  @keyframes float2-mobile {
+    0% { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+    25% { transform: translate(-70px, 80px) rotate(-90deg) scale(var(--skill-scale, 1)); }
+    50% { transform: translate(-140px, 0) rotate(-180deg) scale(var(--skill-scale, 1)); }
+    75% { transform: translate(-70px, -80px) rotate(-270deg) scale(var(--skill-scale, 1)); }
+    100% { transform: translate(0, 0) rotate(-360deg) scale(var(--skill-scale, 1)); }
+  }
+
+  @keyframes float3-mobile {
+    0% { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+    33% { transform: translate(100px, 90px) rotate(120deg) scale(var(--skill-scale, 1)); }
+    66% { transform: translate(-100px, 90px) rotate(240deg) scale(var(--skill-scale, 1)); }
+    100% { transform: translate(0, 0) rotate(360deg) scale(var(--skill-scale, 1)); }
+  }
+
+  @keyframes float4-mobile {
+    0% { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+    20% { transform: translate(60px, -90px) rotate(72deg) scale(var(--skill-scale, 1)); }
+    40% { transform: translate(120px, 30px) rotate(144deg) scale(var(--skill-scale, 1)); }
+    60% { transform: translate(40px, 100px) rotate(216deg) scale(var(--skill-scale, 1)); }
+    80% { transform: translate(-90px, 40px) rotate(288deg) scale(var(--skill-scale, 1)); }
+    100% { transform: translate(0, 0) rotate(360deg) scale(var(--skill-scale, 1)); }
+  }
+
+  @keyframes float5-mobile {
+    0% { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+    25% { transform: translate(-100px, -40px) rotate(-90deg) scale(var(--skill-scale, 1)); }
+    50% { transform: translate(30px, -100px) rotate(-180deg) scale(var(--skill-scale, 1)); }
+    75% { transform: translate(100px, 30px) rotate(-270deg) scale(var(--skill-scale, 1)); }
+    100% { transform: translate(0, 0) rotate(-360deg) scale(var(--skill-scale, 1)); }
+  }
+
+  @keyframes float6-mobile {
+    0% { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+    30% { transform: translate(80px, 70px) rotate(108deg) scale(var(--skill-scale, 1)); }
+    70% { transform: translate(-80px, -70px) rotate(252deg) scale(var(--skill-scale, 1)); }
+    100% { transform: translate(0, 0) rotate(360deg) scale(var(--skill-scale, 1)); }
+  }
+
+  @keyframes float7-mobile {
+    0% { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+    25% { transform: translate(70px, 80px) rotate(90deg) scale(var(--skill-scale, 1)); }
+    50% { transform: translate(-70px, 80px) rotate(180deg) scale(var(--skill-scale, 1)); }
+    75% { transform: translate(-70px, -80px) rotate(270deg) scale(var(--skill-scale, 1)); }
+    100% { transform: translate(0, 0) rotate(360deg) scale(var(--skill-scale, 1)); }
+  }
+
+  @keyframes float8-mobile {
+    0% { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+    20% { transform: translate(-110px, 20px) rotate(-72deg) scale(var(--skill-scale, 1)); }
+    40% { transform: translate(-60px, -90px) rotate(-144deg) scale(var(--skill-scale, 1)); }
+    60% { transform: translate(60px, -90px) rotate(-216deg) scale(var(--skill-scale, 1)); }
+    80% { transform: translate(110px, 20px) rotate(-288deg) scale(var(--skill-scale, 1)); }
+    100% { transform: translate(0, 0) rotate(-360deg) scale(var(--skill-scale, 1)); }
+  }
+
+  @keyframes float9-mobile {
+    0% { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+    50% { transform: translate(0, 90px) rotate(180deg) scale(var(--skill-scale, 1)); }
+    100% { transform: translate(0, 0) rotate(360deg) scale(var(--skill-scale, 1)); }
+  }
+
+  @keyframes float10-mobile {
+    0% { transform: translate(0, 0) rotate(0deg) scale(var(--skill-scale, 1)); }
+    16.66% { transform: translate(90px, -40px) rotate(60deg) scale(var(--skill-scale, 1)); }
+    33.33% { transform: translate(90px, 40px) rotate(120deg) scale(var(--skill-scale, 1)); }
+    50% { transform: translate(0, 80px) rotate(180deg) scale(var(--skill-scale, 1)); }
+    66.66% { transform: translate(-90px, 40px) rotate(240deg) scale(var(--skill-scale, 1)); }
+    83.33% { transform: translate(-90px, -40px) rotate(300deg) scale(var(--skill-scale, 1)); }
+    100% { transform: translate(0, 0) rotate(360deg) scale(var(--skill-scale, 1)); }
   }
   
   .header-content {

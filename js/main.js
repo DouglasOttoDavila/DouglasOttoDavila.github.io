@@ -280,6 +280,186 @@ window.addEventListener('DOMContentLoaded', function() {
     new SPARouter();
 });
 
+// Smooth Skills Animation Controller
+class SkillsAnimationController {
+    constructor() {
+        this.skillsContainer = null;
+        this.skills = [];
+        this.isHovering = false;
+        this.returnAnimations = new Map();
+        this.init();
+    }
+
+    init() {
+        // Wait for DOM to be ready and check for skills periodically
+        this.checkForSkills();
+    }
+
+    checkForSkills() {
+        const skillsContainer = document.querySelector('.skills');
+        if (skillsContainer) {
+            this.setupSkillsAnimation(skillsContainer);
+        } else {
+            // Retry after a short delay if skills not found
+            setTimeout(() => this.checkForSkills(), 100);
+        }
+    }
+
+    setupSkillsAnimation(skillsContainer) {
+        this.skillsContainer = skillsContainer;
+        this.skills = Array.from(skillsContainer.querySelectorAll('.skill'));
+        
+        if (this.skills.length === 0) {
+            setTimeout(() => this.checkForSkills(), 100);
+            return;
+        }
+
+        console.log('Found skills:', this.skills.length); // Debug log
+
+        // Add event listeners
+        skillsContainer.addEventListener('mouseenter', () => this.handleHoverStart());
+        skillsContainer.addEventListener('mouseleave', () => this.handleHoverEnd());
+        
+        // Touch events for mobile
+        skillsContainer.addEventListener('touchstart', () => this.handleHoverStart());
+        skillsContainer.addEventListener('touchend', () => this.handleHoverEnd());
+    }
+
+    handleHoverStart() {
+        console.log('Hover start'); // Debug log
+        this.isHovering = true;
+        // Clear any ongoing return animations
+        this.returnAnimations.forEach((animation) => {
+            animation.cancel();
+        });
+        this.returnAnimations.clear();
+        
+        // Remove JavaScript animation control and reset to CSS control
+        this.skills.forEach(skill => {
+            skill.classList.remove('js-animating');
+            skill.style.transform = '';
+        });
+    }
+
+    handleHoverEnd() {
+        console.log('Hover end'); // Debug log
+        this.isHovering = false;
+        
+        // Immediately capture positions while CSS animations are still running
+        // BEFORE removing the hover class
+        const currentPositions = this.skills.map((skill, index) => {
+            const transform = this.getCurrentTransform(skill);
+            console.log(`Captured position for skill ${index} while animating:`, transform);
+            return transform;
+        });
+        
+        // Stop any ongoing return animations
+        this.returnAnimations.forEach((animation, skill) => {
+            animation.cancel();
+        });
+        this.returnAnimations.clear();
+        
+        // Remove hover state AFTER capturing positions
+        this.skillsSection.classList.remove('hovered');
+        
+        // Start JavaScript-controlled return animation
+        this.animateSkillsReturn(currentPositions);
+    }
+
+    getCurrentTransform(element) {
+        const computedStyle = window.getComputedStyle(element);
+        const transform = computedStyle.transform;
+        
+        console.log('Current transform:', transform); // Debug log
+        
+        if (transform === 'none' || !transform) {
+            return { translateX: 0, translateY: 0, rotate: 0, scale: 1 };
+        }
+
+        // Parse matrix transform
+        const matrixMatch = transform.match(/matrix.*\((.+)\)/);
+        if (matrixMatch) {
+            const values = matrixMatch[1].split(/,\s*/).map(parseFloat);
+            console.log('Matrix values:', values); // Debug log
+            
+            const result = {
+                translateX: values[4] || 0,
+                translateY: values[5] || 0,
+                rotate: Math.atan2(values[1], values[0]) * (180 / Math.PI) || 0,
+                scale: Math.sqrt(values[0] * values[0] + values[1] * values[1]) || 1
+            };
+            console.log('Parsed transform:', result); // Debug log
+            return result;
+        }
+
+        return { translateX: 0, translateY: 0, rotate: 0, scale: 1 };
+    }
+
+    animateSkillsReturn(capturedPositions) {
+        console.log('Starting return animation with captured positions'); // Debug log
+        
+        this.skills.forEach((skill, index) => {
+            // Add class to disable CSS animations
+            skill.classList.add('js-animating');
+            
+            // Use the captured position instead of reading current position
+            const currentTransform = capturedPositions[index];
+            
+            console.log(`Skill ${index} using captured position:`, currentTransform); // Debug log
+            
+            // Only animate if the element is not already at center
+            const isAtCenter = Math.abs(currentTransform.translateX) < 1 && 
+                              Math.abs(currentTransform.translateY) < 1 && 
+                              Math.abs(currentTransform.rotate) < 1;
+            
+            if (isAtCenter) {
+                console.log(`Skill ${index} already at center`); // Debug log
+                skill.classList.remove('js-animating');
+                return;
+            }
+            
+            // Set the current position explicitly before starting animation
+            skill.style.transform = `translate(${currentTransform.translateX}px, ${currentTransform.translateY}px) rotate(${currentTransform.rotate}deg) scale(${currentTransform.scale})`;
+            
+            // Force a reflow
+            skill.offsetHeight;
+            
+            // Create smooth return animation using Web Animations API
+            const animation = skill.animate([
+                {
+                    transform: `translate(${currentTransform.translateX}px, ${currentTransform.translateY}px) rotate(${currentTransform.rotate}deg) scale(${currentTransform.scale})`,
+                    offset: 0
+                },
+                {
+                    transform: 'translate(0px, 0px) rotate(0deg) scale(1)',
+                    offset: 1
+                }
+            ], {
+                duration: 1500,
+                easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+                fill: 'forwards'
+            });
+
+            this.returnAnimations.set(skill, animation);
+
+            // Clean up after animation completes
+            animation.addEventListener('finish', () => {
+                console.log(`Skill ${index} return animation finished`); // Debug log
+                this.returnAnimations.delete(skill);
+                skill.classList.remove('js-animating');
+                // Set final position explicitly
+                skill.style.transform = 'translate(0px, 0px) rotate(0deg) scale(1)';
+            });
+            
+            animation.addEventListener('cancel', () => {
+                console.log(`Skill ${index} return animation cancelled`); // Debug log
+                this.returnAnimations.delete(skill);
+                skill.classList.remove('js-animating');
+            });
+        });
+    }
+}
+
 // Dark mode toggle functionality
 window.addEventListener('DOMContentLoaded', function() {
     const toggleBtn = document.getElementById('theme-toggle');
@@ -300,4 +480,7 @@ window.addEventListener('DOMContentLoaded', function() {
             setTheme(current === 'dark' ? 'light' : 'dark');
         });
     }
+
+    // Skills animations are now handled purely by CSS - no JavaScript needed
+    // new SkillsAnimationController();
 });
