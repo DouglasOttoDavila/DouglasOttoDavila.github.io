@@ -481,6 +481,90 @@ window.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Profile Image Animation Controller
+    function initProfileImageAnimation() {
+        const profileImage = document.querySelector('.profile-image');
+        
+        if (profileImage) {
+            // Add loading animation delay to start pulse after initial load completes
+            setTimeout(() => {
+                profileImage.classList.add('loaded');
+            }, 1200); // Match the duration of profileImageLoad animation
+
+            // Add interactive hover effects
+            profileImage.addEventListener('mouseenter', () => {
+                profileImage.style.animationPlayState = 'paused';
+            });
+
+            profileImage.addEventListener('mouseleave', () => {
+                profileImage.style.animationPlayState = 'running';
+            });
+
+            // Image expansion functionality
+            profileImage.addEventListener('click', () => {
+                expandProfileImage();
+            });
+        }
+    }
+
+    // Profile Image Expansion Functionality
+    function expandProfileImage() {
+        const profileImage = document.querySelector('.profile-image');
+        if (!profileImage) return;
+
+        // Create modal overlay
+        const modal = document.createElement('div');
+        modal.className = 'profile-image-modal';
+        
+        // Create expanded image
+        const expandedImage = document.createElement('img');
+        expandedImage.src = profileImage.src;
+        expandedImage.alt = profileImage.alt;
+        expandedImage.className = 'profile-image-expanded';
+        
+        modal.appendChild(expandedImage);
+        document.body.appendChild(modal);
+
+        // Prevent body scrolling
+        document.body.style.overflow = 'hidden';
+
+        // Show modal with animation
+        setTimeout(() => {
+            modal.classList.add('show');
+        }, 10);
+
+        // Close modal on click
+        const closeModal = () => {
+            modal.classList.remove('show');
+            document.body.style.overflow = '';
+            
+            setTimeout(() => {
+                if (modal.parentNode) {
+                    document.body.removeChild(modal);
+                }
+            }, 300);
+        };
+
+        // Event listeners for closing
+        modal.addEventListener('click', closeModal);
+        expandedImage.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeModal();
+        });
+
+        // Close on Escape key
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+                document.removeEventListener('keydown', handleEscape);
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
+    }
+
+    // Initialize profile image animations
+    initProfileImageAnimation();
+
     // Skills animations are now handled purely by CSS - no JavaScript needed
     // new SkillsAnimationController();
 });

@@ -46,14 +46,38 @@ body {
 
 /* Header Styles */
 header {
-  background: var(--menu-bg);
+  background: linear-gradient(135deg, var(--menu-bg) 0%, var(--secondary-bg) 100%);
   padding: 1.5rem 2rem 1rem 2rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
   display: flex;
   flex-direction: column;
   align-items: center;
   position: relative;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+/* Add a subtle animated background pattern */
+header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 20% 80%, rgba(0, 188, 212, 0.05) 0%, transparent 50%),
+              radial-gradient(circle at 80% 20%, rgba(0, 188, 212, 0.05) 0%, transparent 50%);
+  animation: headerGlow 8s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes headerGlow {
+  0% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0.7;
+  }
 }
 
 .header-content {
@@ -61,6 +85,8 @@ header {
   align-items: center;
   gap: 1.5rem;
   margin-bottom: 0.5rem;
+  position: relative;
+  z-index: 1;
 }
 
 .profile-image {
@@ -69,16 +95,151 @@ header {
   border-radius: 50%;
   object-fit: cover;
   border: 3px solid var(--accent);
-  transition: border var(--transition);
+  transition: all var(--transition) ease-in-out;
+  position: relative;
+  box-shadow: 0 4px 20px rgba(0, 188, 212, 0.3);
+  opacity: 0;
+  transform: scale(0.8) translateY(-10px);
+  animation: profileImageLoad 1.2s ease-out forwards;
+}
+
+.profile-image:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 30px rgba(0, 188, 212, 0.5);
+  border-width: 4px;
+  cursor: pointer;
+}
+
+/* Profile Image Expansion Modal */
+.profile-image-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(8px);
+  transition: opacity 0.3s ease-in-out;
+}
+
+.profile-image-modal.show {
+  display: flex;
+  opacity: 1;
+}
+
+.profile-image-expanded {
+  max-width: 80vw;
+  max-height: 80vh;
+  width: auto;
+  height: auto;
+  border-radius: 20px;
+  border: 4px solid var(--accent);
+  box-shadow: 0 20px 60px rgba(0, 188, 212, 0.4);
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: scale(0.8);
+  opacity: 0;
+}
+
+.profile-image-modal.show .profile-image-expanded {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* Close hint */
+.profile-image-modal::after {
+  content: 'Click image to close';
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  font-family: 'Roboto', sans-serif;
+  pointer-events: none;
+}
+
+/* Profile image loading animation */
+@keyframes profileImageLoad {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(-10px) rotate(-5deg);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1) translateY(-5px) rotate(2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0) rotate(0deg);
+  }
+}
+
+/* Subtle pulse animation that runs continuously after loading */
+@keyframes profilePulse {
+  0%, 100% {
+    box-shadow: 0 4px 20px rgba(0, 188, 212, 0.3);
+  }
+  50% {
+    box-shadow: 0 4px 25px rgba(0, 188, 212, 0.4);
+  }
+}
+
+/* Apply pulse animation after initial load, keeping the image visible */
+.profile-image.loaded {
+  opacity: 1 !important;
+  transform: scale(1) translateY(0) rotate(0deg) !important;
+  animation: profilePulse 3s ease-in-out infinite;
 }
 
 .header-text {
   text-align: left;
+  opacity: 0;
+  transform: translateX(-20px);
+  animation: headerTextLoad 1s ease-out 0.5s forwards;
+}
+
+.header-text h1 {
+  margin: 0 0 0.2rem 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--heading);
+  transition: color var(--transition);
+}
+
+.header-text h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--accent);
+  opacity: 0.9;
+  transition: color var(--transition), opacity var(--transition);
+}
+
+/* Header text loading animation */
+@keyframes headerTextLoad {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 /* Navigation Styles */
 nav {
   margin-top: 0.5rem;
+  position: relative;
+  z-index: 1;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: navLoad 1s ease-out 1s forwards;
 }
 
 nav ul {
@@ -87,6 +248,18 @@ nav ul {
   gap: 2rem;
   padding: 0;
   margin: 0;
+}
+
+/* Navigation loading animation */
+@keyframes navLoad {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 nav a {
@@ -177,11 +350,14 @@ nav a:hover, nav a:focus, nav a.active {
   padding: 0.4rem 1.2rem;
   cursor: pointer;
   font-size: 1rem;
-  transition: background var(--transition), color var(--transition), border var(--transition);
+  transition: background var(--transition), color var(--transition), border var(--transition), transform var(--transition);
   position: absolute;
   top: 1.5rem;
   right: 2rem;
   z-index: 10;
+  opacity: 0;
+  transform: translateX(20px);
+  animation: themeToggleLoad 1s ease-out 1.2s forwards;
 }
 
 /* Theme toggle when standalone (not in header-buttons container) - deprecated */
@@ -192,6 +368,19 @@ header > .theme-toggle {
 .theme-toggle:hover {
   background: var(--accent);
   color: #fff;
+  transform: scale(1.05);
+}
+
+/* Theme toggle loading animation */
+@keyframes themeToggleLoad {
+  0% {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 /* Main Content Styles */
@@ -660,6 +849,10 @@ footer {
   .profile-image {
     width: 60px;
     height: 60px;
+  }
+  
+  .profile-image:hover {
+    transform: scale(1.03);
   }
 }
 
