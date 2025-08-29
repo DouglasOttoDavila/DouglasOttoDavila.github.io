@@ -468,16 +468,33 @@ window.addEventListener('DOMContentLoaded', function() {
         const setTheme = (theme) => {
             document.documentElement.setAttribute('data-theme', theme);
             localStorage.setItem('theme', theme);
-            toggleBtn.textContent = theme === 'dark' ? '🌙 Dark Mode' : '☀️ Light Mode';
+            toggleBtn.setAttribute('aria-checked', theme === 'dark');
+            
+            // Update the icon
+            const iconElement = toggleBtn.querySelector('.toggle-icon');
+            if (iconElement) {
+                iconElement.textContent = ''; // Clear text, let CSS pseudo-element handle it
+            }
         };
         
         const storedTheme = localStorage.getItem('theme');
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         setTheme(storedTheme || (prefersDark ? 'dark' : 'light'));
         
-        toggleBtn.addEventListener('click', () => {
+        const toggleTheme = () => {
             const current = document.documentElement.getAttribute('data-theme');
             setTheme(current === 'dark' ? 'light' : 'dark');
+        };
+        
+        // Handle click events
+        toggleBtn.addEventListener('click', toggleTheme);
+        
+        // Handle keyboard events for accessibility
+        toggleBtn.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleTheme();
+            }
         });
     }
 
@@ -565,6 +582,78 @@ window.addEventListener('DOMContentLoaded', function() {
     // Initialize profile image animations
     initProfileImageAnimation();
 
+    // Initialize hamburger menu
+    initHamburgerMenu();
+
     // Skills animations are now handled purely by CSS - no JavaScript needed
     // new SkillsAnimationController();
 });
+
+// Hamburger Menu Controller
+function initHamburgerMenu() {
+    const hamburgerButton = document.getElementById('hamburger-menu');
+    const navMenu = document.getElementById('nav-menu');
+    const navLinks = document.querySelectorAll('.nav-link');
+    
+    if (!hamburgerButton || !navMenu) return;
+
+    let isMenuOpen = false;
+
+    // Toggle menu function
+    function toggleMenu() {
+        isMenuOpen = !isMenuOpen;
+        
+        hamburgerButton.classList.toggle('active', isMenuOpen);
+        navMenu.classList.toggle('active', isMenuOpen);
+        hamburgerButton.setAttribute('aria-expanded', isMenuOpen);
+        
+        // Prevent body scroll when menu is open
+        document.body.style.overflow = isMenuOpen ? 'hidden' : '';
+        
+        // Add/remove event listeners for closing menu
+        if (isMenuOpen) {
+            document.addEventListener('keydown', handleEscapeKey);
+        } else {
+            document.removeEventListener('keydown', handleEscapeKey);
+        }
+    }
+
+    // Close menu function
+    function closeMenu() {
+        if (isMenuOpen) {
+            toggleMenu();
+        }
+    }
+
+    // Handle escape key
+    function handleEscapeKey(e) {
+        if (e.key === 'Escape') {
+            closeMenu();
+        }
+    }
+
+    // Handle clicks outside menu
+    function handleOutsideClick(e) {
+        if (isMenuOpen && !navMenu.contains(e.target) && !hamburgerButton.contains(e.target)) {
+            closeMenu();
+        }
+    }
+
+    // Event listeners
+    hamburgerButton.addEventListener('click', toggleMenu);
+    document.addEventListener('click', handleOutsideClick);
+    
+    // Close menu when navigation link is clicked
+    navLinks.forEach(link => {
+        link.addEventListener('click', () => {
+            closeMenu();
+        });
+    });
+
+    // Handle window resize - close menu on larger screens if open
+    window.addEventListener('resize', () => {
+        if (window.innerWidth > 768 && isMenuOpen) {
+            closeMenu();
+        }
+    });
+}

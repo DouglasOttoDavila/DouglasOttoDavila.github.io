@@ -57,6 +57,17 @@ header {
   overflow: hidden;
 }
 
+/* Responsive header layout for larger screens */
+@media (min-width: 768px) {
+  header {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 1.5rem 3rem;
+    gap: 3rem;
+  }
+}
+
 /* Add a subtle animated background pattern */
 header::before {
   content: '';
@@ -87,6 +98,14 @@ header::before {
   margin-bottom: 0.5rem;
   position: relative;
   z-index: 1;
+}
+
+/* Responsive header content adjustments */
+@media (min-width: 768px) {
+  .header-content {
+    margin-bottom: 0;
+    flex-shrink: 0;
+  }
 }
 
 .profile-image {
@@ -232,50 +251,265 @@ header::before {
   }
 }
 
-/* Navigation Styles */
-nav {
-  margin-top: 0.5rem;
-  position: relative;
-  z-index: 1;
-  opacity: 0;
-  transform: translateY(10px);
-  animation: navLoad 1s ease-out 1s forwards;
-}
-
-nav ul {
-  list-style: none;
+/* Hamburger Menu Button */
+.hamburger-menu {
+  position: fixed;
+  top: 2rem;
+  right: 2rem;
+  z-index: 1000;
+  background: var(--card-bg);
+  border: none;
+  border-radius: 12px;
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
   display: flex;
-  gap: 2rem;
-  padding: 0;
-  margin: 0;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 4px 20px rgba(0, 188, 212, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0;
+  transform: translateY(-10px);
+  animation: hamburgerLoad 1s ease-out 1.5s forwards;
 }
 
-/* Navigation loading animation */
-@keyframes navLoad {
+.hamburger-menu:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 25px rgba(0, 188, 212, 0.3);
+}
+
+.hamburger-menu:active {
+  transform: scale(0.95);
+}
+
+.hamburger-menu:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Hamburger Lines */
+.hamburger-line {
+  width: 24px;
+  height: 3px;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center;
+}
+
+/* Hamburger Animation States */
+.hamburger-menu.active .hamburger-line:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+
+.hamburger-menu.active .hamburger-line:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0);
+}
+
+.hamburger-menu.active .hamburger-line:nth-child(3) {
+  transform: rotate(-45deg) translate(7px, -6px);
+}
+
+/* Navigation Menu */
+.nav-menu {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 100vh;
+  background: rgba(24, 26, 32, 0.98);
+  backdrop-filter: blur(20px);
+  z-index: 999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(100%);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Menu content container */
+.nav-menu-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3rem;
+}
+
+/* Animated background pattern for the menu */
+.nav-menu::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(0, 188, 212, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(0, 188, 212, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 40% 80%, rgba(0, 188, 212, 0.05) 0%, transparent 50%);
+  animation: menuBackgroundFloat 8s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes menuBackgroundFloat {
   0% {
-    opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(0) rotate(0deg);
+    opacity: 0.5;
   }
   100% {
+    transform: translateY(-10px) rotate(1deg);
+    opacity: 0.8;
+  }
+}
+
+[data-theme="light"] .nav-menu {
+  background: rgba(245, 245, 245, 0.98);
+}
+
+[data-theme="light"] .nav-menu::before {
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(0, 121, 107, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(0, 121, 107, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 40% 80%, rgba(0, 121, 107, 0.05) 0%, transparent 50%);
+}
+
+.nav-menu.active {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+}
+
+.nav-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  align-items: center;
+}
+
+.nav-menu a {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+  font-family: 'Roboto', sans-serif;
+  font-size: 1.5rem;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+/* Staggered animation for menu items */
+.nav-menu.active a {
+  animation: slideInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.nav-menu.active ul li:nth-child(1) a { animation-delay: 0.1s; }
+.nav-menu.active ul li:nth-child(2) a { animation-delay: 0.2s; }
+.nav-menu.active ul li:nth-child(3) a { animation-delay: 0.3s; }
+
+@keyframes slideInUp {
+  to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-nav a {
-  color: var(--text);
-  text-decoration: none;
-  font-weight: 700;
-  font-family: 'Roboto', sans-serif;
-  font-size: 1.1rem;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  transition: background var(--transition), color var(--transition);
+/* Menu item hover effects */
+.nav-menu a::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 188, 212, 0.1), transparent);
+  transition: left 0.5s;
 }
 
-nav a:hover, nav a:focus, nav a.active {
+.nav-menu a:hover::before {
+  left: 100%;
+}
+
+/* Glowing effect on hover */
+.nav-menu a::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: radial-gradient(circle, rgba(0, 188, 212, 0.3) 0%, transparent 70%);
+  transform: translate(-50%, -50%);
+  transition: all 0.4s ease-out;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.nav-menu a:hover::after {
+  width: 120%;
+  height: 120%;
+}
+
+.nav-menu a:hover,
+.nav-menu a:focus,
+.nav-menu a.active {
   background: var(--menu-hover);
   color: #fff;
+  transform: scale(1.05) translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 188, 212, 0.3);
+}
+
+.nav-menu a:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+/* Hamburger menu loading animation */
+@keyframes hamburgerLoad {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px) rotate(-10deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg);
+  }
+}
+
+/* Responsive Design */
+@media (min-width: 768px) {
+  .nav-menu {
+    width: 400px;
+  }
+  
+  .nav-menu a {
+    font-size: 1.8rem;
+  }
+  
+  .nav-menu-content {
+    gap: 4rem;
+  }
+  
+  .nav-menu .theme-toggle::before {
+    font-size: 1.2rem;
+  }
+}
+
+/* Hide original navigation styles */
+nav {
+  display: none;
 }
 
 /* Content Area for SPA */
@@ -341,16 +575,8 @@ nav a:hover, nav a:focus, nav a.active {
   transform: translateY(-2px);
 }
 
-/* Theme Toggle Button */
+/* Theme Toggle Switch - Hide from header */
 .theme-toggle {
-  background: none;
-  border: 1px solid var(--accent);
-  color: var(--accent);
-  border-radius: 20px;
-  padding: 0.4rem 1.2rem;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background var(--transition), color var(--transition), border var(--transition), transform var(--transition);
   position: absolute;
   top: 1.5rem;
   right: 2rem;
@@ -358,6 +584,118 @@ nav a:hover, nav a:focus, nav a.active {
   opacity: 0;
   transform: translateX(20px);
   animation: themeToggleLoad 1s ease-out 1.2s forwards;
+  cursor: pointer;
+  outline: none;
+  display: none; /* Hide original position */
+}
+
+/* Theme Toggle inside Navigation Menu */
+.nav-menu .theme-toggle {
+  position: relative;
+  top: auto;
+  right: auto;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: none; /* Remove original animation */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  background: rgba(0, 188, 212, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 188, 212, 0.2);
+}
+
+.nav-menu .theme-toggle::before {
+  content: 'Theme';
+  color: var(--text);
+  font-family: 'Roboto', sans-serif;
+  font-weight: 500;
+  font-size: 1.1rem;
+}
+
+.nav-menu.active .theme-toggle {
+  opacity: 1;
+  transform: translateY(0);
+  animation: slideInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation-delay: 0.4s; /* Appears after menu items */
+}
+
+.nav-menu .theme-toggle:hover {
+  background: rgba(0, 188, 212, 0.15);
+  border-color: rgba(0, 188, 212, 0.3);
+  transform: scale(1.02);
+}
+
+.toggle-track {
+  width: 60px;
+  height: 32px;
+  background: var(--card-bg);
+  border-radius: 20px;
+  position: relative;
+  transition: all var(--transition);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-thumb {
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(135deg, var(--accent) 0%, #00a8cc 100%);
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.toggle-icon {
+  font-size: 12px;
+  transition: all var(--transition);
+}
+
+/* Active state (dark mode) */
+[data-theme="dark"] .toggle-thumb {
+  transform: translateX(28px);
+  background: linear-gradient(135deg, #ffd700 0%, #ffb300 100%);
+}
+
+[data-theme="dark"] .toggle-icon {
+  content: "☀️";
+}
+
+[data-theme="dark"] .toggle-icon::before {
+  content: "☀️";
+}
+
+[data-theme="light"] .toggle-icon::before {
+  content: "🌙";
+}
+
+/* Hide the original icon text and use pseudo-elements for better control */
+.toggle-icon {
+  font-size: 0;
+}
+
+.toggle-icon::before {
+  font-size: 12px;
+  transition: all var(--transition);
+}
+
+/* Responsive theme toggle positioning */
+@media (min-width: 768px) {
+  .theme-toggle {
+    position: absolute;
+    top: 1.5rem;
+    right: 3rem;
+    transform: translateX(20px);
+    animation: themeToggleLoad 1s ease-out 1.2s forwards;
+  }
 }
 
 /* Theme toggle when standalone (not in header-buttons container) - deprecated */
@@ -365,10 +703,18 @@ header > .theme-toggle {
   margin-top: 0;
 }
 
-.theme-toggle:hover {
-  background: var(--accent);
-  color: #fff;
+.theme-toggle:hover .toggle-track {
+  box-shadow: 0 4px 12px rgba(0, 188, 212, 0.3);
   transform: scale(1.05);
+}
+
+.theme-toggle:hover .toggle-thumb {
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* Focus styles for accessibility */
+.theme-toggle:focus .toggle-track {
+  box-shadow: 0 4px 12px rgba(0, 188, 212, 0.5);
 }
 
 /* Theme toggle loading animation */
@@ -1009,8 +1355,26 @@ code {
   .theme-toggle {
     top: 1rem;
     right: 1rem;
-    font-size: 0.9rem;
-    padding: 0.35rem 1rem;
+  }
+  
+  .toggle-track {
+    width: 52px;
+    height: 28px;
+  }
+  
+  .toggle-thumb {
+    width: 20px;
+    height: 20px;
+    top: 2px;
+    left: 2px;
+  }
+  
+  [data-theme="dark"] .toggle-thumb {
+    transform: translateX(24px);
+  }
+  
+  .toggle-icon::before {
+    font-size: 10px;
   }
   
   .header-buttons {
