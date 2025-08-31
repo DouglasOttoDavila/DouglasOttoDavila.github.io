@@ -179,12 +179,17 @@ nav a.active {
   font-weight: 500;
   white-space: nowrap;
   transition: all 0.3s ease;
-  cursor: default;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
 }
 
-.intro-contact-container .intro-card .skill:hover {
+.intro-contact-container .intro-card .skill:hover,
+.intro-contact-container .intro-card .skill:focus {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 188, 212, 0.3);
+  color: #fff;
+  text-decoration: none;
 }
 
 /* Contact Section - Modified for side-by-side layout */
@@ -355,11 +360,17 @@ nav a.active {
   font-weight: 600;
   transition: all 0.3s ease;
   cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
 }
 
-.skill-tag:hover {
+.skill-tag:hover,
+.skill-tag:focus {
   transform: scale(1.1);
   box-shadow: 0 4px 15px rgba(0, 188, 212, 0.4);
+  color: #fff;
+  text-decoration: none;
+  outline: none;
 }
 
 .certifications-list {
