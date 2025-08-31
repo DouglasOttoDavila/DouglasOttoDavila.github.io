@@ -116,6 +116,90 @@ nav a.active {
   font-size: 1.2rem;
 }
 
+/* Two-column layout for intro-card and contact section */
+.intro-contact-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 2rem;
+  background: var(--primary-bg);
+}
+
+@media (min-width: 1200px) {
+  .intro-contact-container {
+    flex-direction: row;
+    gap: 3rem;
+    align-items: flex-start;
+    padding: 3rem 2rem;
+  }
+}
+
+/* Intro Card Styles for About Page */
+.intro-contact-container .intro-card {
+  background: var(--card-bg);
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+  padding: 2.5rem 2rem;
+  max-width: 520px;
+  width: 100%;
+  text-align: center;
+  transition: background var(--transition);
+  opacity: 0;
+  transform: translateY(30px);
+  flex: 1;
+}
+
+.intro-contact-container .intro-card.animate {
+  animation: slideUp 0.8s ease-out forwards;
+}
+
+.intro-contact-container .intro-card .about {
+  margin-bottom: 2rem;
+}
+
+.intro-contact-container .intro-card .about p {
+  color: var(--text);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.intro-contact-container .intro-card .skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  justify-content: center;
+}
+
+.intro-contact-container .intro-card .skill {
+  background: var(--accent);
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+  cursor: default;
+}
+
+.intro-contact-container .intro-card .skill:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 188, 212, 0.3);
+}
+
+/* Contact Section - Modified for side-by-side layout */
+.intro-contact-container .contact-section {
+  padding: 0;
+  background: transparent;
+  flex: 1;
+}
+
+@media (min-width: 1200px) {
+  .intro-contact-container .contact-section {
+    max-width: 520px;
+  }
+}
+
 /* Contact Section */
 .contact-section {
   padding: 3rem 2rem;

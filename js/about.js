@@ -11,6 +11,14 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeAnimations() {
+    // Initialize intro-card animation
+    const introCard = document.querySelector('.intro-card');
+    if (introCard) {
+        setTimeout(() => {
+            introCard.classList.add('animate');
+        }, 200);
+    }
+    
     // Add staggered animation delays to timeline items
     const timelineItems = document.querySelectorAll('.timeline-item');
     timelineItems.forEach((item, index) => {
