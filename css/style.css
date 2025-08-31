@@ -345,7 +345,7 @@ header::before {
   align-items: center;
   padding: 3rem 2rem 2rem 2rem;
   min-height: 100%;
-  justify-content: space-between;
+  height: 100%;
   gap: 2rem;
 }
 
@@ -443,6 +443,10 @@ header::before {
   .nav-menu ul {
     gap: 3rem;
   }
+  
+  .nav-menu .theme-toggle {
+    max-width: 280px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -463,6 +467,11 @@ header::before {
   
   .nav-menu ul {
     gap: 2rem;
+  }
+  
+  .nav-menu .theme-toggle {
+    max-width: 220px;
+    padding: 0.9rem 1.2rem;
   }
 }
 
@@ -545,7 +554,8 @@ header::before {
   justify-content: center;
   flex-shrink: 0;
   margin-top: auto;
-  margin-bottom: 0;
+  margin-bottom: 1rem;
+  position: relative;
 }
 
 .nav-menu .theme-toggle::before {
@@ -619,12 +629,20 @@ header::before {
 
 /* Responsive theme toggle positioning */
 @media (min-width: 768px) {
-  .theme-toggle {
+  /* Header theme toggle - only applies to theme toggle outside of nav-menu */
+  header > .theme-toggle {
     position: absolute;
     top: 1.5rem;
     right: 3rem;
     transform: translateX(20px);
     animation: themeToggleLoad 1s ease-out 1.2s forwards;
+  }
+  
+  /* Ensure nav menu theme toggle stays at bottom on larger screens */
+  .nav-menu .theme-toggle {
+    position: relative;
+    margin-top: auto;
+    margin-bottom: 1rem;
   }
 }
 
