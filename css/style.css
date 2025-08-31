@@ -954,6 +954,178 @@ h2 {
   line-height: 1.7;
 }
 
+/* LinkedIn Posts Carousel */
+.linkedin-posts {
+  background: var(--card-bg);
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+  padding: 2rem;
+  max-width: 600px;
+  text-align: center;
+  margin: 2rem 80px 0 80px;
+  transition: background var(--transition);
+  opacity: 0;
+  transform: translateY(30px);
+  animation: slide-up 0.8s ease-out forwards 0.4s;
+  position: relative;
+}
+
+.linkedin-posts h3 {
+  color: var(--heading);
+  font-size: 1.5rem;
+  margin: 0 0 1.5rem 0;
+  font-weight: 500;
+}
+
+.carousel-container {
+  position: relative;
+  width: 100%;
+  overflow: visible;
+  border-radius: 12px;
+}
+
+.carousel-wrapper {
+  position: relative;
+  width: 100%;
+  height: 550px;
+  overflow: hidden;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  margin: 0 auto;
+}
+
+.carousel-track {
+  display: flex;
+  width: 500%;
+  height: 100%;
+  transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.carousel-slide {
+  width: 20%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0.7;
+  transform: scale(0.95);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.carousel-slide.active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.carousel-slide iframe {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+/* Navigation Buttons */
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 188, 212, 0.9);
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 10;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0, 188, 212, 0.3);
+}
+
+.carousel-btn:hover {
+  background: rgba(0, 188, 212, 1);
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 6px 20px rgba(0, 188, 212, 0.4);
+}
+
+.carousel-btn-prev {
+  left: -60px;
+}
+
+.carousel-btn-next {
+  right: -60px;
+}
+
+/* Dots Indicator */
+.carousel-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.carousel-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 188, 212, 0.3);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.carousel-dot.active {
+  background: var(--accent);
+  transform: scale(1.2);
+  box-shadow: 0 0 10px rgba(0, 188, 212, 0.5);
+}
+
+.carousel-dot:hover {
+  background: rgba(0, 188, 212, 0.7);
+  transform: scale(1.1);
+}
+
+/* Autoplay Control */
+.carousel-autoplay {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(0, 0, 0, 0.7);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 10;
+  backdrop-filter: blur(10px);
+}
+
+.carousel-autoplay:hover {
+  background: rgba(0, 0, 0, 0.9);
+  transform: scale(1.1);
+}
+
+.carousel-autoplay.paused {
+  background: rgba(0, 188, 212, 0.9);
+}
+
+/* Progress Bar for Autoplay */
+.carousel-container::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: var(--accent);
+  z-index: 10;
+  transition: width 0.1s linear;
+  width: 0;
+}
+
 /* Footer Styles */
 footer {
   text-align: center;
@@ -1129,6 +1301,51 @@ footer {
   
   .profile-image:hover {
     transform: scale(1.03);
+  }
+  
+  .linkedin-posts {
+    padding: 1.5rem 1rem;
+    margin: 1.5rem 50px 0 50px;
+    max-width: 100%;
+  }
+  
+  .linkedin-posts h3 {
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+  }
+  
+  .carousel-container {
+    overflow: visible;
+  }
+  
+  .carousel-wrapper {
+    height: 450px;
+  }
+  
+  .carousel-slide iframe {
+    width: 100%;
+    height: auto;
+    min-height: 400px;
+  }
+  
+  .carousel-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+  
+  .carousel-btn-prev {
+    left: -45px;
+  }
+  
+  .carousel-btn-next {
+    right: -45px;
+  }
+  
+  .carousel-autoplay {
+    width: 35px;
+    height: 35px;
+    font-size: 0.9rem;
   }
 }
 

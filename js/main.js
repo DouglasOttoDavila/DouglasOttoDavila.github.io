@@ -672,3 +672,294 @@ function initHamburgerMenu() {
         }
     });
 }
+
+// LinkedIn Posts Carousel Controller
+class LinkedInCarousel {
+    constructor() {
+        this.currentSlide = 0;
+        this.totalSlides = 0;
+        this.autoplayInterval = null;
+        this.autoplayDuration = 5000; // 5 seconds
+        this.isAutoplayActive = true;
+        this.progressBar = null;
+        this.progressInterval = null;
+        this.init();
+    }
+
+    init() {
+        // Wait for the carousel to be loaded in the DOM
+        this.checkForCarousel();
+    }
+
+    checkForCarousel() {
+        const carousel = document.querySelector('.carousel-container');
+        if (carousel) {
+            this.setupCarousel();
+        } else {
+            // Retry after a short delay if carousel not found
+            setTimeout(() => this.checkForCarousel(), 100);
+        }
+    }
+
+    setupCarousel() {
+        this.track = document.getElementById('carousel-track');
+        this.slides = document.querySelectorAll('.carousel-slide');
+        this.prevBtn = document.getElementById('carousel-prev');
+        this.nextBtn = document.getElementById('carousel-next');
+        this.dots = document.querySelectorAll('.carousel-dot');
+        this.autoplayBtn = document.getElementById('carousel-autoplay');
+        this.container = document.querySelector('.carousel-container');
+        
+        if (!this.track || this.slides.length === 0) {
+            setTimeout(() => this.checkForCarousel(), 100);
+            return;
+        }
+
+        this.totalSlides = this.slides.length;
+        
+        console.log('Carousel initialized with', this.totalSlides, 'slides');
+
+        // Setup event listeners
+        this.setupEventListeners();
+        
+        // Create progress bar
+        this.createProgressBar();
+        
+        // Start autoplay
+        this.startAutoplay();
+        
+        // Initialize first slide
+        this.updateCarousel();
+    }
+
+    setupEventListeners() {
+        // Navigation buttons
+        if (this.prevBtn) {
+            this.prevBtn.addEventListener('click', () => this.previousSlide());
+        }
+        
+        if (this.nextBtn) {
+            this.nextBtn.addEventListener('click', () => this.nextSlide());
+        }
+
+        // Dot indicators
+        this.dots.forEach((dot, index) => {
+            dot.addEventListener('click', () => this.goToSlide(index));
+        });
+
+        // Autoplay toggle
+        if (this.autoplayBtn) {
+            this.autoplayBtn.addEventListener('click', () => this.toggleAutoplay());
+        }
+
+        // Pause autoplay on hover
+        if (this.container) {
+            this.container.addEventListener('mouseenter', () => this.pauseAutoplay());
+            this.container.addEventListener('mouseleave', () => this.resumeAutoplay());
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (!this.isCarouselVisible()) return;
+            
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                this.previousSlide();
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                this.nextSlide();
+            }
+        });
+
+        // Touch/swipe support
+        this.setupTouchEvents();
+    }
+
+    setupTouchEvents() {
+        let startX = 0;
+        let currentX = 0;
+        let isDragging = false;
+
+        this.container.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            isDragging = true;
+            this.pauseAutoplay();
+        });
+
+        this.container.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            currentX = e.touches[0].clientX;
+        });
+
+        this.container.addEventListener('touchend', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            
+            const diffX = startX - currentX;
+            const threshold = 50;
+
+            if (Math.abs(diffX) > threshold) {
+                if (diffX > 0) {
+                    this.nextSlide();
+                } else {
+                    this.previousSlide();
+                }
+            }
+            
+            this.resumeAutoplay();
+        });
+    }
+
+    createProgressBar() {
+        this.progressBar = document.createElement('div');
+        this.progressBar.className = 'carousel-progress';
+        this.progressBar.style.cssText = `
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: var(--accent);
+            z-index: 10;
+            transition: width 0.1s linear;
+            width: 0;
+        `;
+        this.container.appendChild(this.progressBar);
+    }
+
+    updateProgressBar() {
+        if (!this.progressBar || !this.isAutoplayActive) {
+            if (this.progressBar) {
+                this.progressBar.style.width = '0';
+            }
+            return;
+        }
+
+        let progress = 0;
+        this.progressInterval = setInterval(() => {
+            progress += 100 / (this.autoplayDuration / 100);
+            this.progressBar.style.width = progress + '%';
+            
+            if (progress >= 100) {
+                clearInterval(this.progressInterval);
+                this.progressBar.style.width = '0';
+            }
+        }, 100);
+    }
+
+    nextSlide() {
+        this.currentSlide = (this.currentSlide + 1) % this.totalSlides;
+        this.updateCarousel();
+        this.resetAutoplay();
+    }
+
+    previousSlide() {
+        this.currentSlide = (this.currentSlide - 1 + this.totalSlides) % this.totalSlides;
+        this.updateCarousel();
+        this.resetAutoplay();
+    }
+
+    goToSlide(index) {
+        this.currentSlide = index;
+        this.updateCarousel();
+        this.resetAutoplay();
+    }
+
+    updateCarousel() {
+        // Update track position
+        const translateX = -this.currentSlide * 20; // 20% per slide (100% / 5 slides)
+        this.track.style.transform = `translateX(${translateX}%)`;
+
+        // Update slide states
+        this.slides.forEach((slide, index) => {
+            slide.classList.toggle('active', index === this.currentSlide);
+        });
+
+        // Update dots
+        this.dots.forEach((dot, index) => {
+            dot.classList.toggle('active', index === this.currentSlide);
+        });
+
+        console.log('Updated to slide', this.currentSlide);
+    }
+
+    startAutoplay() {
+        if (!this.isAutoplayActive) return;
+        
+        this.autoplayInterval = setInterval(() => {
+            this.nextSlide();
+        }, this.autoplayDuration);
+        
+        this.updateProgressBar();
+    }
+
+    stopAutoplay() {
+        if (this.autoplayInterval) {
+            clearInterval(this.autoplayInterval);
+            this.autoplayInterval = null;
+        }
+        if (this.progressInterval) {
+            clearInterval(this.progressInterval);
+            this.progressInterval = null;
+        }
+        if (this.progressBar) {
+            this.progressBar.style.width = '0';
+        }
+    }
+
+    pauseAutoplay() {
+        this.stopAutoplay();
+    }
+
+    resumeAutoplay() {
+        if (this.isAutoplayActive) {
+            this.startAutoplay();
+        }
+    }
+
+    resetAutoplay() {
+        this.stopAutoplay();
+        if (this.isAutoplayActive) {
+            this.startAutoplay();
+        }
+    }
+
+    toggleAutoplay() {
+        this.isAutoplayActive = !this.isAutoplayActive;
+        
+        if (this.isAutoplayActive) {
+            this.autoplayBtn.innerHTML = '<i class="fas fa-pause"></i>';
+            this.autoplayBtn.classList.remove('paused');
+            this.startAutoplay();
+        } else {
+            this.autoplayBtn.innerHTML = '<i class="fas fa-play"></i>';
+            this.autoplayBtn.classList.add('paused');
+            this.stopAutoplay();
+        }
+    }
+
+    isCarouselVisible() {
+        return this.container && this.container.offsetParent !== null;
+    }
+}
+
+// Initialize carousel when DOM is loaded and when home page is loaded
+window.addEventListener('DOMContentLoaded', function() {
+    // Initialize carousel after a delay to ensure content is loaded
+    setTimeout(() => {
+        new LinkedInCarousel();
+    }, 500);
+});
+
+// Also initialize when navigating to home page
+document.addEventListener('DOMContentLoaded', function() {
+    // Listen for home page loads
+    const originalPushState = history.pushState;
+    history.pushState = function() {
+        originalPushState.apply(this, arguments);
+        if (window.location.hash === '#home' || window.location.hash === '') {
+            setTimeout(() => {
+                new LinkedInCarousel();
+            }, 500);
+        }
+    };
+});
