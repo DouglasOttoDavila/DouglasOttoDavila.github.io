@@ -811,25 +811,15 @@ class LinkedInCarousel {
     }
 
     createProgressBar() {
-        this.progressBar = document.createElement('div');
-        this.progressBar.className = 'carousel-progress';
-        this.progressBar.style.cssText = `
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            height: 3px;
-            background: var(--accent);
-            z-index: 10;
-            transition: width 0.1s linear;
-            width: 0;
-        `;
-        this.container.appendChild(this.progressBar);
+        // Progress bar is now handled by CSS ::after pseudo-element on carousel-wrapper
+        // We'll control it by setting a CSS custom property
+        this.wrapper = document.querySelector('.carousel-wrapper');
     }
 
     updateProgressBar() {
-        if (!this.progressBar || !this.isAutoplayActive) {
-            if (this.progressBar) {
-                this.progressBar.style.width = '0';
+        if (!this.wrapper || !this.isAutoplayActive) {
+            if (this.wrapper) {
+                this.wrapper.style.setProperty('--progress-width', '0%');
             }
             return;
         }
@@ -837,11 +827,11 @@ class LinkedInCarousel {
         let progress = 0;
         this.progressInterval = setInterval(() => {
             progress += 100 / (this.autoplayDuration / 100);
-            this.progressBar.style.width = progress + '%';
+            this.wrapper.style.setProperty('--progress-width', progress + '%');
             
             if (progress >= 100) {
                 clearInterval(this.progressInterval);
-                this.progressBar.style.width = '0';
+                this.wrapper.style.setProperty('--progress-width', '0%');
             }
         }, 100);
     }
@@ -866,7 +856,7 @@ class LinkedInCarousel {
 
     updateCarousel() {
         // Update track position
-        const translateX = -this.currentSlide * 20; // 20% per slide (100% / 5 slides)
+        const translateX = -this.currentSlide * 11.11; // 11.11% per slide (100% / 9 slides)
         this.track.style.transform = `translateX(${translateX}%)`;
 
         // Update slide states
@@ -901,8 +891,8 @@ class LinkedInCarousel {
             clearInterval(this.progressInterval);
             this.progressInterval = null;
         }
-        if (this.progressBar) {
-            this.progressBar.style.width = '0';
+        if (this.wrapper) {
+            this.wrapper.style.setProperty('--progress-width', '0%');
         }
     }
 
