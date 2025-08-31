@@ -603,17 +603,32 @@ function initHamburgerMenu() {
     function toggleMenu() {
         isMenuOpen = !isMenuOpen;
         
-        hamburgerButton.classList.toggle('active', isMenuOpen);
-        navMenu.classList.toggle('active', isMenuOpen);
-        hamburgerButton.setAttribute('aria-expanded', isMenuOpen);
-        
-        // Prevent body scroll when menu is open
-        document.body.style.overflow = isMenuOpen ? 'hidden' : '';
-        
-        // Add/remove event listeners for closing menu
         if (isMenuOpen) {
+            // Opening the menu
+            hamburgerButton.classList.add('active');
+            navMenu.classList.add('active');
+            hamburgerButton.setAttribute('aria-expanded', 'true');
+            
+            // Prevent body scroll when menu is open
+            document.body.style.overflow = 'hidden';
+            
+            // Add event listeners for closing menu
             document.addEventListener('keydown', handleEscapeKey);
         } else {
+            // Closing the menu
+            hamburgerButton.classList.remove('active');
+            hamburgerButton.setAttribute('aria-expanded', 'false');
+            
+            // Add closing animation class before removing active
+            navMenu.classList.add('closing');
+            
+            // Remove active class after animation delay
+            setTimeout(() => {
+                navMenu.classList.remove('active', 'closing');
+                document.body.style.overflow = '';
+            }, 300);
+            
+            // Remove event listeners
             document.removeEventListener('keydown', handleEscapeKey);
         }
     }
