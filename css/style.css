@@ -42,6 +42,7 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 }
 
 /* Header Styles */
@@ -94,7 +95,7 @@ header::before {
 .header-content {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 0.1rem;
   margin-bottom: 0.5rem;
   position: relative;
   z-index: 1;
@@ -684,6 +685,8 @@ main {
   flex-direction: column;
   align-items: center;
   padding: 2rem 1rem 3rem 1rem;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 /* Home page specific layout - side by side on larger screens */
@@ -754,7 +757,7 @@ h2 {
   width: 100%;
   height: 400px;
   margin: 2rem 0;
-  overflow: visible;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1648,4 +1651,51 @@ code {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* --- Avatar → pill overlap effect --- */
+:root {
+  --avatar-size: 80px;
+  --pill-overlap: calc(var(--avatar-size) * 0.45);
+}
+
+/* Avatar above the pill */
+.profile-image {
+  position: relative;
+  z-index: 2; /* stays over the pill */
+}
+
+/* Normal text box; animation can stay */
+.header-text {
+  position: relative;
+  z-index: 1;
+  padding: 0.6rem 2rem 0.6rem 1.2rem; /* more right padding for space inside pill */
+}
+
+/* The pill background that comes from behind the avatar */
+.header-text::before {
+  content: '';
+  position: absolute;
+  inset: 0;                                  /* cover the header-text box */
+  left: calc(var(--avatar-size) * -0.75);   /* extend further to the left behind the avatar */
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: saturate(115%) blur(2px);
+  border-radius: 0 9999px 9999px 0;         /* flat on the left, rounded on the right */
+  box-shadow:
+    0 4px 18px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  z-index: -1;                               /* sit behind the text */
+}
+
+/* Light theme contrast */
+[data-theme="light"] .header-text::before {
+  background: rgba(0, 0, 0, 0.08);
+  box-shadow:
+    0 4px 18px rgba(0, 0, 0, 0.08),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+/* responsive: sync with your smaller avatar */
+@media (max-width: 600px) {
+  :root { --avatar-size: 60px; }
 }
