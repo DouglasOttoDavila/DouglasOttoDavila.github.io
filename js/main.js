@@ -106,10 +106,12 @@ class SPARouter {
 
     initializePageScripts(page) {
         if (page === 'prompt-explained') {
-            // Re-initialize highlight.js
-            if (window.hljs) {
-                window.hljs.highlightAll();
-            }
+            // Re-initialize highlight.js with a small delay to ensure DOM is ready
+            setTimeout(() => {
+                if (window.hljs) {
+                    window.hljs.highlightAll();
+                }
+            }, 50);
             // Re-initialize modal functionality
             this.setupModals();
             // Re-initialize download functionality

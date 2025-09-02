@@ -7,7 +7,8 @@
   <link rel="stylesheet" href="css/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <script defer src="js/main.js"></script>
+  <!-- Include Highlight.js for syntax highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/default.min.css">
 </head>
 <body>
   <header>
@@ -54,5 +55,7 @@
   <footer>
     &copy; 2025 Douglas D'Avila &mdash; QA Automation Engineer & SDET
   </footer>
-</body>
-</html>
+  
+  <!-- Load scripts at the end -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+  <script defer src="js/main.js"></script>
