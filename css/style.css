@@ -705,7 +705,7 @@ main.home-main {
 @media (min-width: 1200px) {
   main.home-main {
     flex-direction: row;
-    align-items: flex-start;
+    align-items: stretch;
     padding: 3rem 2rem;
   }
 }
@@ -1030,6 +1030,8 @@ h2 {
     flex: 1;
     margin: 0;
     max-width: 650px;
+    display: flex;
+    flex-direction: column;
   }
 }
 
@@ -1188,6 +1190,75 @@ h2 {
   transition: width 0.1s linear;
   width: var(--progress-width, 0%);
   border-radius: 0 0 12px 12px;
+}
+
+/* GitHub Card Section */
+.github-card-section {
+  background: var(--card-bg);
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+  padding: 2rem;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  margin: 2rem 80px 0 80px;
+  transition: background var(--transition);
+  opacity: 0;
+  transform: translateY(30px);
+  animation: slide-up 0.8s ease-out forwards 0.6s;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Side-by-side layout adjustments */
+@media (min-width: 1200px) {
+  .github-card-section {
+    flex: 0 0 auto;
+    margin: 0;
+    max-width: 420px;
+  }
+}
+
+.github-card-section h3 {
+  color: var(--heading);
+  font-size: 1.5rem;
+  margin: 0 0 1.5rem 0;
+  font-weight: 500;
+}
+
+.github-card-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  flex: 1;
+}
+
+.github-card-container iframe {
+  border-radius: 14px;
+}
+
+/* Mobile responsiveness for GitHub card */
+@media (max-width: 1199px) {
+  .github-card-section {
+    margin: 2rem auto 0 auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .github-card-section {
+    margin: 2rem 1rem 0 1rem;
+    padding: 1.5rem;
+  }
+  
+  .github-card-container iframe {
+    width: 100% !important;
+    max-width: 340px;
+    height: 460px !important;
+  }
 }
 
 /* Footer Styles */
