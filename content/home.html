@@ -1,76 +1,365 @@
-<main class="home-main">
-  <section class="linkedin-posts">
-    <h3>Latest LinkedIn Posts</h3>
-    <div class="carousel-container">
-      <div class="carousel-wrapper">
-        <div class="carousel-track" id="carousel-track">
-          <div class="carousel-slide active">
-            <iframe src="https://www.linkedin.com/embed/feed/update/urn:li:ugcPost:7365820840745037824?collapsed=1" height="542" width="504" frameborder="0" allowfullscreen="" title="Embedded post"></iframe>
-          </div>
-          <div class="carousel-slide">
-            <iframe src="https://www.linkedin.com/embed/feed/update/urn:li:share:7364821761768538113?collapsed=1" height="494" width="504" frameborder="0" allowfullscreen="" title="Embedded post"></iframe>
-          </div>
-          <div class="carousel-slide">
-            <iframe src="https://www.linkedin.com/embed/feed/update/urn:li:share:7364061745897684994?collapsed=1" height="670" width="504" frameborder="0" allowfullscreen="" title="Embedded post"></iframe>
-          </div>
-          <div class="carousel-slide">
-            <iframe src="https://www.linkedin.com/embed/feed/update/urn:li:share:7360718998860132353?collapsed=1" height="670" width="504" frameborder="0" allowfullscreen="" title="Embedded post"></iframe>
-          </div>
-          <div class="carousel-slide">
-            <iframe src="https://www.linkedin.com/embed/feed/update/urn:li:share:7358950490262454273?collapsed=1" height="670" width="504" frameborder="0" allowfullscreen="" title="Embedded post"></iframe>
-          </div>
-          <div class="carousel-slide">
-            <iframe src="https://www.linkedin.com/embed/feed/update/urn:li:share:7358087443637485571?collapsed=1" height="670" width="504" frameborder="0" allowfullscreen="" title="Embedded post"></iframe>
-          </div>
-          <div class="carousel-slide">
-            <iframe src="https://www.linkedin.com/embed/feed/update/urn:li:share:7357831804080316416?collapsed=1" height="264" width="504" frameborder="0" allowfullscreen="" title="Embedded post"></iframe>
-          </div>
-          <div class="carousel-slide">
-            <iframe src="https://www.linkedin.com/embed/feed/update/urn:li:ugcPost:7350193029074374656?collapsed=1" height="542" width="504" frameborder="0" allowfullscreen="" title="Embedded post"></iframe>
-          </div>
-          <div class="carousel-slide">
-            <iframe src="https://www.linkedin.com/embed/feed/update/urn:li:share:7349791200448495616?collapsed=1" height="593" width="504" frameborder="0" allowfullscreen="" title="Embedded post"></iframe>
-          </div>
-        </div>
+<!-- About Me Page Content -->
+<link rel="stylesheet" href="css/about.css">
+
+<main class="about-main">
+  <!-- Hero Section -->
+  <section class="hero-section fade-in">
+    <div class="hero-content">
+      <h1 class="hero-title">About Me</h1>
+      <p class="hero-subtitle">QA Automation Lead | SDET | Driving Innovation with AI & Hyperautomation</p>
+      <div class="hero-location">
+        <i class="fas fa-map-marker-alt"></i>
+        <span>Porto Alegre, Rio Grande do Sul, Brazil</span>
       </div>
-      
-      <!-- Navigation Controls -->
-      <button class="carousel-btn carousel-btn-prev" id="carousel-prev" aria-label="Previous post">
-        <i class="fas fa-chevron-left"></i>
-      </button>
-      <button class="carousel-btn carousel-btn-next" id="carousel-next" aria-label="Next post">
-        <i class="fas fa-chevron-right"></i>
-      </button>
-      
-      <!-- Dots Indicator -->
-      <div class="carousel-dots" id="carousel-dots">
-        <button class="carousel-dot active" data-slide="0" aria-label="Go to post 1"></button>
-        <button class="carousel-dot" data-slide="1" aria-label="Go to post 2"></button>
-        <button class="carousel-dot" data-slide="2" aria-label="Go to post 3"></button>
-        <button class="carousel-dot" data-slide="3" aria-label="Go to post 4"></button>
-        <button class="carousel-dot" data-slide="4" aria-label="Go to post 5"></button>
-        <button class="carousel-dot" data-slide="5" aria-label="Go to post 6"></button>
-        <button class="carousel-dot" data-slide="6" aria-label="Go to post 7"></button>
-        <button class="carousel-dot" data-slide="7" aria-label="Go to post 8"></button>
-        <button class="carousel-dot" data-slide="8" aria-label="Go to post 9"></button>
-      </div>
-      
-      <!-- Autoplay Control -->
-      <button class="carousel-autoplay" id="carousel-autoplay" aria-label="Toggle autoplay">
-        <i class="fas fa-pause"></i>
-      </button>
     </div>
   </section>
 
-  <section class="github-card-section">
-    <h3>GitHub Profile</h3>
-    <div class="github-card-container">
-      <iframe
-        src="https://github.cards/douglasottodavila?template=Default"
-        style="width: 380px; height: 520px; border: 0; border-radius: 14px; overflow: hidden;"
-        loading="lazy"
-        title="Douglas Otto – GitHub Card">
-      </iframe>
+  <!-- Two-column layout for intro-card and contact section -->
+  <div class="intro-contact-container">
+    <!-- Intro Card -->
+    <section class="intro-card animate">
+      <div class="about">
+        <p>Hello! I'm Douglas D'Avila, a passionate <strong>Quality Assurance Automation Engineer</strong> and <strong>SDET</strong> with a strong background in building robust, scalable, and maintainable QA-oriented applications and test automation frameworks. I thrive on ensuring software quality through modern automation, CI/CD, and best software engineering practices.</p>
+      </div>
+      <div class="skills">
+        <a href="https://www.python.org/" target="_blank" rel="noopener noreferrer" class="skill">Python</a>
+        <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" target="_blank" rel="noopener noreferrer" class="skill">JavaScript</a>
+        <a href="https://webdriver.io/" target="_blank" rel="noopener noreferrer" class="skill">Webdriver.IO</a>
+        <a href="https://playwright.dev/" target="_blank" rel="noopener noreferrer" class="skill">Playwright</a>
+        <a href="https://www.cypress.io/" target="_blank" rel="noopener noreferrer" class="skill">Cypress</a>
+        <a href="https://aws.amazon.com/devops/" target="_blank" rel="noopener noreferrer" class="skill">DevOps</a>
+        <a href="https://about.gitlab.com/topics/ci-cd/" target="_blank" rel="noopener noreferrer" class="skill">CI/CD</a>
+        <a href="https://www.postman.com/api-testing/" target="_blank" rel="noopener noreferrer" class="skill">API Testing</a>
+        <a href="https://cucumber.io/docs/bdd/" target="_blank" rel="noopener noreferrer" class="skill">BDD</a>
+        <a href="https://www.atlassian.com/continuous-delivery/software-testing/types-of-software-testing" target="_blank" rel="noopener noreferrer" class="skill">Test Strategy</a>
+      </div>
+    </section>
+
+    <section class="linkedin-posts">
+      <h3>Latest LinkedIn Posts</h3>
+      <div class="carousel-container">
+        <div class="carousel-wrapper">
+          <div class="carousel-track" id="carousel-track">
+            <div class="carousel-slide active">
+              <iframe src="https://www.linkedin.com/embed/feed/update/urn:li:ugcPost:7365820840745037824?collapsed=1" height="542" width="504" frameborder="0" allowfullscreen="" title="Embedded post"></iframe>
+            </div>
+            <div class="carousel-slide">
+              <iframe src="https://www.linkedin.com/embed/feed/update/urn:li:share:7364821761768538113?collapsed=1" height="494" width="504" frameborder="0" allowfullscreen="" title="Embedded post"></iframe>
+            </div>
+            <div class="carousel-slide">
+              <iframe src="https://www.linkedin.com/embed/feed/update/urn:li:share:7364061745897684994?collapsed=1" height="670" width="504" frameborder="0" allowfullscreen="" title="Embedded post"></iframe>
+            </div>
+            <div class="carousel-slide">
+              <iframe src="https://www.linkedin.com/embed/feed/update/urn:li:share:7360718998860132353?collapsed=1" height="670" width="504" frameborder="0" allowfullscreen="" title="Embedded post"></iframe>
+            </div>
+            <div class="carousel-slide">
+              <iframe src="https://www.linkedin.com/embed/feed/update/urn:li:share:7358950490262454273?collapsed=1" height="670" width="504" frameborder="0" allowfullscreen="" title="Embedded post"></iframe>
+            </div>
+            <div class="carousel-slide">
+              <iframe src="https://www.linkedin.com/embed/feed/update/urn:li:share:7358087443637485571?collapsed=1" height="670" width="504" frameborder="0" allowfullscreen="" title="Embedded post"></iframe>
+            </div>
+            <div class="carousel-slide">
+              <iframe src="https://www.linkedin.com/embed/feed/update/urn:li:share:7357831804080316416?collapsed=1" height="264" width="504" frameborder="0" allowfullscreen="" title="Embedded post"></iframe>
+            </div>
+            <div class="carousel-slide">
+              <iframe src="https://www.linkedin.com/embed/feed/update/urn:li:ugcPost:7350193029074374656?collapsed=1" height="542" width="504" frameborder="0" allowfullscreen="" title="Embedded post"></iframe>
+            </div>
+            <div class="carousel-slide">
+              <iframe src="https://www.linkedin.com/embed/feed/update/urn:li:share:7349791200448495616?collapsed=1" height="593" width="504" frameborder="0" allowfullscreen="" title="Embedded post"></iframe>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Navigation Controls -->
+        <button class="carousel-btn carousel-btn-prev" id="carousel-prev" aria-label="Previous post">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        <button class="carousel-btn carousel-btn-next" id="carousel-next" aria-label="Next post">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+        
+        <!-- Dots Indicator -->
+        <div class="carousel-dots" id="carousel-dots">
+          <button class="carousel-dot active" data-slide="0" aria-label="Go to post 1"></button>
+          <button class="carousel-dot" data-slide="1" aria-label="Go to post 2"></button>
+          <button class="carousel-dot" data-slide="2" aria-label="Go to post 3"></button>
+          <button class="carousel-dot" data-slide="3" aria-label="Go to post 4"></button>
+          <button class="carousel-dot" data-slide="4" aria-label="Go to post 5"></button>
+          <button class="carousel-dot" data-slide="5" aria-label="Go to post 6"></button>
+          <button class="carousel-dot" data-slide="6" aria-label="Go to post 7"></button>
+          <button class="carousel-dot" data-slide="7" aria-label="Go to post 8"></button>
+          <button class="carousel-dot" data-slide="8" aria-label="Go to post 9"></button>
+        </div>
+        
+        <!-- Autoplay Control -->
+        <button class="carousel-autoplay" id="carousel-autoplay" aria-label="Toggle autoplay">
+          <i class="fas fa-pause"></i>
+        </button>
+      </div>
+    </section>
+
+    <section class="github-card-section">
+      <h3>GitHub Profile</h3>
+      <div class="github-card-container">
+        <iframe
+          src="https://github.cards/douglasottodavila?template=Default"
+          style="width: 380px; height: 520px; border: 0; border-radius: 14px; overflow: hidden;"
+          loading="lazy"
+          title="Douglas Otto – GitHub Card">
+        </iframe>
+      </div>
+    </section>
+  </div>
+
+  <!-- Contact Info -->
+  <section class="contact-section slide-up">
+    <div class="contact-card">
+      <h2>Contact Information</h2>
+      <div class="contact-grid">
+        <div class="contact-item">
+          <i class="fas fa-envelope"></i>
+          <span>douglas.odavila@gmail.com</span>
+        </div>
+        <div class="contact-item">
+          <i class="fab fa-linkedin"></i>
+          <a href="http://www.linkedin.com/in/douglasottodavila" target="_blank">LinkedIn Profile</a>
+        </div>
+        <div class="contact-item">
+          <i class="fab fa-github"></i>
+          <a href="https://github.com/DouglasOttoSf" target="_blank">GitHub Portfolio</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Summary Section -->
+  <section class="summary-section slide-up">
+    <div class="summary-card">
+      <h2>Professional Summary</h2>
+      <div class="summary-content">
+        <p>Ever met a QA engineer who enjoys breaking things more than building them? That's me, except I rebuild them smarter with automation, SDET practices, and a dash of AI magic.</p>
+        
+        <h3>What I Actually Do (when I'm not hunting bugs):</h3>
+        <ul class="summary-list">
+          <li>Architect slick automation frameworks (Playwright, Cypress, WebdriverIO, APIs... you name it)</li>
+          <li>Build AI-driven QA tools: from Automated Test Case Generators to Root Cause Analyzers and Requirements Reviewer</li>
+          <li>Translate "dev speak" and "business speak" so everyone nods politely at meetings</li>
+          <li>Mentor teams to test smarter, not harder (because no one wants to babysit flaky tests)</li>
+        </ul>
+
+        <h3>Impact Highlights (aka proof I'm not just talking big):</h3>
+        <ul class="impact-list">
+          <li>Slashed regression cycle time by <strong>40%</strong> with end-to-end automation</li>
+          <li>Rolled out AI test case generation, boosting coverage & killing redundancies</li>
+          <li>Partnered with product/dev teams to cut production bugs by <strong>30%</strong></li>
+        </ul>
+
+        <div class="philosophy">
+          <h3>My Philosophy:</h3>
+          <p>Quality isn't just "nice to have". It's the difference between smooth releases and angry midnight calls. I thrive at the intersection of tech, efficiency, and a little bit of QA mischief.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Skills & Certifications -->
+  <section class="skills-section slide-up">
+    <div class="skills-grid">
+      <div class="skills-card">
+        <h2>Top Skills</h2>
+        <div class="skills-list">
+          <a href="https://developer.mozilla.org/en-US/docs/Web/HTML" target="_blank" rel="noopener noreferrer" class="skill-tag">HTML</a>
+          <a href="https://cloud.google.com/" target="_blank" rel="noopener noreferrer" class="skill-tag">Google Cloud</a>
+          <a href="https://github.com/" target="_blank" rel="noopener noreferrer" class="skill-tag">GitHub</a>
+          <a href="https://playwright.dev/" target="_blank" rel="noopener noreferrer" class="skill-tag">Playwright</a>
+          <a href="https://www.cypress.io/" target="_blank" rel="noopener noreferrer" class="skill-tag">Cypress</a>
+          <a href="https://webdriver.io/" target="_blank" rel="noopener noreferrer" class="skill-tag">WebdriverIO</a>
+          <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" target="_blank" rel="noopener noreferrer" class="skill-tag">JavaScript</a>
+          <a href="https://www.python.org/" target="_blank" rel="noopener noreferrer" class="skill-tag">Python</a>
+          <a href="https://www.tensorflow.org/guide/test" target="_blank" rel="noopener noreferrer" class="skill-tag">AI/ML Testing</a>
+        </div>
+      </div>
+
+      <div class="certifications-card">
+        <h2>Certifications</h2>
+        <div class="certifications-list">
+          <div class="cert-item">Robot Framework Week - Automação de Testes para Aplicações Web</div>
+          <div class="cert-item">Cypress Discovery (Cypress | Javascript | NodeJS | GitActions)</div>
+          <div class="cert-item">Introduction to Digital Accessibility</div>
+          <div class="cert-item">Developer Accessibility Fundamentals I</div>
+          <div class="cert-item">Testes de Software - Imersivo e Completo</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Experience Timeline -->
+  <section class="experience-section slide-up">
+    <h2 class="section-title">Professional Experience</h2>
+    <div class="timeline">
+      <!-- Object Edge -->
+      <div class="timeline-item">
+        <div class="timeline-marker"></div>
+        <div class="timeline-content">
+          <div class="company-header">
+            <h3>Object Edge</h3>
+            <span class="duration">5 years 7 months</span>
+          </div>
+          
+          <div class="position">
+            <h4>Software Development Engineer in Test (SDET)</h4>
+            <span class="period">April 2024 - Present (1 year 5 months)</span>
+            <ul>
+              <li>Designed and deployed AI-powered QA applications to accelerate SDLC across enterprise-scale eCommerce projects</li>
+              <li>Built intelligent automation solutions for test case generation, defect analysis, and requirements validation, reducing manual QA overhead by 35%</li>
+              <li>Drove innovation by embedding generative AI into CI/CD workflows, cutting release verification time by 40%</li>
+              <li>Partnered with cross-functional teams to ensure AI-enhanced automation was seamlessly adopted across projects</li>
+            </ul>
+          </div>
+
+          <div class="position">
+            <h4>QA Automation Lead</h4>
+            <span class="period">January 2023 - April 2024 (1 year 4 months)</span>
+            <ul>
+              <li>Led QA Automation practice, overseeing a team of engineers across multiple client projects</li>
+              <li>Implemented test automation strategy that reduced regression execution time by 50%</li>
+              <li>Introduced new best practices in test design, reporting, and CI integration, improving defect detection rate by 20%</li>
+              <li>Managed performance and mentoring, improving team productivity and reducing defect leakage to production</li>
+            </ul>
+          </div>
+
+          <div class="position">
+            <h4>Quality Assurance Engineer</h4>
+            <span class="period">February 2020 - January 2023 (3 years)</span>
+            <ul>
+              <li>Delivered QA for Oracle eCommerce platforms (OCC/OCI) with complex middleware integrations</li>
+              <li>Automated regression suite using Selenium, WebdriverIO, and Cypress, cutting manual testing effort by 60%</li>
+              <li>Built and executed API tests with Postman and performance/stress tests with JMeter</li>
+              <li>Designed test plans in TestRail & Zephyr, achieving >90% test coverage</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Previous Experiences -->
+      <div class="timeline-item">
+        <div class="timeline-marker"></div>
+        <div class="timeline-content">
+          <div class="company-header">
+            <h3>Lojas Virtuais BR</h3>
+            <span class="duration">9 months</span>
+          </div>
+          <div class="position">
+            <h4>Technical Support Assistant</h4>
+            <span class="period">June 2019 - February 2020</span>
+            <ul>
+              <li>Supported eCommerce platforms, troubleshooting ERP/payment integrations</li>
+              <li>Diagnosed and resolved system errors across checkout, shipping, and configuration workflows</li>
+              <li>Collaborated with developers to suggest improvements and validate system corrections</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Additional experiences condensed -->
+      <div class="timeline-item">
+        <div class="timeline-marker"></div>
+        <div class="timeline-content">
+          <div class="experience-summary">
+            <h3>Early Career & Foundation</h3>
+            <div class="early-roles">
+              <div class="role-item">
+                <strong>Civilian Police Department of Rio Grande do Sul</strong> - Technical Support Assistant (1 year 9 months)
+                <p>System installation, network configuration, and structured problem-solving</p>
+              </div>
+              <div class="role-item">
+                <strong>Military School of Porto Alegre</strong> - 2nd Class Brazilian Army Soldier (1 year)
+                <p>Report preparation, protocol compliance, and process rigor development</p>
+              </div>
+              <div class="role-item">
+                <strong>Kavalos Com. Repres. Ltda.</strong> - Administrative Assistant (1 year 3 months)
+                <p>Financial management, customer service, and early technical troubleshooting</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Education & Awards -->
+  <section class="education-awards-section slide-up">
+    <div class="education-awards-grid">
+      <div class="education-card">
+        <h2>Education</h2>
+        <div class="education-list">
+          <div class="education-item">
+            <h4>UniRitter</h4>
+            <p>System Analysis and Development, Information Technology</p>
+            <span class="period">February 2021 - July 2023</span>
+          </div>
+          <div class="education-item">
+            <h4>QI Faculdade & Escola Técnica</h4>
+            <p>Técnico em Informática, TI</p>
+            <span class="period">2010 - 2012</span>
+          </div>
+          <div class="education-item">
+            <h4>Instituto de Educação São Francisco</h4>
+            <p>Ensino Médio Completo</p>
+            <span class="period">1997 - 2008</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="awards-card">
+        <h2>Honors & Awards</h2>
+        <div class="awards-list">
+          <div class="award-item">
+            <i class="fas fa-trophy"></i>
+            <div>
+              <strong>Peer-to-Peer Winner</strong>
+              <p>Princess Auto Project - Multiple wins (March, May, October)</p>
+            </div>
+          </div>
+          <div class="award-item">
+            <i class="fas fa-trophy"></i>
+            <div>
+              <strong>OE Awards Winner</strong>
+              <p>2021</p>
+            </div>
+          </div>
+          <div class="award-item">
+            <i class="fas fa-trophy"></i>
+            <div>
+              <strong>Support Team Recognition</strong>
+              <p>Peer-to-Peer Winner</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Call to Action -->
+  <section class="cta-section slide-up">
+    <div class="cta-card">
+      <h2>Let's Connect!</h2>
+      <p>Curious about hyperautomation, AI in QA, or if you secretly believe that lazy testers make the best automation engineers? Let's talk!</p>
+      <div class="cta-buttons">
+        <a href="mailto:douglas.odavila@gmail.com" class="cta-btn primary">
+          <i class="fas fa-envelope"></i>
+          Get In Touch
+        </a>
+        <a href="http://www.linkedin.com/in/douglasottodavila" target="_blank" class="cta-btn secondary">
+          <i class="fab fa-linkedin"></i>
+          LinkedIn
+        </a>
+      </div>
     </div>
   </section>
 </main>
+
+
+
+
+<script defer src="js/about.js"></script>
