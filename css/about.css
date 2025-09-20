@@ -44,8 +44,9 @@
 }
 
 /* Animation Classes */
-.fade-in {
+.about-main .fade-in {
   animation: fadeIn 0.8s ease-out;
+  opacity: 1 !important; /* Override style.css with important */
 }
 
 .slide-up {

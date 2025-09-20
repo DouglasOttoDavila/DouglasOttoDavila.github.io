@@ -247,9 +247,12 @@ class SPARouter {
             });
         }, observerOptions);
 
-        // Observe elements with animation classes
+        // Observe elements with animation classes, but exclude those in about-main
         document.querySelectorAll('.fade-in, .slide-up').forEach(el => {
-            observer.observe(el);
+            // Skip elements within about-main as they use CSS animations
+            if (!el.closest('.about-main')) {
+                observer.observe(el);
+            }
         });
     }
 
