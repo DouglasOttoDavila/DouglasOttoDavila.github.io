@@ -3,59 +3,54 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Douglas D'Avila | QA Automation Engineer & SDET</title>
+  <title>Douglas D'Avila | QA Automation Engineer &amp; SDET</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&amp;family=Fira+Code:wght@400;700&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH1GIfcd5WfE3u6dRM8zpNTJr3R0uHxLz5k3H6V9E6xBTJFMn0tGZ4Nf66nF7IpYCVd1xHzyP0LJ+YMa0v4Yg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" integrity="sha512-YVRHyCuXapnwXCfJOLLmObAun1vDLteA94ppIqhzyapMI2vlA38nSxrdbidKfnUSsfx8bVsgcuyo6edSxnl2lA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="css/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <!-- Include Highlight.js for syntax highlighting -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/default.min.css">
 </head>
-<body>
-  <header>
-    <div class="header-content">
-      <img src="assets/profile.png" alt="Douglas D'Avila Profile Picture" class="profile-image">
-      <div class="header-text">
-        <h1>Douglas D'Avila</h1>
-        <h2>QA Automation Engineer & SDET</h2>
-      </div>
-    </div>
-    <!-- Hamburger Menu Button -->
-    <button class="hamburger-menu" id="hamburger-menu" aria-label="Toggle navigation menu" aria-expanded="false">
-      <span class="hamburger-line"></span>
-      <span class="hamburger-line"></span>
-      <span class="hamburger-line"></span>
-    </button>
-    
-    <!-- Navigation Menu -->
-    <nav class="nav-menu" id="nav-menu">
-      <div class="nav-menu-content">
-        <!-- Navigation Links -->
-        <ul>
-          <li><a href="#home" class="nav-link active">Home</a></li>
-          <li><a href="#about" class="nav-link">About Me</a></li>
-          <li><a href="#prompt-explained" class="nav-link">[AI] Playwright Prompt</a></li>
-        </ul>
-        
-        <!-- Theme Toggle at bottom -->
-        <div class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode" role="switch" tabindex="0">
-          <div class="toggle-track">
-            <div class="toggle-thumb">
-              <span class="toggle-icon">🌙</span>
-            </div>
+<body class="d-flex flex-column min-vh-100" data-bs-theme="dark">
+  <header class="shadow-sm border-bottom sticky-top bg-body">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-body-tertiary">
+      <div class="container py-2">
+        <a class="navbar-brand d-flex align-items-center gap-3" href="#home">
+          <img src="assets/profile.png" alt="Douglas D'Avila" class="rounded-circle border border-2 border-primary-subtle shadow-sm" width="64" height="64">
+          <div class="d-flex flex-column">
+            <span class="fw-semibold">Douglas D'Avila</span>
+            <small class="text-body-secondary">QA Automation Engineer &amp; SDET</small>
           </div>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#primaryNav" aria-controls="primaryNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse justify-content-end" id="primaryNav">
+          <ul class="navbar-nav align-items-lg-center gap-lg-3 mb-3 mb-lg-0">
+            <li class="nav-item"><a href="#home" class="nav-link active">Home</a></li>
+            <li class="nav-item"><a href="#about" class="nav-link">About Me</a></li>
+            <li class="nav-item"><a href="#prompt-explained" class="nav-link">[AI] Playwright Prompt</a></li>
+          </ul>
+          <button id="theme-toggle" class="btn btn-outline-secondary rounded-pill d-flex align-items-center gap-2 ms-lg-3" type="button" aria-label="Toggle theme" aria-pressed="false">
+            <i class="fa-solid fa-moon theme-icon" aria-hidden="true"></i>
+            <span class="theme-label small">Dark</span>
+          </button>
         </div>
       </div>
     </nav>
   </header>
-  
-  <div id="content-area">
-    <!-- Content will be loaded here dynamically -->
-  </div>
-  
-  <footer>
-    &copy; 2025 Douglas D'Avila &mdash; QA Automation Engineer & SDET
+
+  <main class="flex-grow-1 bg-body" id="main-content">
+    <div id="content-area" class="container py-5"></div>
+  </main>
+
+  <footer class="py-4 bg-body-tertiary border-top">
+    <div class="container text-center small text-body-secondary">
+      &copy; 2025 Douglas D'Avila &mdash; QA Automation Engineer &amp; SDET
+    </div>
   </footer>
-  
-  <!-- Load scripts at the end -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js" integrity="sha512-cHv9Jx7Dnk3a1JpN96CBvs1+qsSVqS+8CA0nVddOZXS6jttuPAoBs+K6TfGsDzpDHK5vVsQt1zArhcXd1LSeXQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script defer src="js/main.js"></script>
+</body>
+</html>
