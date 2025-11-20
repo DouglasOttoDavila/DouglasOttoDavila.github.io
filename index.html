@@ -14,7 +14,7 @@
   <header class="shadow-sm border-bottom sticky-top bg-body">
     <nav class="navbar navbar-expand-lg navbar-dark bg-body-tertiary">
       <div class="container py-2">
-        <a class="navbar-brand d-flex align-items-center gap-3" href="#home">
+        <a class="navbar-brand d-flex align-items-center gap-3" href="#home" data-route="home">
           <img src="assets/profile.png" alt="Douglas D'Avila" class="rounded-circle border border-2 border-primary-subtle shadow-sm" width="64" height="64">
           <div class="d-flex flex-column">
             <span class="fw-semibold">Douglas D'Avila</span>
@@ -26,9 +26,30 @@
         </button>
         <div class="collapse navbar-collapse justify-content-end" id="primaryNav">
           <ul class="navbar-nav align-items-lg-center gap-lg-3 mb-3 mb-lg-0">
-            <li class="nav-item"><a href="#home" class="nav-link active">Home</a></li>
-            <li class="nav-item"><a href="#about" class="nav-link">About Me</a></li>
-            <li class="nav-item"><a href="#prompt-explained" class="nav-link">[AI] Playwright Prompt</a></li>
+            <li class="nav-item"><a href="#home" class="nav-link active" data-route="home">Home</a></li>
+            <li class="nav-item"><a href="#about" class="nav-link" data-route="about">About Me</a></li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="aiToolsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+                AI-Powered Tools
+              </a>
+              <ul class="dropdown-menu dropdown-menu-panel" aria-labelledby="aiToolsDropdown" data-bs-auto-close="outside" id="aiToolsMenu">
+                <li class="dropdown-submenu">
+                  <button class="dropdown-item dropdown-toggle submenu-toggle d-flex align-items-center justify-content-between gap-3" type="button" data-bs-toggle="collapse" data-bs-target="#documentationSubmenu" aria-expanded="false" data-submenu-toggle>
+                    <span>Documentation</span>
+                    <i class="fa-solid fa-chevron-down submenu-icon" aria-hidden="true"></i>
+                  </button>
+                  <div class="submenu collapse" id="documentationSubmenu" data-bs-parent="#aiToolsMenu">
+                    <ul class="submenu-list list-unstyled mb-0">
+                      <li>
+                        <a class="dropdown-item submenu-link" href="#prompt-explained" data-route="prompt-explained">
+                          Playwright Prompt Explained
+                        </a>
+                      </li>
+                    </ul>
+                  </div>
+                </li>
+              </ul>
+            </li>
           </ul>
           <button id="theme-toggle" class="btn btn-outline-secondary rounded-pill d-flex align-items-center gap-2 ms-lg-3" type="button" aria-label="Toggle theme" aria-pressed="false">
             <i class="fa-solid fa-moon theme-icon" aria-hidden="true"></i>

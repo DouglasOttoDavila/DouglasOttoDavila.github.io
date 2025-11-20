@@ -1,7 +1,7 @@
 class SPARouter {
     constructor() {
         this.contentArea = document.getElementById('content-area');
-        this.navLinks = Array.from(document.querySelectorAll('.nav-link'));
+        this.navLinks = Array.from(document.querySelectorAll('[data-route]'));
         this.routes = {
             'home': 'content/home.html',
             'about': 'content/about.html',
@@ -17,7 +17,7 @@ class SPARouter {
         this.navLinks.forEach(link => {
             link.addEventListener('click', (event) => {
                 event.preventDefault();
-                const targetPage = link.getAttribute('href').replace('#', '') || 'home';
+                const targetPage = link.dataset.route || 'home';
                 this.navigate(targetPage);
             });
         });
@@ -74,9 +74,57 @@ class SPARouter {
 
     setActiveLink(page) {
         this.navLinks.forEach(link => {
-            const linkPage = link.getAttribute('href').replace('#', '') || 'home';
-            link.classList.toggle('active', linkPage === page);
+            const linkPage = link.dataset.route || 'home';
+            const isBrandLink = link.classList.contains('navbar-brand');
+            link.classList.toggle('active', !isBrandLink && linkPage === page);
         });
+
+        const dropdownToggles = document.querySelectorAll('.navbar .dropdown-toggle');
+        dropdownToggles.forEach(toggle => toggle.classList.remove('active', 'is-open'));
+
+        const activeLink = this.navLinks.find(link => (link.dataset.route || 'home') === page);
+        if (!activeLink) {
+            return;
+        }
+
+        const rootToggle = activeLink.closest('.dropdown-menu')?.previousElementSibling;
+        if (rootToggle && rootToggle.matches('.dropdown-toggle')) {
+            rootToggle.classList.add('active');
+        }
+
+        this.expandParentSubmenus(activeLink);
+    }
+
+    expandParentSubmenus(activeLink) {
+        if (!activeLink) {
+            return;
+        }
+
+        const Collapse = window.bootstrap?.Collapse;
+        let currentSubmenu = activeLink.closest('.dropdown-submenu');
+
+        while (currentSubmenu) {
+            const children = Array.from(currentSubmenu.children);
+            const toggle = children.find(child => child.matches('[data-submenu-toggle]')) || null;
+            const submenu = children.find(child => child.matches('.submenu.collapse')) || null;
+
+            if (toggle) {
+                toggle.classList.add('active', 'is-open');
+            }
+
+            if (submenu) {
+                if (Collapse) {
+                    const instance = Collapse.getOrCreateInstance(submenu, { toggle: false });
+                    if (!submenu.classList.contains('show')) {
+                        instance.show();
+                    }
+                } else {
+                    submenu.classList.add('show');
+                }
+            }
+
+            currentSubmenu = currentSubmenu.parentElement?.closest('.dropdown-submenu');
+        }
     }
 
     updatePageTitle(page) {
@@ -327,7 +375,41 @@ function initThemeToggle() {
     }
 }
 
+function initDropdownSubmenus() {
+    const Collapse = window.bootstrap?.Collapse;
+    const toggles = document.querySelectorAll('[data-submenu-toggle]');
+
+    toggles.forEach(toggle => {
+        const targetSelector = toggle.getAttribute('data-bs-target');
+        if (!targetSelector) {
+            return;
+        }
+
+        const target = document.querySelector(targetSelector);
+        if (!target) {
+            return;
+        }
+
+        if (Collapse) {
+            Collapse.getOrCreateInstance(target, { toggle: false });
+        }
+
+        if (target.classList.contains('show')) {
+            toggle.classList.add('is-open', 'active');
+        }
+
+        target.addEventListener('shown.bs.collapse', () => {
+            toggle.classList.add('is-open');
+        });
+
+        target.addEventListener('hidden.bs.collapse', () => {
+            toggle.classList.remove('is-open');
+        });
+    });
+}
+
 window.addEventListener('DOMContentLoaded', () => {
     new SPARouter();
     initThemeToggle();
+    initDropdownSubmenus();
 });
