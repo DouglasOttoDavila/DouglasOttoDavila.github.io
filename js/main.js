@@ -328,6 +328,19 @@ function initThemeToggle() {
         const normalized = theme === 'light' ? 'light' : 'dark';
         body.setAttribute('data-bs-theme', normalized);
         toggleBtn.setAttribute('aria-pressed', String(normalized === 'dark'));
+        
+        // Toggle navbar color scheme
+        const navbar = document.querySelector('.navbar');
+        if (navbar) {
+            if (normalized === 'dark') {
+                navbar.classList.remove('navbar-light');
+                navbar.classList.add('navbar-dark');
+            } else {
+                navbar.classList.remove('navbar-dark');
+                navbar.classList.add('navbar-light');
+            }
+        }
+        
         if (icon) {
             icon.classList.remove('fa-moon', 'fa-sun');
             icon.classList.add(normalized === 'dark' ? 'fa-moon' : 'fa-sun');
