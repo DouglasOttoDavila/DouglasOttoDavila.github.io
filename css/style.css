@@ -217,14 +217,13 @@ header .theme-label {
 }
 
 .list-check li::before {
-  content: '\f00c';
-  font-family: 'Font Awesome 6 Free';
-  font-weight: 900;
+  content: '▸';
   position: absolute;
   left: 0;
-  top: 0.15rem;
+  top: 0.2rem;
   color: var(--bs-primary);
-  font-size: 0.95rem;
+  font-size: 1rem;
+  font-weight: normal;
 }
 
 .timeline {
@@ -253,7 +252,7 @@ header .theme-label {
 .timeline-marker {
   position: absolute;
   top: 0.75rem;
-  left: -1.5rem;
+  left: -1.85rem;
   width: 0.9rem;
   height: 0.9rem;
   border-radius: 50%;
