@@ -30,6 +30,29 @@ header .navbar-brand span {
   font-size: 1.1rem;
 }
 
+/* Theme-based logo switching */
+.navbar-logo {
+  width: auto;
+  height: 64px;
+  display: block;
+}
+
+[data-bs-theme="dark"] .navbar-logo-light {
+  display: none;
+}
+
+[data-bs-theme="dark"] .navbar-logo-dark {
+  display: block;
+}
+
+[data-bs-theme="light"] .navbar-logo-dark {
+  display: none;
+}
+
+[data-bs-theme="light"] .navbar-logo-light {
+  display: block;
+}
+
 header .navbar-nav .nav-link {
   font-weight: 500;
   transition: color 0.2s ease, transform 0.2s ease;
