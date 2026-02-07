@@ -74,25 +74,39 @@
               </ul>
             </li>
           </ul>
-          <div id="auth-controls" class="d-flex align-items-center gap-2 ms-lg-3">
-            <a href="#login" class="btn btn-outline-primary rounded-pill d-flex align-items-center gap-2"
+          <div id="auth-controls" class="navbar-controls d-flex align-items-center gap-2 ms-lg-3">
+            <a href="#login" class="btn btn-sm btn-outline-primary rounded-pill d-flex align-items-center gap-2"
               data-route="login" id="nav-login">
               <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
               <span class="small">Login</span>
             </a>
-            <span class="badge text-bg-secondary auth-user-badge d-none" id="nav-user" aria-live="polite"></span>
-            <button id="nav-logout" class="btn btn-outline-secondary rounded-pill d-none d-flex align-items-center gap-2"
-              type="button">
-              <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
-              <span class="small">Logout</span>
+
+            <div class="dropdown d-none" id="nav-user-menu">
+              <button class="btn btn-sm btn-outline-secondary rounded-pill auth-user-btn dropdown-toggle" type="button"
+                id="nav-user-menu-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fa-solid fa-circle-user" aria-hidden="true"></i>
+                <span id="nav-user-email" class="auth-user-email"></span>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end auth-dropdown-menu" aria-labelledby="nav-user-menu-btn">
+                <li>
+                  <button id="nav-logout" class="dropdown-item d-flex align-items-center gap-2" type="button">
+                    <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
+                    <span>Logout</span>
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle theme"
+              aria-pressed="false">
+              <span class="theme-toggle-track" aria-hidden="true">
+                <span class="theme-toggle-thumb">
+                  <i class="fa-solid fa-moon theme-toggle-icon theme-toggle-icon-moon" aria-hidden="true"></i>
+                  <i class="fa-solid fa-sun theme-toggle-icon theme-toggle-icon-sun" aria-hidden="true"></i>
+                </span>
+              </span>
             </button>
           </div>
-          <button id="theme-toggle"
-            class="btn btn-outline-secondary rounded-pill d-flex align-items-center gap-2 ms-lg-3" type="button"
-            aria-label="Toggle theme" aria-pressed="false">
-            <i class="fa-solid fa-moon theme-icon" aria-hidden="true"></i>
-            <span class="theme-label small">Dark</span>
-          </button>
         </div>
       </div>
     </nav>

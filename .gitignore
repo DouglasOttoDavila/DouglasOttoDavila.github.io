@@ -5,3 +5,4 @@ content/auth.runtime.json
 !.github/
 !.github/workflows/
 !.github/workflows/**
+/thoughts

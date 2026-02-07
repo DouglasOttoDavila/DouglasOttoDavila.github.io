@@ -35,8 +35,10 @@ class SPARouter {
 
         this.authControls = {
             loginLink: document.getElementById('nav-login'),
-            logoutBtn: document.getElementById('nav-logout'),
-            userBadge: document.getElementById('nav-user')
+            userMenu: document.getElementById('nav-user-menu'),
+            userMenuBtn: document.getElementById('nav-user-menu-btn'),
+            userEmail: document.getElementById('nav-user-email'),
+            logoutBtn: document.getElementById('nav-logout')
         };
     }
 
@@ -392,8 +394,8 @@ class SPARouter {
 
     updateAuthUI() {
         const loginLink = this.authControls.loginLink;
-        const logoutBtn = this.authControls.logoutBtn;
-        const userBadge = this.authControls.userBadge;
+        const userMenu = this.authControls.userMenu;
+        const userEmail = this.authControls.userEmail;
 
         const showLoggedIn = this.authState.isAuthenticated;
 
@@ -404,14 +406,12 @@ class SPARouter {
             loginLink.removeAttribute('tabindex');
         }
 
-        if (logoutBtn) {
-            logoutBtn.classList.toggle('d-none', !showLoggedIn);
+        if (userMenu) {
+            userMenu.classList.toggle('d-none', !showLoggedIn);
         }
 
-        if (userBadge) {
-            const label = this.authState.email ? this.authState.email : '';
-            userBadge.textContent = label;
-            userBadge.classList.toggle('d-none', !showLoggedIn || !label);
+        if (userEmail) {
+            userEmail.textContent = this.authState.email ? this.authState.email : '';
         }
     }
 
@@ -979,9 +979,6 @@ class SPARouter {
 function initThemeToggle() {
     const toggleBtn = document.getElementById('theme-toggle');
     if (!toggleBtn) return;
-
-    const icon = toggleBtn.querySelector('.theme-icon');
-    const label = toggleBtn.querySelector('.theme-label');
     const body = document.body;
     const storageKey = 'preferred-theme';
 
@@ -1001,14 +998,7 @@ function initThemeToggle() {
                 navbar.classList.add('navbar-light');
             }
         }
-        
-        if (icon) {
-            icon.classList.remove('fa-moon', 'fa-sun');
-            icon.classList.add(normalized === 'dark' ? 'fa-moon' : 'fa-sun');
-        }
-        if (label) {
-            label.textContent = normalized === 'dark' ? 'Dark' : 'Light';
-        }
+
         if (persist) {
             localStorage.setItem(storageKey, normalized);
         }
