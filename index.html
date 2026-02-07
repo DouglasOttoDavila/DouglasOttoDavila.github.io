@@ -74,6 +74,19 @@
               </ul>
             </li>
           </ul>
+          <div id="auth-controls" class="d-flex align-items-center gap-2 ms-lg-3">
+            <a href="#login" class="btn btn-outline-primary rounded-pill d-flex align-items-center gap-2"
+              data-route="login" id="nav-login">
+              <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
+              <span class="small">Login</span>
+            </a>
+            <span class="badge text-bg-secondary auth-user-badge d-none" id="nav-user" aria-live="polite"></span>
+            <button id="nav-logout" class="btn btn-outline-secondary rounded-pill d-none d-flex align-items-center gap-2"
+              type="button">
+              <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
+              <span class="small">Logout</span>
+            </button>
+          </div>
           <button id="theme-toggle"
             class="btn btn-outline-secondary rounded-pill d-flex align-items-center gap-2 ms-lg-3" type="button"
             aria-label="Toggle theme" aria-pressed="false">
@@ -101,6 +114,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"
     integrity="sha512-cHv9Jx7Dnk3a1JpN96CBvs1+qsSVqS+8CA0nVddOZXS6jttuPAoBs+K6TfGsDzpDHK5vVsQt1zArhcXd1LSeXQ=="
     crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
   <script defer src="js/main.js"></script>
 </body>
 

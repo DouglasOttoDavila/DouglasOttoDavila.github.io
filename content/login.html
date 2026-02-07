@@ -1,0 +1,55 @@
+<section class="login-wrapper d-flex flex-column gap-4">
+  <div class="text-center mb-2">
+    <h1 class="display-5 fw-bold mb-3">Login</h1>
+    <p class="lead text-body-secondary mx-auto" style="max-width: 780px;">
+      Sign in to access protected sections of the site.
+    </p>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body p-4 p-lg-5">
+      <div id="login-config-warning" class="alert alert-warning d-none" role="alert">
+        <div class="d-flex gap-2">
+          <i class="fa-solid fa-triangle-exclamation mt-1" aria-hidden="true"></i>
+          <div>
+            <strong>Auth is not configured yet.</strong>
+            <div class="small mt-1">
+              For local dev: set <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code> in <code>.env</code>,
+              then generate <code>content/auth.runtime.json</code> with <code>scripts/generate-auth-runtime.ps1</code>.
+              For GitHub Pages: set <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code> as GitHub Actions
+              secrets and deploy via the workflow.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="login-error" class="alert alert-danger d-none" role="alert"></div>
+      <div id="login-status" class="alert alert-info d-none" role="status" aria-live="polite"></div>
+
+      <div class="d-grid gap-3">
+        <button class="btn btn-dark btn-lg d-flex align-items-center justify-content-center gap-2"
+          type="button" id="login-github">
+          <i class="fa-brands fa-github" aria-hidden="true"></i>
+          <span>Continue with GitHub</span>
+        </button>
+        <button class="btn btn-outline-secondary btn-lg d-flex align-items-center justify-content-center gap-2"
+          type="button" id="login-google">
+          <i class="fa-brands fa-google" aria-hidden="true"></i>
+          <span>Continue with Google</span>
+        </button>
+      </div>
+
+      <hr class="my-4">
+
+      <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+        <div class="text-body-secondary small">
+          <span>Signed in as:</span>
+          <strong id="login-email">Not signed in</strong>
+        </div>
+        <button class="btn btn-outline-secondary d-none" type="button" id="login-logout">
+          Logout
+        </button>
+      </div>
+    </div>
+  </div>
+</section>

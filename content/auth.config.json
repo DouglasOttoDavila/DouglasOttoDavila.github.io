@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "provider": "supabase",
+  "supabase": {
+    "url": "",
+    "anonKey": "",
+    "oauthProviders": [
+      "github",
+      "google"
+    ]
+  },
+  "accessControl": {
+    "allowedEmails": []
+  }
+}

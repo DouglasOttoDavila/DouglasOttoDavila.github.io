@@ -6,35 +6,75 @@ class SPARouter {
             'home': 'content/home.html',
             'about': 'content/about.html',
             'prompt-explained': 'content/prompt-explained.html',
-            'user-story-analyzer': 'content/user-story-analyzer.html'
+            'user-story-analyzer': 'content/user-story-analyzer.html',
+            'login': 'content/login.html'
         };
         this.currentPage = '';
         this.navContainer = document.getElementById('primaryNav');
         this.promptEscapeHandler = null;
-        this.init();
+
+        this.protectedPagesConfigUrl = 'content/protected-pages.json';
+        this.authConfigUrl = 'content/auth.config.json';
+        this.authRuntimeUrl = 'content/auth.runtime.json';
+
+        this.protectedPagesConfig = {
+            version: 1,
+            defaults: { redirectRoute: 'login' },
+            pages: []
+        };
+        this.protectedPagesIndex = new Map();
+
+        this.authConfig = null;
+        this.supabase = null;
+        this.authState = {
+            initialized: false,
+            isAuthenticated: false,
+            isAllowed: false,
+            email: null
+        };
+
+        this.authControls = {
+            loginLink: document.getElementById('nav-login'),
+            logoutBtn: document.getElementById('nav-logout'),
+            userBadge: document.getElementById('nav-user')
+        };
     }
 
-    init() {
+    async start() {
         this.navLinks.forEach(link => {
             link.addEventListener('click', (event) => {
                 event.preventDefault();
                 const targetPage = link.dataset.route || 'home';
-                this.navigate(targetPage);
+                this.navigate(targetPage, 'push');
             });
         });
 
         window.addEventListener('popstate', (event) => {
             const page = event.state?.page || 'home';
-            this.navigate(page, false);
+            this.navigate(page, 'none');
         });
 
+        this.bindAuthControls();
+
+        await this.loadProtectedPagesConfig();
+        await this.loadAuthConfig();
+        await this.loadAuthRuntimeConfig();
+        await this.initSupabaseAuth();
+
+        this.updateAuthUI();
+        this.applyNavVisibilityRules();
+
         const initialPage = window.location.hash.replace('#', '') || 'home';
-        this.navigate(initialPage, false);
+        this.navigate(initialPage, 'none');
     }
 
-    async navigate(page, pushState = true) {
+    async navigate(page, historyMode = 'push') {
+        const requestedPage = page;
         if (!this.routes[page]) {
             page = 'home';
+            if (historyMode === 'none') {
+                historyMode = 'replace';
+            }
         }
 
         if (this.currentPage === page) {
@@ -43,8 +83,24 @@ class SPARouter {
         }
 
         try {
-            if (pushState) {
+            const guard = this.guardRoute(page);
+            if (guard?.redirectTo && guard.redirectTo !== page) {
+                if (guard.storeRedirectFrom) {
+                    sessionStorage.setItem('post_login_redirect', requestedPage);
+                }
+                if (guard.reason) {
+                    sessionStorage.setItem('auth_denied_reason', guard.reason);
+                } else {
+                    sessionStorage.removeItem('auth_denied_reason');
+                }
+                await this.navigate(guard.redirectTo, 'replace');
+                return;
+            }
+
+            if (historyMode === 'push') {
                 history.pushState({ page }, '', `#${page}`);
+            } else if (historyMode === 'replace') {
+                history.replaceState({ page }, '', `#${page}`);
             }
 
             this.setActiveLink(page);
@@ -71,6 +127,335 @@ class SPARouter {
         const markup = await response.text();
         this.contentArea.innerHTML = markup;
         this.initializePageScripts(page);
+    }
+
+    async loadProtectedPagesConfig() {
+        const fallback = {
+            version: 1,
+            defaults: { redirectRoute: 'login' },
+            pages: []
+        };
+
+        try {
+            const response = await fetch(this.protectedPagesConfigUrl, { cache: 'no-store' });
+            if (!response.ok) {
+                console.warn(`[auth] Unable to load ${this.protectedPagesConfigUrl} (${response.status}). Falling back to no protected pages.`);
+                this.setProtectedPagesConfig(fallback);
+                return;
+            }
+
+            const parsed = await response.json();
+            if (!parsed || !Array.isArray(parsed.pages)) {
+                console.warn(`[auth] Invalid protected pages config. Falling back to no protected pages.`);
+                this.setProtectedPagesConfig(fallback);
+                return;
+            }
+
+            this.setProtectedPagesConfig(parsed);
+        } catch (error) {
+            console.warn(`[auth] Error loading protected pages config. Falling back to no protected pages.`, error);
+            this.setProtectedPagesConfig(fallback);
+        }
+    }
+
+    setProtectedPagesConfig(config) {
+        this.protectedPagesConfig = {
+            version: config.version || 1,
+            defaults: {
+                redirectRoute: config.defaults?.redirectRoute || 'login'
+            },
+            pages: Array.isArray(config.pages) ? config.pages : []
+        };
+
+        this.protectedPagesIndex = new Map();
+        this.protectedPagesConfig.pages.forEach(entry => {
+            if (!entry || typeof entry.routeId !== 'string') return;
+            this.protectedPagesIndex.set(entry.routeId, entry);
+        });
+    }
+
+    async loadAuthConfig() {
+        try {
+            const response = await fetch(this.authConfigUrl, { cache: 'no-store' });
+            if (!response.ok) {
+                console.warn(`[auth] Unable to load ${this.authConfigUrl} (${response.status}). Auth disabled.`);
+                this.authConfig = null;
+                return;
+            }
+
+            const parsed = await response.json();
+            if (!parsed || parsed.provider !== 'supabase') {
+                console.warn(`[auth] Unsupported or missing auth provider in ${this.authConfigUrl}. Auth disabled.`);
+                this.authConfig = null;
+                return;
+            }
+
+            this.authConfig = parsed;
+        } catch (error) {
+            console.warn(`[auth] Error loading auth config. Auth disabled.`, error);
+            this.authConfig = null;
+        }
+    }
+
+    async loadAuthRuntimeConfig() {
+        // Optional (and gitignored) runtime config generated from local .env.
+        try {
+            const response = await fetch(this.authRuntimeUrl, { cache: 'no-store' });
+            if (!response.ok) {
+                return;
+            }
+
+            const parsed = await response.json();
+            if (!parsed) {
+                return;
+            }
+
+            if (!this.authConfig) {
+                // Don't enable auth via runtime file alone; the base config defines provider and UX settings.
+                return;
+            }
+
+            const runtimeUrl = parsed.supabase?.url;
+            const runtimeAnonKey = parsed.supabase?.anonKey;
+            const runtimeAllowedEmails = parsed.accessControl?.allowedEmails;
+
+            if (runtimeUrl && !this.authConfig.supabase.url) {
+                this.authConfig.supabase.url = runtimeUrl;
+            }
+
+            if (runtimeAnonKey && !this.authConfig.supabase.anonKey) {
+                this.authConfig.supabase.anonKey = runtimeAnonKey;
+            }
+
+            if (Array.isArray(runtimeAllowedEmails) && runtimeAllowedEmails.length > 0) {
+                this.authConfig.accessControl = this.authConfig.accessControl || {};
+                this.authConfig.accessControl.allowedEmails = runtimeAllowedEmails;
+            }
+        } catch {
+            // Treat parse/network failures as "no runtime config".
+        }
+    }
+
+    isAuthConfigured() {
+        const url = this.authConfig?.supabase?.url || '';
+        const anonKey = this.authConfig?.supabase?.anonKey || '';
+        if (!url || !anonKey) return false;
+        if (url.includes('YOUR_PROJECT_REF') || anonKey.includes('YOUR_SUPABASE_ANON_KEY')) return false;
+        return true;
+    }
+
+    getAllowedEmails() {
+        const list = this.authConfig?.accessControl?.allowedEmails;
+        if (!Array.isArray(list)) return [];
+        return list
+            .map(value => String(value || '').trim().toLowerCase())
+            .filter(Boolean);
+    }
+
+    isEmailAllowed(email) {
+        const allowed = this.getAllowedEmails();
+        if (allowed.length === 0) return true;
+        if (!email) return false;
+        return allowed.includes(String(email).trim().toLowerCase());
+    }
+
+    async initSupabaseAuth() {
+        this.authState.initialized = true;
+
+        if (!this.authConfig) {
+            this.setAuthSession(null);
+            return;
+        }
+
+        if (!this.isAuthConfigured()) {
+            console.warn('[auth] Supabase config placeholders detected. Auth UI will show a configuration warning.');
+            this.setAuthSession(null);
+            return;
+        }
+
+        const createClient = window.supabase?.createClient;
+        if (typeof createClient !== 'function') {
+            console.warn('[auth] Supabase library not available on window.supabase. Auth disabled.');
+            this.setAuthSession(null);
+            return;
+        }
+
+        try {
+            this.supabase = createClient(this.authConfig.supabase.url, this.authConfig.supabase.anonKey, {
+                auth: {
+                    flowType: 'pkce',
+                    persistSession: true,
+                    autoRefreshToken: true,
+                    detectSessionInUrl: true
+                }
+            });
+
+            const { data, error } = await this.supabase.auth.getSession();
+            if (error) {
+                console.warn('[auth] getSession() failed.', error);
+                this.setAuthSession(null);
+            } else {
+                this.setAuthSession(data?.session || null);
+            }
+
+            this.supabase.auth.onAuthStateChange((event, session) => {
+                this.setAuthSession(session || null);
+                this.updateAuthUI();
+                this.applyNavVisibilityRules();
+
+                if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+                    this.maybeRedirectAfterLogin();
+                }
+
+                if (event === 'SIGNED_OUT') {
+                    sessionStorage.removeItem('post_login_redirect');
+                    sessionStorage.removeItem('auth_denied_reason');
+
+                    const current = this.currentPage || (window.location.hash.replace('#', '') || 'home');
+                    const guard = this.guardRoute(current);
+                    if (guard?.redirectTo && guard.redirectTo !== current) {
+                        this.navigate(guard.redirectTo, 'replace');
+                    }
+                }
+            });
+        } catch (error) {
+            console.warn('[auth] Supabase initialization failed. Auth disabled.', error);
+            this.setAuthSession(null);
+        }
+    }
+
+    setAuthSession(session) {
+        const email = session?.user?.email || null;
+        const isAuthenticated = Boolean(session?.user);
+        const isAllowed = isAuthenticated && this.isEmailAllowed(email);
+
+        this.authState.isAuthenticated = isAuthenticated;
+        this.authState.isAllowed = isAllowed;
+        this.authState.email = email;
+
+        if (isAuthenticated && !isAllowed) {
+            sessionStorage.setItem('auth_denied_reason', 'Your account is signed in, but not authorized to access protected pages.');
+        }
+    }
+
+    isAuthedForProtectedPages() {
+        return this.authState.isAuthenticated && this.authState.isAllowed;
+    }
+
+    guardRoute(page) {
+        const entry = this.protectedPagesIndex.get(page);
+        if (!entry || !entry.requireAuth) return null;
+
+        if (page === (this.protectedPagesConfig.defaults?.redirectRoute || 'login')) return null;
+
+        if (!this.isAuthedForProtectedPages()) {
+            return {
+                redirectTo: this.protectedPagesConfig.defaults?.redirectRoute || 'login',
+                storeRedirectFrom: true,
+                reason: sessionStorage.getItem('auth_denied_reason') || null
+            };
+        }
+
+        return null;
+    }
+
+    maybeRedirectAfterLogin() {
+        if (!this.isAuthedForProtectedPages()) return;
+
+        const requested = sessionStorage.getItem('post_login_redirect');
+        if (!requested) return;
+        sessionStorage.removeItem('post_login_redirect');
+        sessionStorage.removeItem('auth_denied_reason');
+
+        const target = this.routes[requested] ? requested : 'home';
+        if (this.currentPage === target) return;
+        this.navigate(target, 'replace');
+    }
+
+    bindAuthControls() {
+        const logoutBtn = this.authControls.logoutBtn;
+        if (logoutBtn && !logoutBtn.dataset.bound) {
+            logoutBtn.addEventListener('click', async () => {
+                if (!this.supabase) {
+                    this.navigate('login', 'push');
+                    return;
+                }
+                try {
+                    await this.supabase.auth.signOut();
+                } catch (error) {
+                    console.error('[auth] signOut failed', error);
+                }
+            });
+            logoutBtn.dataset.bound = 'true';
+        }
+    }
+
+    updateAuthUI() {
+        const loginLink = this.authControls.loginLink;
+        const logoutBtn = this.authControls.logoutBtn;
+        const userBadge = this.authControls.userBadge;
+
+        const showLoggedIn = this.authState.isAuthenticated;
+
+        if (loginLink) {
+            loginLink.classList.toggle('d-none', showLoggedIn);
+            loginLink.removeAttribute('aria-disabled');
+            loginLink.classList.remove('disabled');
+            loginLink.removeAttribute('tabindex');
+        }
+
+        if (logoutBtn) {
+            logoutBtn.classList.toggle('d-none', !showLoggedIn);
+        }
+
+        if (userBadge) {
+            const label = this.authState.email ? this.authState.email : '';
+            userBadge.textContent = label;
+            userBadge.classList.toggle('d-none', !showLoggedIn || !label);
+        }
+    }
+
+    applyNavVisibilityRules() {
+        const canAccessProtected = this.isAuthedForProtectedPages();
+
+        const routeLinks = Array.from(document.querySelectorAll('a[data-route]'));
+        routeLinks.forEach(link => {
+            const routeId = link.dataset.route;
+            if (!routeId) return;
+
+            const entry = this.protectedPagesIndex.get(routeId);
+            const shouldHide = Boolean(entry?.hideWhenLoggedOut) && Boolean(entry?.requireAuth) && !canAccessProtected;
+
+            const container = link.closest('li') || link;
+            container.classList.toggle('d-none', shouldHide);
+            link.setAttribute('aria-hidden', String(shouldHide));
+            if (shouldHide) {
+                link.setAttribute('tabindex', '-1');
+            } else {
+                link.removeAttribute('tabindex');
+            }
+        });
+
+        // Hide empty submenus / dropdowns to avoid dead panels.
+        const submenus = Array.from(document.querySelectorAll('.dropdown-submenu'));
+        submenus.forEach(submenu => {
+            const links = Array.from(submenu.querySelectorAll('a[data-route]'));
+            const hasVisible = links.some(a => {
+                const li = a.closest('li') || a;
+                return !li.classList.contains('d-none') && !a.classList.contains('d-none');
+            });
+            submenu.classList.toggle('d-none', !hasVisible);
+        });
+
+        const dropdownNavItems = Array.from(document.querySelectorAll('.navbar .nav-item.dropdown'));
+        dropdownNavItems.forEach(item => {
+            const links = Array.from(item.querySelectorAll('a[data-route]'));
+            const hasVisible = links.some(a => {
+                const li = a.closest('li') || a;
+                return !li.classList.contains('d-none') && !a.classList.contains('d-none');
+            });
+            item.classList.toggle('d-none', !hasVisible);
+        });
     }
 
     setActiveLink(page) {
@@ -133,7 +518,8 @@ class SPARouter {
             'home': "Douglas D'Avila | QA Automation Engineer & SDET",
             'about': "About Douglas D'Avila | QA Automation Engineer & SDET",
             'prompt-explained': 'Automation Prompt Analysis | Douglas D\'Avila',
-            'user-story-analyzer': 'User Story Quality Analyzer | Douglas D\'Avila'
+            'user-story-analyzer': 'User Story Quality Analyzer | Douglas D\'Avila',
+            'login': 'Login | Douglas D\'Avila'
         };
         document.title = titles[page] || titles.home;
     }
@@ -154,6 +540,104 @@ class SPARouter {
 
         if (page === 'user-story-analyzer') {
             this.setupUserStoryAnalyzer();
+        }
+
+        if (page === 'login') {
+            this.setupLoginPage();
+        }
+    }
+
+    setupLoginPage() {
+        const configWarning = document.getElementById('login-config-warning');
+        const errorBox = document.getElementById('login-error');
+        const statusBox = document.getElementById('login-status');
+        const emailEl = document.getElementById('login-email');
+        const logoutBtn = document.getElementById('login-logout');
+        const githubBtn = document.getElementById('login-github');
+        const googleBtn = document.getElementById('login-google');
+
+        const configured = Boolean(this.authConfig) && this.isAuthConfigured() && Boolean(this.supabase);
+        if (configWarning) {
+            configWarning.classList.toggle('d-none', configured);
+        }
+
+        const deniedReason = sessionStorage.getItem('auth_denied_reason');
+        if (errorBox) {
+            if (deniedReason) {
+                errorBox.textContent = deniedReason;
+                errorBox.classList.remove('d-none');
+            } else {
+                errorBox.classList.add('d-none');
+                errorBox.textContent = '';
+            }
+        }
+
+        if (emailEl) {
+            emailEl.textContent = this.authState.email || 'Not signed in';
+        }
+
+        const showLogout = this.authState.isAuthenticated;
+        if (logoutBtn) {
+            logoutBtn.classList.toggle('d-none', !showLogout);
+            if (!logoutBtn.dataset.bound) {
+                logoutBtn.addEventListener('click', async () => {
+                    if (!this.supabase) return;
+                    try {
+                        await this.supabase.auth.signOut();
+                    } catch (error) {
+                        console.error('[auth] signOut failed', error);
+                    }
+                });
+                logoutBtn.dataset.bound = 'true';
+            }
+        }
+
+        const providers = Array.isArray(this.authConfig?.supabase?.oauthProviders) ? this.authConfig.supabase.oauthProviders : ['github'];
+        const allowGithub = providers.includes('github');
+        const allowGoogle = providers.includes('google');
+
+        if (githubBtn) githubBtn.classList.toggle('d-none', !allowGithub);
+        if (googleBtn) googleBtn.classList.toggle('d-none', !allowGoogle);
+
+        const bindOAuth = (btn, provider) => {
+            if (!btn || btn.dataset.bound) return;
+            btn.addEventListener('click', async () => {
+                if (!configured) {
+                    if (statusBox) {
+                        statusBox.textContent = 'Auth is not configured yet.';
+                        statusBox.classList.remove('d-none');
+                    }
+                    return;
+                }
+
+                try {
+                    if (statusBox) {
+                        statusBox.textContent = `Redirecting to ${provider}...`;
+                        statusBox.classList.remove('d-none');
+                    }
+
+                    const redirectTo = `${window.location.origin}${window.location.pathname}`;
+                    await this.supabase.auth.signInWithOAuth({
+                        provider,
+                        options: { redirectTo }
+                    });
+                } catch (error) {
+                    console.error('[auth] signInWithOAuth failed', error);
+                    if (errorBox) {
+                        errorBox.textContent = 'Unable to start login right now. Please try again.';
+                        errorBox.classList.remove('d-none');
+                    }
+                }
+            });
+            btn.dataset.bound = 'true';
+        };
+
+        bindOAuth(githubBtn, 'github');
+        bindOAuth(googleBtn, 'google');
+
+        // If already signed in and allowed, bounce to requested page quickly.
+        if (this.isAuthedForProtectedPages()) {
+            this.maybeRedirectAfterLogin();
         }
     }
 
@@ -599,7 +1083,11 @@ function initDropdownSubmenus() {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-    new SPARouter();
     initThemeToggle();
     initDropdownSubmenus();
+
+    const router = new SPARouter();
+    router.start().catch(error => {
+        console.error('[router] Failed to start', error);
+    });
 });

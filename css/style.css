@@ -176,6 +176,13 @@ header .theme-label {
   transition: opacity 0.2s ease;
 }
 
+.auth-user-badge {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .home-wrapper {
   margin-top: 1rem;
 }

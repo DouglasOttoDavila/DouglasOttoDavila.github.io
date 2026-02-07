@@ -1,2 +1,6 @@
 .vscode/settings.json
+.env
+.env.*
+content/auth.runtime.json
 /.github
+/thoughts

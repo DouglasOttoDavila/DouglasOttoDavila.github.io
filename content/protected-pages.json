@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "defaults": {
+    "redirectRoute": "login"
+  },
+  "pages": [
+    {
+      "routeId": "prompt-explained",
+      "requireAuth": true,
+      "hideWhenLoggedOut": true
+    },
+    {
+      "routeId": "user-story-analyzer",
+      "requireAuth": true,
+      "hideWhenLoggedOut": true
+    }
+  ]
+}
+
