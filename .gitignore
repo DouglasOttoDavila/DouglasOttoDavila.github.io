@@ -2,6 +2,6 @@
 .env
 .env.*
 content/auth.runtime.json
-.github/instructions
-.github/prompts
-.github/chatmodes
+!.github/
+!.github/workflows/
+!.github/workflows/**
