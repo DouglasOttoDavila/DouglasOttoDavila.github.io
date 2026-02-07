@@ -1,0 +1,88 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate runtime auth config (from Actions secrets)
+        shell: bash
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          ALLOWED_EMAILS: ${{ vars.ALLOWED_EMAILS }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${SUPABASE_URL:-}" || -z "${SUPABASE_ANON_KEY:-}" ]]; then
+            echo "Missing SUPABASE_URL and/or SUPABASE_ANON_KEY. Add them in repo Settings -> Secrets and variables -> Actions."
+            exit 1
+          fi
+
+          mkdir -p content
+
+          # This file is public in the deployed site (GitHub Pages is static hosting).
+          # It is used to avoid committing credentials to the repo history.
+          node - <<'NODE'
+          const fs = require('fs');
+
+          const supabaseUrl = process.env.SUPABASE_URL || '';
+          const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
+          const allowedEmailsRaw = process.env.ALLOWED_EMAILS || '';
+
+          const allowedEmails = allowedEmailsRaw
+            .split(',')
+            .map(s => s.trim().toLowerCase())
+            .filter(Boolean);
+
+          const payload = {
+            version: 1,
+            supabase: {
+              url: supabaseUrl,
+              anonKey: supabaseAnonKey
+            },
+            accessControl: {
+              allowedEmails
+            }
+          };
+
+          fs.writeFileSync('content/auth.runtime.json', JSON.stringify(payload, null, 2) + '\n', 'utf8');
+          console.log('Wrote content/auth.runtime.json');
+          NODE
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
+
