@@ -5,7 +5,8 @@ class SPARouter {
         this.routes = {
             'home': 'content/home.html',
             'about': 'content/about.html',
-            'prompt-explained': 'content/prompt-explained.html'
+            'prompt-explained': 'content/prompt-explained.html',
+            'user-story-analyzer': 'content/user-story-analyzer.html'
         };
         this.currentPage = '';
         this.navContainer = document.getElementById('primaryNav');
@@ -131,7 +132,8 @@ class SPARouter {
         const titles = {
             'home': "Douglas D'Avila | QA Automation Engineer & SDET",
             'about': "About Douglas D'Avila | QA Automation Engineer & SDET",
-            'prompt-explained': 'Automation Prompt Analysis | Douglas D\'Avila'
+            'prompt-explained': 'Automation Prompt Analysis | Douglas D\'Avila',
+            'user-story-analyzer': 'User Story Quality Analyzer | Douglas D\'Avila'
         };
         document.title = titles[page] || titles.home;
     }
@@ -148,6 +150,10 @@ class SPARouter {
 
         if (page === 'home') {
             this.setupHomeCarousel();
+        }
+
+        if (page === 'user-story-analyzer') {
+            this.setupUserStoryAnalyzer();
         }
     }
 
@@ -289,6 +295,177 @@ class SPARouter {
             });
         }
     }
+
+    setupUserStoryAnalyzer() {
+        const form = document.getElementById('story-analyzer-form');
+        const analyzeBtn = document.getElementById('analyze-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const errorMessage = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+        const resultsContainer = document.getElementById('results-container');
+        const storyContent = document.getElementById('story-content');
+
+        if (!form) return;
+
+        // Handle form submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const story = storyContent.value.trim();
+            if (!story) {
+                this.showAnalyzerError('Please enter a user story to analyze.');
+                return;
+            }
+
+            // Show loading state
+            analyzeBtn.disabled = true;
+            loadingSpinner.classList.remove('d-none');
+            errorMessage.classList.add('d-none');
+            resultsContainer.classList.add('d-none');
+
+            try {
+                // Make API request
+                const response = await fetch('https://douglasdavila.duckdns.org/webhook/analyze_user_story', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Basic ' + btoa('admin:aqEp%U-815*y')
+                    },
+                    body: JSON.stringify({ story_content: story })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API request failed with status ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                // Render results
+                this.renderAnalysisResults(data);
+                
+                // Show results and clear button
+                resultsContainer.classList.remove('d-none');
+                clearBtn.classList.remove('d-none');
+                
+                // Scroll to results
+                setTimeout(() => {
+                    resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+
+            } catch (error) {
+                console.error('Analysis error:', error);
+                this.showAnalyzerError('Failed to analyze the user story. Please check your connection and try again.');
+            } finally {
+                analyzeBtn.disabled = false;
+                loadingSpinner.classList.add('d-none');
+            }
+        });
+
+        // Handle clear button
+        clearBtn.addEventListener('click', () => {
+            resultsContainer.classList.add('d-none');
+            clearBtn.classList.add('d-none');
+            errorMessage.classList.add('d-none');
+            storyContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    }
+
+    showAnalyzerError(message) {
+        const errorMessage = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+        if (errorMessage && errorText) {
+            errorText.textContent = message;
+            errorMessage.classList.remove('d-none');
+            errorMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
+    renderAnalysisResults(data) {
+        if (!data) {
+            console.error('No data received from API');
+            this.showAnalyzerError('Invalid response from the server. Please try again.');
+            return;
+        }
+
+        // API returns an object directly, not an array
+        const investScore = data.invest_score;
+        const improvements = data.story_improvement?.body;
+
+        if (!investScore || !improvements) {
+            console.error('Missing required data in API response', data);
+            this.showAnalyzerError('Incomplete response from the server. Please try again.');
+            return;
+        }
+
+        // Render INVEST scores
+        this.renderInvestScores(investScore);
+
+        // Render improvement suggestions
+        this.renderImprovements(improvements);
+
+        // Render rewritten story
+        document.getElementById('rewritten-story').textContent = improvements.rewrittenStory || 'N/A';
+
+        // Render Gherkin criteria
+        const gherkinElement = document.getElementById('gherkin-criteria');
+        gherkinElement.textContent = improvements.gherkinAcceptanceCriteria || 'N/A';
+        
+        // Highlight code if hljs is available
+        setTimeout(() => {
+            if (window.hljs?.highlightElement) {
+                window.hljs.highlightElement(gherkinElement);
+            }
+        }, 10);
+
+        // Render missing context
+        document.getElementById('missing-context').textContent = improvements.missingContextOrDependencies || 'No specific dependencies identified.';
+
+        // Update overall comments
+        document.getElementById('overall-comment').textContent = investScore.overall_comment || '';
+        document.getElementById('overall-improvement-comment').textContent = improvements.overallComment || '';
+    }
+
+    renderInvestScores(investScore) {
+        const scoresContainer = document.getElementById('invest-scores');
+        const scores = [
+            { name: 'Independent', value: investScore.independent, icon: 'fa-puzzle-piece', key: 'independent' },
+            { name: 'Negotiable', value: investScore.negotiable, icon: 'fa-handshake', key: 'negotiable' },
+            { name: 'Valuable', value: investScore.valuable, icon: 'fa-gem', key: 'valuable' },
+            { name: 'Estimable', value: investScore.estimable, icon: 'fa-calculator', key: 'estimable' },
+            { name: 'Small', value: investScore.small, icon: 'fa-compress', key: 'small' },
+            { name: 'Testable', value: investScore.testable, icon: 'fa-vial', key: 'testable' }
+        ];
+
+        scoresContainer.innerHTML = scores.map(score => {
+            const badgeClass = this.getScoreBadgeClass(score.value);
+            return `
+                <div class="col-md-4 col-lg-2">
+                    <div class="score-card text-center p-3 rounded-3 bg-body-tertiary h-100">
+                        <i class="fa-solid ${score.icon} fs-3 mb-2 text-primary"></i>
+                        <h3 class="h6 mb-2">${score.name}</h3>
+                        <span class="badge ${badgeClass} fs-5">${score.value}/5</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    renderImprovements(improvements) {
+        document.getElementById('independent-suggestion').textContent = improvements.independentSuggestion || 'N/A';
+        document.getElementById('negotiable-suggestion').textContent = improvements.negotiableSuggestion || 'N/A';
+        document.getElementById('valuable-suggestion').textContent = improvements.valuableSuggestion || 'N/A';
+        document.getElementById('estimable-suggestion').textContent = improvements.estimableSuggestion || 'N/A';
+        document.getElementById('small-suggestion').textContent = improvements.smallSuggestion || 'N/A';
+        document.getElementById('testable-suggestion').textContent = improvements.testableSuggestion || 'N/A';
+    }
+
+    getScoreBadgeClass(score) {
+        if (score <= 2) return 'bg-danger text-white';
+        if (score <= 4) return 'bg-warning text-dark';
+        return 'bg-success text-white';
+    }
+
 
     closeMobileNav() {
         if (!this.navContainer || !window.bootstrap?.Collapse) return;

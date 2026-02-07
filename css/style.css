@@ -580,6 +580,132 @@ header .theme-label {
   }
 }
 
+/* User Story Analyzer */
+.user-story-analyzer-wrapper {
+  margin-top: 1rem;
+}
+
+.story-textarea {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.9rem;
+  background: var(--bs-body-bg);
+  border: 2px solid var(--bs-border-color);
+  border-radius: 0.75rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  resize: vertical;
+}
+
+.story-textarea:focus {
+  border-color: var(--bs-primary);
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+  outline: none;
+}
+
+.score-card {
+  background: var(--bs-body-tertiary) !important;
+  border: 1px solid var(--bs-border-color);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.score-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+[data-bs-theme="light"] .score-card {
+  background: rgba(13, 110, 253, 0.04) !important;
+}
+
+.rewritten-story-content {
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: var(--bs-body-color);
+  background: var(--bs-body-secondary) !important;
+  border-left: 4px solid var(--bs-success);
+}
+
+.missing-context-content {
+  white-space: pre-wrap;
+  line-height: 1.7;
+  color: var(--bs-body-color);
+}
+
+/* Accordion customization for analyzer */
+.user-story-analyzer-wrapper .accordion-item {
+  border: 1px solid var(--bs-border-color);
+  margin-bottom: 0.5rem;
+  border-radius: 0.75rem !important;
+  overflow: hidden;
+}
+
+.user-story-analyzer-wrapper .accordion-button {
+  font-weight: 500;
+  background: var(--bs-body-bg);
+  color: var(--bs-body-color);
+  border-radius: 0.75rem;
+  padding: 1rem 1.25rem;
+}
+
+.user-story-analyzer-wrapper .accordion-button:not(.collapsed) {
+  background: var(--bs-primary-bg-subtle);
+  color: var(--bs-primary-text-emphasis);
+  box-shadow: none;
+}
+
+.user-story-analyzer-wrapper .accordion-button:focus {
+  box-shadow: none;
+  border-color: var(--bs-border-color);
+}
+
+.user-story-analyzer-wrapper .accordion-body {
+  padding: 1.25rem;
+  background: var(--bs-body-bg);
+  line-height: 1.7;
+}
+
+/* Code block styling */
+.user-story-analyzer-wrapper pre {
+  background: var(--bs-body-tertiary);
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  overflow-x: auto;
+  margin: 0;
+}
+
+.user-story-analyzer-wrapper pre code {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--bs-body-color);
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.spinner-border {
+  animation: spin 0.75s linear infinite;
+}
+
+/* Responsive adjustments for analyzer */
+@media (max-width: 767.98px) {
+  .user-story-analyzer-wrapper .display-5 {
+    font-size: 2rem;
+  }
+
+  .story-textarea {
+    font-size: 0.85rem;
+  }
+
+  .score-card {
+    margin-bottom: 0.5rem;
+  }
+}
+
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
