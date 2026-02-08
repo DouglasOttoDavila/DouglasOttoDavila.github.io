@@ -734,6 +734,151 @@ header .navbar-nav .nav-link.active {
   margin-top: 0.25rem;
 }
 
+.login-divider {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 1.1rem 0 1rem;
+  opacity: 0.95;
+}
+
+.login-divider::before {
+  content: '';
+  height: 1px;
+  width: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+[data-bs-theme="light"] .login-divider::before {
+  background: linear-gradient(90deg, transparent, rgba(13, 110, 253, 0.18), transparent);
+}
+
+.login-divider span {
+  position: relative;
+  padding: 0 0.75rem;
+  font-size: 0.85rem;
+  color: var(--space-text-dim);
+}
+
+.login-email-auth {
+  margin-top: 0.1rem;
+  margin-bottom: 1.1rem;
+}
+
+.login-auth-tabs {
+  display: inline-flex;
+  gap: 0.4rem;
+  padding: 0.35rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(10, 12, 22, 0.22);
+  backdrop-filter: blur(12px) saturate(140%);
+  margin-bottom: 0.9rem;
+}
+
+[data-bs-theme="light"] .login-auth-tabs {
+  border-color: rgba(13, 110, 253, 0.16);
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.login-auth-tab {
+  border: 0;
+  background: transparent;
+  color: var(--space-text-dim);
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font-weight: 650;
+  font-size: 0.9rem;
+  transition: background 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.login-auth-tab:hover {
+  color: var(--bs-body-color);
+}
+
+.login-auth-tab.is-active,
+.login-auth-tab[aria-selected="true"] {
+  background: rgba(84, 183, 255, 0.14);
+  color: var(--bs-body-color);
+  box-shadow: 0 0 0 1px rgba(84, 183, 255, 0.18) inset;
+}
+
+[data-bs-theme="light"] .login-auth-tab.is-active,
+[data-bs-theme="light"] .login-auth-tab[aria-selected="true"] {
+  background: rgba(13, 110, 253, 0.1);
+  box-shadow: 0 0 0 1px rgba(13, 110, 253, 0.16) inset;
+}
+
+.login-auth-form .form-label {
+  font-size: 0.85rem;
+  color: var(--space-text-dim);
+  margin-bottom: 0.25rem;
+}
+
+.login-glass-input {
+  background: rgba(8, 10, 18, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--bs-body-color);
+  backdrop-filter: blur(12px) saturate(150%);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08) inset;
+}
+
+[data-bs-theme="light"] .login-glass-input {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(13, 110, 253, 0.16);
+}
+
+.login-glass-input::placeholder {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+[data-bs-theme="light"] .login-glass-input::placeholder {
+  color: rgba(15, 18, 28, 0.48);
+}
+
+.login-glass-input:focus {
+  border-color: rgba(84, 183, 255, 0.55);
+  box-shadow: 0 0 0 0.25rem var(--space-focus);
+}
+
+.login-otp {
+  letter-spacing: 0.22em;
+  font-variant-numeric: tabular-nums;
+}
+
+.login-auth-submit {
+  border-radius: 999px;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.login-auth-link {
+  color: rgba(84, 183, 255, 0.92);
+  text-decoration: none;
+}
+
+.login-auth-link:hover,
+.login-auth-link:focus-visible {
+  text-decoration: underline;
+}
+
+.login-auth-help {
+  font-size: 0.85rem;
+}
+
+.login-auth-signedin {
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(10, 12, 22, 0.2);
+  padding: 0.75rem;
+  backdrop-filter: blur(12px) saturate(140%);
+}
+
 .sso-btn {
   position: relative;
   width: 100%;

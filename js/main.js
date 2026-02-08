@@ -365,6 +365,17 @@ class SPARouter {
                     this.ensureProfileRow().catch(error => console.warn('[profile] ensureProfileRow failed', error));
                 }
 
+                if (event === 'PASSWORD_RECOVERY') {
+                    // User came from a recovery email link; prompt them to set a new password.
+                    sessionStorage.setItem('password_recovery', '1');
+                    if ((this.currentPage || '') !== 'login') {
+                        this.navigate('login', 'replace');
+                    } else {
+                        this.setupLoginPage();
+                    }
+                    return;
+                }
+
                 if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
                     this.maybeRedirectAfterLogin();
                 }
@@ -419,6 +430,20 @@ class SPARouter {
 
         if (page === (this.protectedPagesConfig.defaults?.redirectRoute || 'login')) return null;
 
+        // "requireAuth" means: signed in is required. Allowlist is a second layer used only for certain protected pages.
+        // Profile is available to any authenticated user so they can complete their details, even if not allowlisted.
+        if (!this.authState.isAuthenticated) {
+            return {
+                redirectTo: this.protectedPagesConfig.defaults?.redirectRoute || 'login',
+                storeRedirectFrom: true,
+                reason: sessionStorage.getItem('auth_denied_reason') || null
+            };
+        }
+
+        if (page === 'profile') {
+            return null;
+        }
+
         if (!this.isAuthedForProtectedPages()) {
             return {
                 redirectTo: this.protectedPagesConfig.defaults?.redirectRoute || 'login',
@@ -431,6 +456,18 @@ class SPARouter {
     }
 
     maybeRedirectAfterLogin() {
+        const forceProfile = sessionStorage.getItem('post_auth_force_profile');
+        // Always allow redirecting to profile for any authenticated user (even if not allowlisted for protected pages).
+        if ((forceProfile === '1' || this.currentPage === 'login') && this.authState.isAuthenticated) {
+            sessionStorage.removeItem('post_auth_force_profile');
+            sessionStorage.removeItem('post_login_redirect');
+            sessionStorage.removeItem('auth_denied_reason');
+            if (this.currentPage !== 'profile') {
+                this.navigate('profile', 'replace');
+            }
+            return;
+        }
+
         if (!this.isAuthedForProtectedPages()) return;
 
         const requested = sessionStorage.getItem('post_login_redirect');
@@ -799,6 +836,9 @@ class SPARouter {
                         statusBox.classList.remove('d-none');
                     }
 
+                    // After successful sign in (OAuth), route to profile per requirement.
+                    sessionStorage.setItem('post_auth_force_profile', '1');
+
                     const redirectTo = `${window.location.origin}${window.location.pathname}`;
                     await this.supabase.auth.signInWithOAuth({
                         provider,
@@ -818,8 +858,405 @@ class SPARouter {
         bindOAuth(githubBtn, 'github');
         bindOAuth(googleBtn, 'google');
 
-        // If already signed in and allowed, bounce to requested page quickly.
-        if (this.isAuthedForProtectedPages()) {
+        const emailAuthRoot = document.getElementById('login-email-auth');
+        const dividerEl = document.getElementById('login-divider');
+        const alreadySignedInEl = document.getElementById('login-already-signedin');
+
+        if (emailAuthRoot) {
+            emailAuthRoot.classList.toggle('d-none', showLogout);
+        }
+        if (dividerEl) {
+            dividerEl.classList.toggle('d-none', showLogout);
+        }
+        if (alreadySignedInEl) {
+            alreadySignedInEl.classList.toggle('d-none', !showLogout);
+        }
+
+        const setError = (msg) => {
+            if (!errorBox) return;
+            if (msg) {
+                errorBox.textContent = msg;
+                errorBox.classList.remove('d-none');
+            } else {
+                errorBox.textContent = '';
+                errorBox.classList.add('d-none');
+            }
+        };
+
+        const setStatus = (msg) => {
+            if (!statusBox) return;
+            if (msg) {
+                statusBox.textContent = msg;
+                statusBox.classList.remove('d-none');
+            } else {
+                statusBox.textContent = '';
+                statusBox.classList.add('d-none');
+            }
+        };
+
+        if (emailAuthRoot && !emailAuthRoot.dataset.bound) {
+            const tabSignin = document.getElementById('login-tab-signin');
+            const tabSignup = document.getElementById('login-tab-signup');
+            const panelSignin = document.getElementById('login-panel-signin');
+            const panelSignup = document.getElementById('login-panel-signup');
+            const panelVerify = document.getElementById('login-panel-verify');
+            const panelRecovery = document.getElementById('login-panel-recovery');
+
+            const formSignin = document.getElementById('login-form-signin');
+            const formSignup = document.getElementById('login-form-signup');
+            const formVerify = document.getElementById('login-form-verify');
+            const formRecovery = document.getElementById('login-form-recovery');
+
+            const signinEmail = document.getElementById('login-signin-email');
+            const signinPassword = document.getElementById('login-signin-password');
+            const forgotBtn = document.getElementById('login-forgot-password');
+
+            const signupName = document.getElementById('login-signup-name');
+            const signupEmail = document.getElementById('login-signup-email');
+            const signupPassword = document.getElementById('login-signup-password');
+            const signupPassword2 = document.getElementById('login-signup-password2');
+
+            const verifyEmail = document.getElementById('login-verify-email');
+            const verifyCode = document.getElementById('login-verify-code');
+            const verifyResend = document.getElementById('login-verify-resend');
+            const verifyCancel = document.getElementById('login-verify-cancel');
+
+            const recoveryEmail = document.getElementById('login-recovery-email');
+            const recoveryPassword = document.getElementById('login-recovery-password');
+            const recoveryPassword2 = document.getElementById('login-recovery-password2');
+            const recoveryCancel = document.getElementById('login-recovery-cancel');
+
+            const switchToSignup = document.getElementById('login-switch-to-signup');
+            const switchToSignin = document.getElementById('login-switch-to-signin');
+
+            const setMode = (mode) => {
+                const isSignin = mode === 'signin';
+                const isSignup = mode === 'signup';
+                const isVerify = mode === 'verify';
+                const isRecover = mode === 'recover';
+
+                if (tabSignin) {
+                    tabSignin.classList.toggle('is-active', isSignin);
+                    tabSignin.setAttribute('aria-selected', isSignin ? 'true' : 'false');
+                }
+                if (tabSignup) {
+                    tabSignup.classList.toggle('is-active', isSignup);
+                    tabSignup.setAttribute('aria-selected', isSignup ? 'true' : 'false');
+                }
+
+                // Hide the tablist when in recovery mode to avoid suggesting sign-in/signup actions.
+                if (tabSignin?.parentElement) {
+                    tabSignin.parentElement.classList.toggle('d-none', isRecover);
+                }
+
+                if (panelSignin) panelSignin.classList.toggle('d-none', !isSignin);
+                if (panelSignup) panelSignup.classList.toggle('d-none', !isSignup);
+                if (panelVerify) panelVerify.classList.toggle('d-none', !isVerify);
+                if (panelRecovery) panelRecovery.classList.toggle('d-none', !isRecover);
+
+                setError(null);
+                setStatus(null);
+            };
+
+            const sanitizeOtp = (value) => String(value || '').replace(/\D+/g, '').slice(0, 6);
+
+            if (tabSignin) {
+                tabSignin.addEventListener('click', () => setMode('signin'));
+            }
+            if (tabSignup) {
+                tabSignup.addEventListener('click', () => setMode('signup'));
+            }
+            if (switchToSignup) {
+                switchToSignup.addEventListener('click', () => setMode('signup'));
+            }
+            if (switchToSignin) {
+                switchToSignin.addEventListener('click', () => setMode('signin'));
+            }
+
+            if (verifyCode) {
+                verifyCode.addEventListener('input', () => {
+                    const next = sanitizeOtp(verifyCode.value);
+                    if (verifyCode.value !== next) verifyCode.value = next;
+                });
+            }
+
+            if (formSignin) {
+                formSignin.addEventListener('submit', async (event) => {
+                    event.preventDefault();
+                    setError(null);
+                    setStatus(null);
+                    if (!configured) {
+                        setStatus('Auth is not configured yet.');
+                        return;
+                    }
+                    if (!this.supabase) return;
+
+                    const email = String(signinEmail?.value || '').trim();
+                    const password = String(signinPassword?.value || '');
+                    if (!email || !password) {
+                        setError('Please enter your email and password.');
+                        return;
+                    }
+
+                    try {
+                        setStatus('Signing in...');
+                        sessionStorage.setItem('post_auth_force_profile', '1');
+                        const { error } = await this.supabase.auth.signInWithPassword({ email, password });
+                        if (error) throw error;
+                        setStatus('Signed in. Redirecting to profile...');
+                    } catch (error) {
+                        console.error('[auth] signInWithPassword failed', error);
+                        setStatus(null);
+                        setError('Unable to sign in. Please double-check your credentials and try again.');
+                    }
+                });
+            }
+
+            if (formSignup) {
+                formSignup.addEventListener('submit', async (event) => {
+                    event.preventDefault();
+                    setError(null);
+                    setStatus(null);
+                    if (!configured) {
+                        setStatus('Auth is not configured yet.');
+                        return;
+                    }
+                    if (!this.supabase) return;
+
+                    const fullName = String(signupName?.value || '').trim();
+                    const email = String(signupEmail?.value || '').trim();
+                    const password = String(signupPassword?.value || '');
+                    const password2 = String(signupPassword2?.value || '');
+
+                    if (!email || !password) {
+                        setError('Please enter an email and a password.');
+                        return;
+                    }
+                    if (password.length < 8) {
+                        setError('Password must be at least 8 characters.');
+                        return;
+                    }
+                    if (password !== password2) {
+                        setError('Passwords do not match.');
+                        return;
+                    }
+
+                    try {
+                        setStatus('Sending verification code...');
+                        this.pendingEmailSignup = { email, password, fullName };
+
+                        // Uses Supabase email OTP. Your Supabase email template must include the token to display a code.
+                        const { error } = await this.supabase.auth.signInWithOtp({
+                            email,
+                            options: {
+                                shouldCreateUser: true,
+                                data: fullName ? { full_name: fullName } : undefined
+                            }
+                        });
+                        if (error) throw error;
+
+                        if (verifyEmail) verifyEmail.value = email;
+                        if (verifyCode) verifyCode.value = '';
+                        setMode('verify');
+                        setStatus('Check your email for the verification code.');
+                        if (verifyCode && typeof verifyCode.focus === 'function') {
+                            verifyCode.focus({ preventScroll: true });
+                        }
+                    } catch (error) {
+                        console.error('[auth] signInWithOtp failed', error);
+                        this.pendingEmailSignup = null;
+                        setStatus(null);
+                        setError('Unable to send a verification code right now. Please try again.');
+                    }
+                });
+            }
+
+            if (formVerify) {
+                formVerify.addEventListener('submit', async (event) => {
+                    event.preventDefault();
+                    setError(null);
+                    setStatus(null);
+                    if (!configured) {
+                        setStatus('Auth is not configured yet.');
+                        return;
+                    }
+                    if (!this.supabase) return;
+
+                    const pending = this.pendingEmailSignup;
+                    const email = String(verifyEmail?.value || pending?.email || '').trim();
+                    const token = sanitizeOtp(verifyCode?.value || '');
+                    if (!email) {
+                        setError('Missing email for verification.');
+                        return;
+                    }
+                    if (!/^\d{6}$/.test(token)) {
+                        setError('Please enter the 6-digit code from your email.');
+                        return;
+                    }
+
+                    try {
+                        setStatus('Verifying code...');
+                        const { error: verifyErr } = await this.supabase.auth.verifyOtp({
+                            email,
+                            token,
+                            type: 'email'
+                        });
+                        if (verifyErr) throw verifyErr;
+
+                        // Once verified, enable password-based sign-in by setting the password on the new account.
+                        const newPassword = pending?.password;
+                        if (newPassword) {
+                            const { error: updateErr } = await this.supabase.auth.updateUser({ password: newPassword });
+                            if (updateErr) throw updateErr;
+                        }
+
+                        this.pendingEmailSignup = null;
+                        sessionStorage.setItem('post_auth_force_profile', '1');
+                        setStatus('Signup complete. Redirecting to profile...');
+                    } catch (error) {
+                        console.error('[auth] verifyOtp/updateUser failed', error);
+                        setStatus(null);
+                        setError('Invalid or expired code. Please try again (or resend a new code).');
+                    }
+                });
+            }
+
+            if (verifyResend) {
+                verifyResend.addEventListener('click', async () => {
+                    setError(null);
+                    setStatus(null);
+                    if (!configured) {
+                        setStatus('Auth is not configured yet.');
+                        return;
+                    }
+                    if (!this.supabase) return;
+                    const email = String(verifyEmail?.value || this.pendingEmailSignup?.email || '').trim();
+                    if (!email) {
+                        setError('Missing email to resend the code.');
+                        return;
+                    }
+                    try {
+                        setStatus('Resending verification code...');
+                        const fullName = String(this.pendingEmailSignup?.fullName || '').trim();
+                        const { error } = await this.supabase.auth.signInWithOtp({
+                            email,
+                            options: {
+                                shouldCreateUser: true,
+                                data: fullName ? { full_name: fullName } : undefined
+                            }
+                        });
+                        if (error) throw error;
+                        setStatus('Verification code resent. Check your email.');
+                    } catch (error) {
+                        console.error('[auth] resend signInWithOtp failed', error);
+                        setStatus(null);
+                        setError('Unable to resend the code right now. Please try again.');
+                    }
+                });
+            }
+
+            if (verifyCancel) {
+                verifyCancel.addEventListener('click', () => {
+                    this.pendingEmailSignup = null;
+                    setMode('signup');
+                });
+            }
+
+            if (forgotBtn) {
+                forgotBtn.addEventListener('click', async () => {
+                    setError(null);
+                    setStatus(null);
+                    if (!configured) {
+                        setStatus('Auth is not configured yet.');
+                        return;
+                    }
+                    if (!this.supabase) return;
+
+                    const email = String(signinEmail?.value || '').trim();
+                    if (!email) {
+                        setError('Enter your email above first, then click “Forgot my password”.');
+                        return;
+                    }
+
+                    try {
+                        setStatus('Sending password reset email...');
+                        // Supabase will send a recovery link; when the user returns, we show the recovery form.
+                        const redirectTo = `${window.location.origin}${window.location.pathname}#login`;
+                        const { error } = await this.supabase.auth.resetPasswordForEmail(email, { redirectTo });
+                        if (error) throw error;
+                        setStatus('Password reset email sent. Open it to continue.');
+                    } catch (error) {
+                        console.error('[auth] resetPasswordForEmail failed', error);
+                        setStatus(null);
+                        setError('Unable to send reset email right now. Please try again.');
+                    }
+                });
+            }
+
+            if (formRecovery) {
+                formRecovery.addEventListener('submit', async (event) => {
+                    event.preventDefault();
+                    setError(null);
+                    setStatus(null);
+                    if (!configured) {
+                        setStatus('Auth is not configured yet.');
+                        return;
+                    }
+                    if (!this.supabase) return;
+
+                    const p1 = String(recoveryPassword?.value || '');
+                    const p2 = String(recoveryPassword2?.value || '');
+                    if (p1.length < 8) {
+                        setError('Password must be at least 8 characters.');
+                        return;
+                    }
+                    if (p1 !== p2) {
+                        setError('Passwords do not match.');
+                        return;
+                    }
+
+                    try {
+                        setStatus('Updating password...');
+                        const { error } = await this.supabase.auth.updateUser({ password: p1 });
+                        if (error) throw error;
+                        sessionStorage.removeItem('password_recovery');
+                        sessionStorage.setItem('post_auth_force_profile', '1');
+                        setStatus('Password updated. Redirecting to profile...');
+                        this.maybeRedirectAfterLogin();
+                    } catch (error) {
+                        console.error('[auth] updateUser(password) failed', error);
+                        setStatus(null);
+                        setError('Unable to update password. Please try again.');
+                    }
+                });
+            }
+
+            if (recoveryCancel) {
+                recoveryCancel.addEventListener('click', () => {
+                    sessionStorage.removeItem('password_recovery');
+                    setMode('signin');
+                });
+            }
+
+            // Default panel.
+            const recoveryMode = sessionStorage.getItem('password_recovery') === '1' && this.authState.isAuthenticated;
+            if (recoveryMode) {
+                const identity = this.getCurrentIdentity();
+                if (recoveryEmail) recoveryEmail.value = identity.email || '';
+                if (recoveryPassword) recoveryPassword.value = '';
+                if (recoveryPassword2) recoveryPassword2.value = '';
+                setMode('recover');
+                if (recoveryPassword && typeof recoveryPassword.focus === 'function') {
+                    recoveryPassword.focus({ preventScroll: true });
+                }
+            } else {
+                setMode('signin');
+            }
+            emailAuthRoot.dataset.bound = 'true';
+        }
+
+        // If already signed in, bounce away from login quickly (profile for any authed user; otherwise a stored redirect).
+        if (this.authState.isAuthenticated) {
             this.maybeRedirectAfterLogin();
         }
     }

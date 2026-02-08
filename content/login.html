@@ -69,6 +69,177 @@
         </button>
       </div>
 
+      <div class="login-divider" id="login-divider" role="separator" aria-label="Or">
+        <span>or</span>
+      </div>
+
+      <section class="login-email-auth" id="login-email-auth" aria-label="Email and password sign in">
+        <div class="login-auth-tabs" role="tablist" aria-label="Email auth mode">
+          <button class="login-auth-tab is-active" type="button" id="login-tab-signin" role="tab"
+            aria-selected="true" aria-controls="login-panel-signin">
+            Sign in
+          </button>
+          <button class="login-auth-tab" type="button" id="login-tab-signup" role="tab"
+            aria-selected="false" aria-controls="login-panel-signup">
+            Create account
+          </button>
+        </div>
+
+        <div class="login-auth-panel" id="login-panel-signin" role="tabpanel" aria-labelledby="login-tab-signin">
+          <form id="login-form-signin" class="login-auth-form" novalidate>
+            <div class="row g-2">
+              <div class="col-12">
+                <label class="form-label" for="login-signin-email">Email</label>
+                <input id="login-signin-email" class="form-control login-glass-input" type="email" autocomplete="email"
+                  required inputmode="email" placeholder="you@company.com">
+              </div>
+              <div class="col-12">
+                <label class="form-label" for="login-signin-password">Password</label>
+                <input id="login-signin-password" class="form-control login-glass-input" type="password"
+                  autocomplete="current-password" required placeholder="Your password">
+              </div>
+              <div class="col-12 d-flex justify-content-end">
+                <button class="btn btn-link p-0 login-auth-link" type="button" id="login-forgot-password">
+                  Forgot my password
+                </button>
+              </div>
+              <div class="col-12 d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                <button class="btn btn-outline-primary login-auth-submit" type="submit" id="login-signin-submit">
+                  Sign in
+                </button>
+                <small class="text-body-secondary">
+                  New here?
+                  <button class="btn btn-link p-0 align-baseline login-auth-link" type="button"
+                    id="login-switch-to-signup">
+                    Create an account
+                  </button>
+                </small>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="login-auth-panel d-none" id="login-panel-signup" role="tabpanel" aria-labelledby="login-tab-signup">
+          <form id="login-form-signup" class="login-auth-form" novalidate>
+            <div class="row g-2">
+              <div class="col-12">
+                <label class="form-label" for="login-signup-name">Name <span class="text-body-secondary">(optional)</span></label>
+                <input id="login-signup-name" class="form-control login-glass-input" type="text" autocomplete="name"
+                  placeholder="Your name">
+              </div>
+              <div class="col-12">
+                <label class="form-label" for="login-signup-email">Email</label>
+                <input id="login-signup-email" class="form-control login-glass-input" type="email" autocomplete="email"
+                  required inputmode="email" placeholder="you@company.com">
+              </div>
+              <div class="col-12">
+                <label class="form-label" for="login-signup-password">Password</label>
+                <input id="login-signup-password" class="form-control login-glass-input" type="password"
+                  autocomplete="new-password" required minlength="8" placeholder="Create a password">
+              </div>
+              <div class="col-12">
+                <label class="form-label" for="login-signup-password2">Confirm password</label>
+                <input id="login-signup-password2" class="form-control login-glass-input" type="password"
+                  autocomplete="new-password" required minlength="8" placeholder="Repeat the password">
+              </div>
+              <div class="col-12 d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                <button class="btn btn-outline-primary login-auth-submit" type="submit" id="login-signup-submit">
+                  Send verification code
+                </button>
+                <small class="text-body-secondary">
+                  Already have an account?
+                  <button class="btn btn-link p-0 align-baseline login-auth-link" type="button"
+                    id="login-switch-to-signin">
+                    Sign in
+                  </button>
+                </small>
+              </div>
+              <div class="col-12">
+                <p class="login-auth-help text-body-secondary mb-0">
+                  We’ll email you a one-time code to verify your address, then your password will be enabled.
+                </p>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="login-auth-panel d-none" id="login-panel-verify" role="tabpanel" aria-label="Verify your email">
+          <form id="login-form-verify" class="login-auth-form" novalidate>
+            <div class="row g-2">
+              <div class="col-12">
+                <label class="form-label" for="login-verify-email">Email</label>
+                <input id="login-verify-email" class="form-control login-glass-input" type="email" readonly>
+              </div>
+              <div class="col-12">
+                <label class="form-label" for="login-verify-code">Verification code</label>
+                <input id="login-verify-code" class="form-control login-glass-input login-otp" type="text"
+                  inputmode="numeric" autocomplete="one-time-code" pattern="\\d{6}" maxlength="6"
+                  placeholder="6-digit code" aria-describedby="login-verify-help">
+                <div id="login-verify-help" class="form-text text-body-secondary">
+                  Enter the code from your email.
+                </div>
+              </div>
+              <div class="col-12 d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                <button class="btn btn-outline-primary login-auth-submit" type="submit" id="login-verify-submit">
+                  Verify and finish signup
+                </button>
+                <div class="d-flex align-items-center gap-2">
+                  <button class="btn btn-sm btn-outline-secondary" type="button" id="login-verify-resend">
+                    Resend
+                  </button>
+                  <button class="btn btn-sm btn-link login-auth-link" type="button" id="login-verify-cancel">
+                    Back
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="login-auth-panel d-none" id="login-panel-recovery" role="tabpanel" aria-label="Reset your password">
+          <form id="login-form-recovery" class="login-auth-form" novalidate>
+            <div class="row g-2">
+              <div class="col-12">
+                <label class="form-label" for="login-recovery-email">Email</label>
+                <input id="login-recovery-email" class="form-control login-glass-input" type="email" readonly>
+              </div>
+              <div class="col-12">
+                <label class="form-label" for="login-recovery-password">New password</label>
+                <input id="login-recovery-password" class="form-control login-glass-input" type="password"
+                  autocomplete="new-password" required minlength="8" placeholder="Create a new password">
+              </div>
+              <div class="col-12">
+                <label class="form-label" for="login-recovery-password2">Confirm new password</label>
+                <input id="login-recovery-password2" class="form-control login-glass-input" type="password"
+                  autocomplete="new-password" required minlength="8" placeholder="Repeat the new password">
+              </div>
+              <div class="col-12 d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                <button class="btn btn-outline-primary login-auth-submit" type="submit" id="login-recovery-submit">
+                  Update password
+                </button>
+                <button class="btn btn-sm btn-link login-auth-link" type="button" id="login-recovery-cancel">
+                  Back
+                </button>
+              </div>
+              <div class="col-12">
+                <p class="login-auth-help text-body-secondary mb-0">
+                  After you update your password, you’ll be redirected to your profile.
+                </p>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="login-auth-signedin d-none" id="login-already-signedin" role="status" aria-live="polite">
+          <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+            <span class="text-body-secondary">You’re signed in.</span>
+            <a class="btn btn-outline-primary btn-sm" href="#profile" data-route="profile" id="login-go-profile">
+              Go to profile
+            </a>
+          </div>
+        </div>
+      </section>
+
       <div class="login-status-block" aria-label="Status">
         <p class="login-status-label" aria-hidden="true">Status</p>
         <div class="login-status-row">
