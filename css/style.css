@@ -67,18 +67,6 @@ main {
   background-color: var(--bs-body-bg);
 }
 
-.brand-title {
-  font-weight: 600;
-  font-size: 1.15rem;
-  letter-spacing: 0.01em;
-  color: var(--bs-body-color);
-}
-
-.brand-subtitle {
-  font-size: 0.9rem;
-  color: var(--bs-secondary-color);
-}
-
 .nav-pill {
   display: inline-flex;
   align-items: center;
@@ -1351,10 +1339,6 @@ header .navbar-nav .nav-link.active {
 }
 
 @media (max-width: 767.98px) {
-  .brand-title {
-    font-size: 1.05rem;
-  }
-
   .hero-section {
     padding: 2.5rem 1.75rem;
   }
