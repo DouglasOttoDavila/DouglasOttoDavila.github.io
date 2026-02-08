@@ -13,7 +13,11 @@
       "routeId": "user-story-analyzer",
       "requireAuth": true,
       "hideWhenLoggedOut": true
+    },
+    {
+      "routeId": "profile",
+      "requireAuth": true,
+      "hideWhenLoggedOut": false
     }
   ]
 }
-

@@ -1,0 +1,88 @@
+<section class="profile-shell" aria-labelledby="profile-title">
+  <header class="profile-header">
+    <h1 class="profile-title" id="profile-title">Profile</h1>
+    <p class="profile-subtitle">
+      Review your identity and store a few preferences. OAuth-provided fields are read-only.
+    </p>
+  </header>
+
+  <div class="profile-grid">
+    <section class="glass-card profile-card" aria-label="Identity">
+      <div class="profile-card-header">
+        <h2 class="profile-card-title">Identity</h2>
+        <span id="profile-auth-badge" class="profile-badge" aria-live="polite">Signed in</span>
+      </div>
+
+      <div class="profile-identity">
+        <div class="profile-avatar-block">
+          <img id="profile-avatar" class="profile-avatar" src="assets/user-default.svg" alt="Profile picture"
+            width="72" height="72" loading="lazy" decoding="async">
+          <div class="profile-avatar-actions">
+            <label class="profile-upload-btn" for="profile-avatar-file">
+              Replace photo
+            </label>
+            <input id="profile-avatar-file" class="profile-avatar-input" type="file"
+              accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" />
+            <p class="profile-hint">JPG, PNG, or WebP. Max 2 MB.</p>
+          </div>
+        </div>
+
+        <div class="profile-fieldset" role="group" aria-label="Account details">
+          <div class="profile-field">
+            <label class="profile-label" for="profile-name">Name</label>
+            <input id="profile-name" class="profile-input" type="text" readonly aria-readonly="true">
+          </div>
+
+          <div class="profile-field">
+            <label class="profile-label" for="profile-email">Email</label>
+            <input id="profile-email" class="profile-input" type="email" readonly aria-readonly="true">
+          </div>
+
+          <div class="profile-field">
+            <label class="profile-label" for="profile-provider">Provider</label>
+            <input id="profile-provider" class="profile-input" type="text" readonly aria-readonly="true">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="glass-card profile-card" aria-label="Professional details">
+      <div class="profile-card-header">
+        <h2 class="profile-card-title">Professional details</h2>
+      </div>
+
+      <form id="profile-form" class="profile-form" novalidate>
+        <div class="profile-field">
+          <label class="profile-label" for="profile-phone-country">Phone</label>
+          <div class="profile-phone-row" aria-label="Phone number">
+            <select id="profile-phone-country" class="profile-select" aria-label="Country code"></select>
+            <input id="profile-phone-dial" class="profile-input profile-input--dial d-none" type="text" inputmode="tel"
+              aria-label="Dial code" placeholder="+1">
+            <input id="profile-phone" class="profile-input" type="tel" autocomplete="tel"
+              placeholder="(555) 123-4567">
+          </div>
+          <p class="profile-hint" id="profile-phone-hint">Stored as dial code + number. (E.164 normalization optional.)</p>
+        </div>
+
+        <div class="profile-field">
+          <label class="profile-label" for="profile-role">Role</label>
+          <input id="profile-role" class="profile-input" type="text" autocomplete="organization-title"
+            placeholder="QA Automation Lead / SDET">
+        </div>
+
+        <div class="profile-field">
+          <label class="profile-label" for="profile-company-url">Company website URL</label>
+          <input id="profile-company-url" class="profile-input" type="url" inputmode="url" autocomplete="url"
+            placeholder="https://company.com">
+        </div>
+
+        <div class="profile-actions">
+          <div id="profile-save-status" class="profile-save-status" role="status" aria-live="polite"></div>
+          <button id="profile-save" class="btn btn-primary profile-save-btn" type="submit">
+            Save changes
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+</section>

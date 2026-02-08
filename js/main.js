@@ -9,7 +9,8 @@ class SPARouter {
             'prompt-explained': 'content/prompt-explained.html',
             'user-story-analyzer': 'content/user-story-analyzer.html',
             'login': 'content/login.html',
-            'privacy': 'content/privacy.html'
+            'privacy': 'content/privacy.html',
+            'profile': 'content/profile.html'
         };
         this.currentPage = '';
         this.navContainer = document.getElementById('primaryNav');
@@ -33,7 +34,10 @@ class SPARouter {
             isAuthenticated: false,
             isAllowed: false,
             email: null,
-            avatarUrl: null
+            fullName: null,
+            provider: null,
+            avatarUrl: null,
+            avatarOverrideUrl: null
         };
 
         this.authControls = {
@@ -357,6 +361,10 @@ class SPARouter {
                     this.setupLoginPage();
                 }
 
+                if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && this.authState.isAuthenticated) {
+                    this.ensureProfileRow().catch(error => console.warn('[profile] ensureProfileRow failed', error));
+                }
+
                 if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
                     this.maybeRedirectAfterLogin();
                 }
@@ -381,13 +389,20 @@ class SPARouter {
         const email = session?.user?.email || null;
         const meta = session?.user?.user_metadata || {};
         const avatarUrl = meta.avatar_url || meta.picture || meta.avatarUrl || null;
+        const fullName = meta.full_name || meta.fullName || meta.name || null;
+        const provider = session?.user?.app_metadata?.provider || meta.provider || null;
         const isAuthenticated = Boolean(session?.user);
         const isAllowed = isAuthenticated && this.isEmailAllowed(email);
 
         this.authState.isAuthenticated = isAuthenticated;
         this.authState.isAllowed = isAllowed;
         this.authState.email = email;
+        this.authState.fullName = fullName;
+        this.authState.provider = provider;
         this.authState.avatarUrl = avatarUrl;
+        if (!isAuthenticated) {
+            this.authState.avatarOverrideUrl = null;
+        }
 
         if (isAuthenticated && !isAllowed) {
             sessionStorage.setItem('auth_denied_reason', 'Your account is signed in, but not authorized to access protected pages.');
@@ -426,6 +441,64 @@ class SPARouter {
         const target = this.routes[requested] ? requested : 'home';
         if (this.currentPage === target) return;
         this.navigate(target, 'replace');
+    }
+
+    getAvatarPublicUrl(path) {
+        if (!path || !this.supabase?.storage) return null;
+        try {
+            const { data } = this.supabase.storage.from('avatars').getPublicUrl(path);
+            return data?.publicUrl || null;
+        } catch {
+            return null;
+        }
+    }
+
+    async ensureProfileRow() {
+        if (!this.supabase) return;
+        if (!this.authState.isAuthenticated) return;
+
+        const { data, error } = await this.supabase.auth.getUser();
+        if (error) throw error;
+        const user = data?.user;
+        if (!user) return;
+
+        const meta = user.user_metadata || {};
+        const fullName = meta.full_name || meta.name || this.authState.fullName || null;
+        const email = user.email || this.authState.email || null;
+        const provider = user.app_metadata?.provider || this.authState.provider || null;
+        const oauthAvatarUrl = meta.avatar_url || meta.picture || this.authState.avatarUrl || null;
+
+        if (!email) return;
+
+        // Email is used as the primary key per repo preference. Also store user_id for stable linkage + RLS checks.
+        const payload = {
+            email,
+            user_id: user.id,
+            full_name: fullName,
+            provider,
+            oauth_avatar_url: oauthAvatarUrl
+        };
+
+        const upsert = await this.supabase
+            .from('profiles')
+            .upsert(payload, { onConflict: 'email' })
+            .select('email, avatar_storage_path, oauth_avatar_url')
+            .maybeSingle();
+
+        if (upsert.error) throw upsert.error;
+
+        const row = upsert.data;
+        const overrideUrl = row?.avatar_storage_path ? this.getAvatarPublicUrl(row.avatar_storage_path) : null;
+        this.authState.avatarOverrideUrl = overrideUrl;
+        this.updateAuthUI();
+    }
+
+    getCurrentIdentity() {
+        const email = this.authState.email || null;
+        const provider = this.authState.provider || null;
+        const avatarUrl = this.authState.avatarOverrideUrl || this.authState.avatarUrl || null;
+        const fullName = this.authState.fullName || null;
+        return { email, provider, avatarUrl, fullName };
     }
 
     bindAuthControls() {
@@ -502,7 +575,8 @@ class SPARouter {
         }
 
         if (userAvatar) {
-            userAvatar.src = this.authState.avatarUrl ? this.authState.avatarUrl : fallbackAvatar;
+            const url = this.authState.avatarOverrideUrl || this.authState.avatarUrl || null;
+            userAvatar.src = url ? url : fallbackAvatar;
         }
     }
 
@@ -611,7 +685,8 @@ class SPARouter {
             'prompt-explained': 'Automation Prompt Analysis | Douglas D\'Avila',
             'user-story-analyzer': 'User Story Quality Analyzer | Douglas D\'Avila',
             'login': 'Sign in | Douglas D\'Avila',
-            'privacy': 'Privacy | Douglas D\'Avila'
+            'privacy': 'Privacy | Douglas D\'Avila',
+            'profile': 'Profile | Douglas D\'Avila'
         };
         document.title = titles[page] || titles.home;
     }
@@ -636,6 +711,10 @@ class SPARouter {
 
         if (page === 'login') {
             this.setupLoginPage();
+        }
+
+        if (page === 'profile') {
+            this.setupProfilePage();
         }
     }
 
@@ -742,6 +821,260 @@ class SPARouter {
         // If already signed in and allowed, bounce to requested page quickly.
         if (this.isAuthedForProtectedPages()) {
             this.maybeRedirectAfterLogin();
+        }
+    }
+
+    setupProfilePage() {
+        const statusEl = document.getElementById('profile-save-status');
+        const badgeEl = document.getElementById('profile-auth-badge');
+        const avatarEl = document.getElementById('profile-avatar');
+        const avatarFileEl = document.getElementById('profile-avatar-file');
+
+        const nameEl = document.getElementById('profile-name');
+        const emailEl = document.getElementById('profile-email');
+        const providerEl = document.getElementById('profile-provider');
+
+        const countryEl = document.getElementById('profile-phone-country');
+        const dialEl = document.getElementById('profile-phone-dial');
+        const phoneEl = document.getElementById('profile-phone');
+        const roleEl = document.getElementById('profile-role');
+        const companyUrlEl = document.getElementById('profile-company-url');
+        const formEl = document.getElementById('profile-form');
+
+        const setStatus = (message) => {
+            if (!statusEl) return;
+            statusEl.textContent = message || '';
+        };
+
+        if (!this.authState.isAuthenticated || !this.supabase) {
+            if (badgeEl) badgeEl.textContent = 'Not signed in';
+            setStatus('Please sign in to view your profile.');
+            this.navigate('login', 'replace');
+            return;
+        }
+
+        const fallbackAvatar = 'assets/user-default.svg';
+        const identity = this.getCurrentIdentity();
+        if (nameEl) nameEl.value = identity.fullName || '';
+        if (emailEl) emailEl.value = identity.email || '';
+        if (providerEl) providerEl.value = identity.provider || '';
+        if (badgeEl) badgeEl.textContent = 'Signed in';
+        if (avatarEl) avatarEl.src = identity.avatarUrl || fallbackAvatar;
+
+        const countries = [
+            { iso2: 'US', name: 'United States', dial: '+1' },
+            { iso2: 'BR', name: 'Brazil', dial: '+55' },
+            { iso2: 'CA', name: 'Canada', dial: '+1' },
+            { iso2: 'GB', name: 'United Kingdom', dial: '+44' },
+            { iso2: 'DE', name: 'Germany', dial: '+49' },
+            { iso2: 'FR', name: 'France', dial: '+33' },
+            { iso2: 'ES', name: 'Spain', dial: '+34' },
+            { iso2: 'PT', name: 'Portugal', dial: '+351' },
+            { iso2: 'NL', name: 'Netherlands', dial: '+31' },
+            { iso2: 'AU', name: 'Australia', dial: '+61' },
+            { iso2: 'IN', name: 'India', dial: '+91' },
+            { iso2: 'JP', name: 'Japan', dial: '+81' },
+            { iso2: 'KR', name: 'South Korea', dial: '+82' },
+            { iso2: 'MX', name: 'Mexico', dial: '+52' },
+            { iso2: 'AR', name: 'Argentina', dial: '+54' },
+            { iso2: 'CL', name: 'Chile', dial: '+56' },
+            { iso2: 'CO', name: 'Colombia', dial: '+57' },
+            { iso2: 'UY', name: 'Uruguay', dial: '+598' },
+            { iso2: 'PE', name: 'Peru', dial: '+51' },
+            { iso2: 'ZA', name: 'South Africa', dial: '+27' },
+            { iso2: 'OTHER', name: 'Other', dial: '' }
+        ];
+
+        const toFlag = (iso2) => {
+            if (!iso2 || iso2.length !== 2) return '🌐';
+            const base = 0x1F1E6;
+            const A = 0x41;
+            const chars = iso2.toUpperCase().split('');
+            return String.fromCodePoint(base + (chars[0].charCodeAt(0) - A), base + (chars[1].charCodeAt(0) - A));
+        };
+
+        if (countryEl && !countryEl.dataset.bound) {
+            countryEl.innerHTML = '';
+            countries.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.iso2;
+                const flag = c.iso2 === 'OTHER' ? '🌐' : toFlag(c.iso2);
+                opt.textContent = `${flag} ${c.name}${c.dial ? ` (${c.dial})` : ''}`;
+                opt.dataset.dial = c.dial || '';
+                countryEl.appendChild(opt);
+            });
+            countryEl.value = 'US';
+            countryEl.dataset.bound = 'true';
+        }
+
+        const syncDialInput = () => {
+            if (!countryEl || !dialEl) return;
+            const selected = countryEl.options[countryEl.selectedIndex];
+            const dial = selected?.dataset?.dial || '';
+            const isOther = countryEl.value === 'OTHER';
+            dialEl.classList.toggle('d-none', !isOther);
+            if (!isOther) {
+                dialEl.value = dial;
+            } else if (!dialEl.value) {
+                dialEl.value = '+';
+            }
+        };
+
+        if (countryEl && dialEl && !countryEl.dataset.boundChange) {
+            countryEl.addEventListener('change', syncDialInput);
+            countryEl.dataset.boundChange = 'true';
+        }
+        syncDialInput();
+
+        let pendingAvatarFile = null;
+        if (avatarFileEl && !avatarFileEl.dataset.bound) {
+            avatarFileEl.addEventListener('change', () => {
+                const file = avatarFileEl.files?.[0] || null;
+                pendingAvatarFile = null;
+                if (!file) return;
+
+                const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+                if (!allowed.includes(file.type)) {
+                    setStatus('Unsupported image type. Use JPG, PNG, or WebP.');
+                    avatarFileEl.value = '';
+                    return;
+                }
+
+                const maxBytes = 2 * 1024 * 1024;
+                if (file.size > maxBytes) {
+                    setStatus('Image too large. Max 2 MB.');
+                    avatarFileEl.value = '';
+                    return;
+                }
+
+                pendingAvatarFile = file;
+                const url = URL.createObjectURL(file);
+                if (avatarEl) avatarEl.src = url;
+                setStatus('New photo selected. Click Save changes.');
+            });
+            avatarFileEl.dataset.bound = 'true';
+        }
+
+        const loadExisting = async () => {
+            if (!identity.email) return null;
+            const { data, error } = await this.supabase
+                .from('profiles')
+                .select('email, role, company_website_url, phone_country_iso2, phone_dial_code, phone_number, avatar_storage_path, oauth_avatar_url')
+                .eq('email', identity.email)
+                .maybeSingle();
+            if (error) throw error;
+            return data || null;
+        };
+
+        const applyExisting = (row) => {
+            if (!row) return;
+            if (roleEl) roleEl.value = row.role || '';
+            if (companyUrlEl) companyUrlEl.value = row.company_website_url || '';
+            if (phoneEl) phoneEl.value = row.phone_number || '';
+
+            if (countryEl) {
+                const iso2 = row.phone_country_iso2 || '';
+                const option = Array.from(countryEl.options).find(o => o.value === iso2);
+                countryEl.value = option ? iso2 : 'OTHER';
+            }
+
+            if (dialEl) {
+                dialEl.value = row.phone_dial_code || '';
+            }
+            syncDialInput();
+
+            const overrideUrl = row.avatar_storage_path ? this.getAvatarPublicUrl(row.avatar_storage_path) : null;
+            const effectiveAvatar = overrideUrl || identity.avatarUrl || row.oauth_avatar_url || fallbackAvatar;
+            if (avatarEl) avatarEl.src = effectiveAvatar;
+        };
+
+        loadExisting()
+            .then(applyExisting)
+            .catch(err => {
+                console.warn('[profile] load failed', err);
+                setStatus('Unable to load profile right now.');
+            });
+
+        const normalizeUrl = (value) => {
+            const raw = String(value || '').trim();
+            if (!raw) return '';
+            if (/^https?:\/\//i.test(raw)) return raw;
+            return `https://${raw}`;
+        };
+
+        const save = async () => {
+            setStatus('Saving...');
+
+            const { data: userData, error: userErr } = await this.supabase.auth.getUser();
+            if (userErr) throw userErr;
+            const user = userData?.user;
+            if (!user) throw new Error('Missing user session');
+
+            const email = user.email || identity.email;
+            if (!email) throw new Error('Missing email');
+
+            const meta = user.user_metadata || {};
+            const fullName = meta.full_name || meta.name || identity.fullName || null;
+            const provider = user.app_metadata?.provider || identity.provider || null;
+            const oauthAvatarUrl = meta.avatar_url || meta.picture || identity.avatarUrl || null;
+
+            let avatarPath = null;
+            if (pendingAvatarFile) {
+                const ext = pendingAvatarFile.type === 'image/png' ? 'png' : (pendingAvatarFile.type === 'image/webp' ? 'webp' : 'jpg');
+                const path = `${user.id}/avatar.${ext}`;
+                const upload = await this.supabase.storage
+                    .from('avatars')
+                    .upload(path, pendingAvatarFile, { upsert: true, contentType: pendingAvatarFile.type, cacheControl: '3600' });
+                if (upload.error) throw upload.error;
+                avatarPath = path;
+            }
+
+            const phoneCountry = countryEl ? countryEl.value : null;
+            const phoneDial = dialEl ? String(dialEl.value || '').trim() : '';
+            const phoneNumber = phoneEl ? String(phoneEl.value || '').trim() : '';
+
+            const payload = {
+                email,
+                user_id: user.id,
+                full_name: fullName,
+                provider,
+                oauth_avatar_url: oauthAvatarUrl,
+                role: roleEl ? String(roleEl.value || '').trim() : null,
+                company_website_url: companyUrlEl ? normalizeUrl(companyUrlEl.value) : null,
+                phone_country_iso2: phoneCountry && phoneCountry !== 'OTHER' ? phoneCountry : null,
+                phone_dial_code: phoneDial || null,
+                phone_number: phoneNumber || null
+            };
+
+            if (avatarPath) {
+                payload.avatar_storage_path = avatarPath;
+            }
+
+            const { data, error } = await this.supabase
+                .from('profiles')
+                .upsert(payload, { onConflict: 'email' })
+                .select('avatar_storage_path')
+                .maybeSingle();
+            if (error) throw error;
+
+            const overrideUrl = data?.avatar_storage_path ? this.getAvatarPublicUrl(data.avatar_storage_path) : null;
+            this.authState.avatarOverrideUrl = overrideUrl;
+            this.updateAuthUI();
+
+            pendingAvatarFile = null;
+            if (avatarFileEl) avatarFileEl.value = '';
+            setStatus('Saved.');
+        };
+
+        if (formEl && !formEl.dataset.bound) {
+            formEl.addEventListener('submit', (event) => {
+                event.preventDefault();
+                save().catch(err => {
+                    console.error('[profile] save failed', err);
+                    setStatus('Unable to save right now.');
+                });
+            });
+            formEl.dataset.bound = 'true';
         }
     }
 
