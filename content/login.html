@@ -102,22 +102,27 @@
                 <input id="login-signin-password" class="form-control login-glass-input" type="password"
                   autocomplete="current-password" required placeholder="Your password">
               </div>
-              <div class="col-12 d-flex justify-content-end">
-                <button class="btn btn-link p-0 login-auth-link" type="button" id="login-forgot-password">
-                  Forgot my password
-                </button>
-              </div>
-              <div class="col-12 d-flex align-items-center justify-content-between gap-2 flex-wrap">
-                <button class="btn btn-outline-primary login-auth-submit" type="submit" id="login-signin-submit">
+              <div class="col-12">
+                <button class="btn btn-outline-primary login-auth-submit w-100" type="submit" id="login-signin-submit">
                   Sign in
                 </button>
-                <small class="text-body-secondary">
-                  New here?
-                  <button class="btn btn-link p-0 align-baseline login-auth-link" type="button"
-                    id="login-switch-to-signup">
-                    Create an account
-                  </button>
-                </small>
+              </div>
+              <div class="col-12">
+                <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                  <small class="text-body-secondary">
+                    New here?
+                    <button class="btn btn-link p-0 align-baseline login-auth-link" type="button"
+                      id="login-switch-to-signup">
+                      Create an account
+                    </button>
+                  </small>
+                  <small class="text-body-secondary">
+                    <button class="btn btn-link p-0 align-baseline login-auth-link" type="button"
+                      id="login-forgot-password">
+                      Forgot my password
+                    </button>
+                  </small>
+                </div>
               </div>
             </div>
           </form>
