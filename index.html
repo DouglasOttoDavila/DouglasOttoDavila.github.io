@@ -19,18 +19,16 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 
-<body class="d-flex flex-column min-vh-100" data-bs-theme="dark">
+  <body class="d-flex flex-column min-vh-100" data-bs-theme="dark">
   <header class="shadow-sm border-bottom sticky-top bg-body">
     <nav class="navbar navbar-expand-lg bg-body-tertiary">
       <div class="container py-2">
         <a class="navbar-brand d-flex align-items-center gap-3" href="#home" data-route="home">
           <img src="assets/profile.png" alt="Douglas D'Avila"
             class="rounded-circle border border-2 border-primary-subtle shadow-sm" width="64" height="64">
-          <div class="d-flex flex-column">
-            <img src="assets/images/douglas-logo-dark.png" alt="Douglas D'Avila" class="navbar-logo navbar-logo-dark"
-              height="64">
-            <img src="assets/images/douglas-logo-light.png" alt="Douglas D'Avila" class="navbar-logo navbar-logo-light"
-              height="64">
+          <div class="d-flex flex-column lh-sm">
+            <span class="brand-title">Douglas D'Avila</span>
+            <span class="brand-subtitle">QA Architect · AI-Enhanced Solutions</span>
           </div>
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#primaryNav"
@@ -42,29 +40,15 @@
             <li class="nav-item"><a href="#home" class="nav-link active" data-route="home">Home</a></li>
             <li class="nav-item"><a href="#about" class="nav-link" data-route="about">About Me</a></li>
             <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="aiToolsDropdown" role="button" data-bs-toggle="dropdown"
-                aria-expanded="false" data-bs-auto-close="outside">
-                AI-Powered Tools
+              <a class="nav-link dropdown-toggle" href="#" id="privateDropdown" role="button" data-bs-toggle="dropdown"
+                aria-expanded="false">
+                Private
               </a>
-              <ul class="dropdown-menu dropdown-menu-panel" aria-labelledby="aiToolsDropdown"
-                data-bs-auto-close="outside" id="aiToolsMenu">
-                <li class="dropdown-submenu">
-                  <button
-                    class="dropdown-item dropdown-toggle submenu-toggle d-flex align-items-center justify-content-between gap-3"
-                    type="button" data-bs-toggle="collapse" data-bs-target="#documentationSubmenu" aria-expanded="false"
-                    data-submenu-toggle>
-                    <span>Documentation</span>
-                    <i class="fa-solid fa-chevron-down submenu-icon" aria-hidden="true"></i>
-                  </button>
-                  <div class="submenu collapse" id="documentationSubmenu" data-bs-parent="#aiToolsMenu">
-                    <ul class="submenu-list list-unstyled mb-0">
-                      <li>
-                        <a class="dropdown-item submenu-link" href="#prompt-explained" data-route="prompt-explained">
-                          Playwright Prompt Explained
-                        </a>
-                      </li>
-                    </ul>
-                  </div>
+              <ul class="dropdown-menu dropdown-menu-panel dropdown-menu-end" aria-labelledby="privateDropdown">
+                <li>
+                  <a class="dropdown-item" href="#prompt-explained" data-route="prompt-explained">
+                    Playwright Prompt Explained
+                  </a>
                 </li>
                 <li>
                   <a class="dropdown-item" href="#user-story-analyzer" data-route="user-story-analyzer">
@@ -75,28 +59,6 @@
             </li>
           </ul>
           <div id="auth-controls" class="navbar-controls d-flex align-items-center gap-2 ms-lg-3">
-            <a href="#login" class="btn btn-sm btn-outline-primary rounded-pill d-flex align-items-center gap-2"
-              data-route="login" id="nav-login">
-              <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
-              <span class="small">Login</span>
-            </a>
-
-            <div class="dropdown d-none" id="nav-user-menu">
-              <button class="btn btn-sm btn-outline-secondary rounded-pill auth-user-btn dropdown-toggle" type="button"
-                id="nav-user-menu-btn" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="fa-solid fa-circle-user" aria-hidden="true"></i>
-                <span id="nav-user-email" class="auth-user-email"></span>
-              </button>
-              <ul class="dropdown-menu dropdown-menu-end auth-dropdown-menu" aria-labelledby="nav-user-menu-btn">
-                <li>
-                  <button id="nav-logout" class="dropdown-item d-flex align-items-center gap-2" type="button">
-                    <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
-                    <span>Logout</span>
-                  </button>
-                </li>
-              </ul>
-            </div>
-
             <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle theme"
               aria-pressed="false">
               <span class="theme-toggle-track" aria-hidden="true">
@@ -106,6 +68,49 @@
                 </span>
               </span>
             </button>
+
+            <a href="#login" class="user-pill user-pill--login nav-pill"
+              data-route="login" id="nav-login" aria-label="Log in">
+              <img id="nav-login-avatar" class="user-pill-avatar" src="assets/user-default.svg" alt=""
+                width="28" height="28" loading="lazy" decoding="async">
+              <span class="user-pill-email">Log In</span>
+            </a>
+
+            <div class="dropdown d-none" id="nav-user-menu">
+              <button class="user-pill dropdown-toggle" type="button"
+                id="nav-user-menu-btn" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="menu">
+                <img id="nav-user-avatar" class="user-pill-avatar" src="assets/user-default.svg" alt=""
+                  width="28" height="28" loading="lazy" decoding="async">
+                <span id="nav-user-email" class="user-pill-email"></span>
+                <i class="fa-solid fa-chevron-down user-pill-caret" aria-hidden="true"></i>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-panel dropdown-menu-end auth-dropdown-menu user-menu"
+                aria-labelledby="nav-user-menu-btn" role="menu">
+                <li>
+                  <a class="dropdown-item user-menu-item" href="#about" data-route="about" role="menuitem">
+                    <i class="fa-regular fa-id-badge user-menu-icon" aria-hidden="true"></i>
+                    <span>Profile</span>
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item user-menu-item" href="#prompt-explained" data-route="prompt-explained"
+                    role="menuitem">
+                    <i class="fa-solid fa-lock user-menu-icon" aria-hidden="true"></i>
+                    <span>Dashboard</span>
+                  </a>
+                </li>
+                <li>
+                  <hr class="dropdown-divider user-menu-divider">
+                </li>
+                <li>
+                  <button id="nav-logout" class="dropdown-item user-menu-item user-menu-item--danger" type="button"
+                    role="menuitem">
+                    <i class="fa-solid fa-right-from-bracket user-menu-icon" aria-hidden="true"></i>
+                    <span>Logout</span>
+                  </button>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>

@@ -1,13 +1,15 @@
 class SPARouter {
     constructor() {
         this.contentArea = document.getElementById('content-area');
-        this.navLinks = Array.from(document.querySelectorAll('[data-route]'));
+        // Static header links only (content pages may add route links dynamically).
+        this.navLinks = Array.from(document.querySelectorAll('header [data-route]'));
         this.routes = {
             'home': 'content/home.html',
             'about': 'content/about.html',
             'prompt-explained': 'content/prompt-explained.html',
             'user-story-analyzer': 'content/user-story-analyzer.html',
-            'login': 'content/login.html'
+            'login': 'content/login.html',
+            'privacy': 'content/privacy.html'
         };
         this.currentPage = '';
         this.navContainer = document.getElementById('primaryNav');
@@ -30,7 +32,8 @@ class SPARouter {
             initialized: false,
             isAuthenticated: false,
             isAllowed: false,
-            email: null
+            email: null,
+            avatarUrl: null
         };
 
         this.authControls = {
@@ -38,21 +41,47 @@ class SPARouter {
             userMenu: document.getElementById('nav-user-menu'),
             userMenuBtn: document.getElementById('nav-user-menu-btn'),
             userEmail: document.getElementById('nav-user-email'),
-            logoutBtn: document.getElementById('nav-logout')
+            logoutBtn: document.getElementById('nav-logout'),
+            loginAvatar: document.getElementById('nav-login-avatar'),
+            userAvatar: document.getElementById('nav-user-avatar')
         };
     }
 
+    normalizeRouteId(value) {
+        // Support both "#route" and "#/route" style hashes, plus accidental trailing slashes/query strings.
+        return String(value || '')
+            .replace(/^#/, '')
+            .replace(/^\/+/, '')
+            .replace(/\/+$/, '')
+            .split('?')[0]
+            .trim();
+    }
+
     async start() {
-        this.navLinks.forEach(link => {
-            link.addEventListener('click', (event) => {
-                event.preventDefault();
-                const targetPage = link.dataset.route || 'home';
-                this.navigate(targetPage, 'push');
-            });
+        // Global route handling via event delegation so dynamic content links work.
+        document.addEventListener('click', (event) => {
+            const target = event.target?.closest?.('[data-route]');
+            if (!target) return;
+            if (event.defaultPrevented) return;
+            if (event.button !== 0) return;
+            if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+            event.preventDefault();
+            const targetPage = target.dataset.route || 'home';
+            this.navigate(targetPage, 'push');
         });
 
         window.addEventListener('popstate', (event) => {
-            const page = event.state?.page || 'home';
+            const page = event.state?.page || (this.normalizeRouteId(window.location.hash) || 'home');
+            this.navigate(page, 'none');
+        });
+
+        // Hash-only navigation (e.g. user types a URL with #prompt-explained).
+        // Without this, the SPA won't react until a full refresh because `hashchange` does not fire `popstate`.
+        window.addEventListener('hashchange', () => {
+            const page = this.normalizeRouteId(window.location.hash) || 'home';
+            // Ensure back/forward has consistent state even for hash-only navigation.
+            history.replaceState({ page }, '', `#${page}`);
             this.navigate(page, 'none');
         });
 
@@ -66,12 +95,15 @@ class SPARouter {
         this.updateAuthUI();
         this.applyNavVisibilityRules();
 
-        const initialPage = window.location.hash.replace('#', '') || 'home';
+        const initialPage = this.normalizeRouteId(window.location.hash) || 'home';
         this.navigate(initialPage, 'none');
     }
 
     async navigate(page, historyMode = 'push') {
-        const requestedPage = page;
+        const normalized = this.normalizeRouteId(page);
+        const requestedPage = normalized;
+
+        page = normalized;
         if (!this.routes[page]) {
             page = 'home';
             if (historyMode === 'none') {
@@ -105,6 +137,7 @@ class SPARouter {
                 history.replaceState({ page }, '', `#${page}`);
             }
 
+            this.setPageChrome(page);
             this.setActiveLink(page);
             await this.loadContent(page);
             this.currentPage = page;
@@ -115,6 +148,11 @@ class SPARouter {
             console.error('Navigation error:', error);
             this.showError('Sorry, something went wrong while loading this section.');
         }
+    }
+
+    setPageChrome(page) {
+        document.body.classList.toggle('page-login', page === 'login');
+        document.body.classList.toggle('page-home', page === 'home');
     }
 
     async loadContent(page) {
@@ -229,9 +267,18 @@ class SPARouter {
                 this.authConfig.supabase.anonKey = runtimeAnonKey;
             }
 
-            if (Array.isArray(runtimeAllowedEmails) && runtimeAllowedEmails.length > 0) {
-                this.authConfig.accessControl = this.authConfig.accessControl || {};
-                this.authConfig.accessControl.allowedEmails = runtimeAllowedEmails;
+            if (runtimeAllowedEmails) {
+                let allowlist = [];
+                if (Array.isArray(runtimeAllowedEmails)) {
+                    allowlist = runtimeAllowedEmails;
+                } else if (typeof runtimeAllowedEmails === 'string') {
+                    allowlist = runtimeAllowedEmails.split(',').map(v => v.trim()).filter(Boolean);
+                }
+
+                if (allowlist.length > 0) {
+                    this.authConfig.accessControl = this.authConfig.accessControl || {};
+                    this.authConfig.accessControl.allowedEmails = allowlist;
+                }
             }
         } catch {
             // Treat parse/network failures as "no runtime config".
@@ -305,6 +352,11 @@ class SPARouter {
                 this.updateAuthUI();
                 this.applyNavVisibilityRules();
 
+                // If the user is currently on the login page, refresh its UI (hide SSO, update dot, etc.).
+                if (this.currentPage === 'login') {
+                    this.setupLoginPage();
+                }
+
                 if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
                     this.maybeRedirectAfterLogin();
                 }
@@ -313,10 +365,9 @@ class SPARouter {
                     sessionStorage.removeItem('post_login_redirect');
                     sessionStorage.removeItem('auth_denied_reason');
 
-                    const current = this.currentPage || (window.location.hash.replace('#', '') || 'home');
-                    const guard = this.guardRoute(current);
-                    if (guard?.redirectTo && guard.redirectTo !== current) {
-                        this.navigate(guard.redirectTo, 'replace');
+                    // On sign out, always return to the login route (and avoid leaving the UI on a protected screen).
+                    if ((this.currentPage || '') !== 'login') {
+                        this.navigate('login', 'replace');
                     }
                 }
             });
@@ -328,12 +379,15 @@ class SPARouter {
 
     setAuthSession(session) {
         const email = session?.user?.email || null;
+        const meta = session?.user?.user_metadata || {};
+        const avatarUrl = meta.avatar_url || meta.picture || meta.avatarUrl || null;
         const isAuthenticated = Boolean(session?.user);
         const isAllowed = isAuthenticated && this.isEmailAllowed(email);
 
         this.authState.isAuthenticated = isAuthenticated;
         this.authState.isAllowed = isAllowed;
         this.authState.email = email;
+        this.authState.avatarUrl = avatarUrl;
 
         if (isAuthenticated && !isAllowed) {
             sessionStorage.setItem('auth_denied_reason', 'Your account is signed in, but not authorized to access protected pages.');
@@ -390,28 +444,65 @@ class SPARouter {
             });
             logoutBtn.dataset.bound = 'true';
         }
+
+        // Focus management for the dropdown (Bootstrap emits events on the `.dropdown` container).
+        const userMenu = this.authControls.userMenu;
+        const userMenuBtn = this.authControls.userMenuBtn;
+        if (userMenu && !userMenu.dataset.boundFocus) {
+            userMenu.addEventListener('shown.bs.dropdown', () => {
+                const first = userMenu.querySelector('[role="menuitem"]');
+                if (first && typeof first.focus === 'function') {
+                    first.focus({ preventScroll: true });
+                }
+            });
+            userMenu.addEventListener('hidden.bs.dropdown', () => {
+                if (userMenuBtn && typeof userMenuBtn.focus === 'function') {
+                    userMenuBtn.focus({ preventScroll: true });
+                }
+            });
+            userMenu.dataset.boundFocus = 'true';
+        }
     }
 
     updateAuthUI() {
         const loginLink = this.authControls.loginLink;
         const userMenu = this.authControls.userMenu;
         const userEmail = this.authControls.userEmail;
+        const loginAvatar = this.authControls.loginAvatar;
+        const userAvatar = this.authControls.userAvatar;
 
         const showLoggedIn = this.authState.isAuthenticated;
+        const fallbackAvatar = 'assets/user-default.svg';
 
         if (loginLink) {
             loginLink.classList.toggle('d-none', showLoggedIn);
+            // Also set the `hidden` attribute to avoid any utility class ordering issues.
+            loginLink.hidden = showLoggedIn;
+            loginLink.setAttribute('aria-hidden', String(showLoggedIn));
+            if (showLoggedIn) {
+                loginLink.setAttribute('tabindex', '-1');
+            } else {
+                loginLink.removeAttribute('tabindex');
+            }
             loginLink.removeAttribute('aria-disabled');
             loginLink.classList.remove('disabled');
-            loginLink.removeAttribute('tabindex');
         }
 
         if (userMenu) {
             userMenu.classList.toggle('d-none', !showLoggedIn);
+            userMenu.hidden = !showLoggedIn;
         }
 
         if (userEmail) {
             userEmail.textContent = this.authState.email ? this.authState.email : '';
+        }
+
+        if (loginAvatar) {
+            loginAvatar.src = fallbackAvatar;
+        }
+
+        if (userAvatar) {
+            userAvatar.src = this.authState.avatarUrl ? this.authState.avatarUrl : fallbackAvatar;
         }
     }
 
@@ -519,7 +610,8 @@ class SPARouter {
             'about': "About Douglas D'Avila | QA Automation Engineer & SDET",
             'prompt-explained': 'Automation Prompt Analysis | Douglas D\'Avila',
             'user-story-analyzer': 'User Story Quality Analyzer | Douglas D\'Avila',
-            'login': 'Login | Douglas D\'Avila'
+            'login': 'Sign in | Douglas D\'Avila',
+            'privacy': 'Privacy | Douglas D\'Avila'
         };
         document.title = titles[page] || titles.home;
     }
@@ -552,6 +644,8 @@ class SPARouter {
         const errorBox = document.getElementById('login-error');
         const statusBox = document.getElementById('login-status');
         const emailEl = document.getElementById('login-email');
+        const statusDot = document.getElementById('login-status-dot');
+        const ssoContainer = document.getElementById('login-sso');
         const logoutBtn = document.getElementById('login-logout');
         const githubBtn = document.getElementById('login-github');
         const googleBtn = document.getElementById('login-google');
@@ -576,6 +670,12 @@ class SPARouter {
             emailEl.textContent = this.authState.email || 'Not signed in';
         }
 
+        if (statusDot) {
+            const authed = Boolean(this.authState.isAuthenticated);
+            statusDot.classList.toggle('is-ok', authed);
+            statusDot.classList.toggle('is-warn', !authed);
+        }
+
         const showLogout = this.authState.isAuthenticated;
         if (logoutBtn) {
             logoutBtn.classList.toggle('d-none', !showLogout);
@@ -590,6 +690,10 @@ class SPARouter {
                 });
                 logoutBtn.dataset.bound = 'true';
             }
+        }
+
+        if (ssoContainer) {
+            ssoContainer.classList.toggle('d-none', showLogout);
         }
 
         const providers = Array.isArray(this.authConfig?.supabase?.oauthProviders) ? this.authConfig.supabase.oauthProviders : ['github'];
@@ -1073,6 +1177,7 @@ function initDropdownSubmenus() {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
+    document.body.classList.add('page-space');
     initThemeToggle();
     initDropdownSubmenus();
 

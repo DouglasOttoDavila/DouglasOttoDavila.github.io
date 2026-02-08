@@ -1,13 +1,36 @@
-<section class="login-wrapper d-flex flex-column gap-4">
-  <div class="text-center mb-2">
-    <h1 class="display-5 fw-bold mb-3">Login</h1>
-    <p class="lead text-body-secondary mx-auto" style="max-width: 780px;">
-      Sign in to access protected sections of the site.
-    </p>
-  </div>
+<section class="login-shell" aria-labelledby="login-title">
+  <div class="login-grid">
+    <aside class="glass-card login-panel login-panel--info" aria-label="Private area">
+      <h2 class="login-panel__title">Private area</h2>
+      <p class="login-panel__text">
+        Access protected pages (case studies, prompts, internal notes). Sign-in uses trusted providers and takes seconds.
+      </p>
 
-  <div class="card shadow-sm">
-    <div class="card-body p-4 p-lg-5">
+      <div class="login-panel__divider" role="separator" aria-hidden="true"></div>
+
+      <ul class="login-feature-list" role="list">
+        <li class="login-feature">
+          <span class="feature-icon" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+          <span><strong>SSO</strong> via GitHub or Google (no passwords stored here)</span>
+        </li>
+        <li class="login-feature">
+          <span class="feature-icon" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+          <span><strong>Clear</strong> sign-in state + accessible focus and keyboard navigation</span>
+        </li>
+        <li class="login-feature">
+          <span class="feature-icon" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+          <span><strong>Responsive</strong> and compact layout (looks great on mobile)</span>
+        </li>
+      </ul>
+    </aside>
+
+    <div class="glass-card login-panel login-panel--form">
+      <p class="login-eyebrow">Secure access</p>
+      <h1 class="login-title" id="login-title">Sign in</h1>
+      <p class="login-subtitle">
+        Use a <strong>trusted provider</strong> to access protected sections of the portfolio.
+      </p>
+
       <div id="login-config-warning" class="alert alert-warning d-none" role="alert">
         <div class="d-flex gap-2">
           <i class="fa-solid fa-triangle-exclamation mt-1" aria-hidden="true"></i>
@@ -26,28 +49,41 @@
       <div id="login-error" class="alert alert-danger d-none" role="alert"></div>
       <div id="login-status" class="alert alert-info d-none" role="status" aria-live="polite"></div>
 
-      <div class="d-grid gap-3">
-        <button class="btn btn-dark btn-lg d-flex align-items-center justify-content-center gap-2"
-          type="button" id="login-github">
-          <i class="fa-brands fa-github" aria-hidden="true"></i>
-          <span>Continue with GitHub</span>
+      <div class="login-sso" id="login-sso" aria-label="Sign in providers">
+        <button class="sso-btn is-primary" type="button" id="login-github">
+          <span class="sso-icon" aria-hidden="true"><i class="fa-brands fa-github"></i></span>
+          <span class="sso-copy">
+            <span class="sso-title">Continue with GitHub</span>
+            <span class="sso-meta">Recommended for recruiters</span>
+          </span>
+          <span class="sso-arrow" aria-hidden="true"><i class="fa-solid fa-chevron-right"></i></span>
         </button>
-        <button class="btn btn-outline-secondary btn-lg d-flex align-items-center justify-content-center gap-2"
-          type="button" id="login-google">
-          <i class="fa-brands fa-google" aria-hidden="true"></i>
-          <span>Continue with Google</span>
+
+        <button class="sso-btn" type="button" id="login-google">
+          <span class="sso-icon" aria-hidden="true"><i class="fa-brands fa-google"></i></span>
+          <span class="sso-copy">
+            <span class="sso-title">Continue with Google</span>
+            <span class="sso-meta">Fast sign-in</span>
+          </span>
+          <span class="sso-arrow" aria-hidden="true"><i class="fa-solid fa-chevron-right"></i></span>
         </button>
       </div>
 
-      <hr class="my-4">
-
-      <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
-        <div class="text-body-secondary small">
-          <span>Signed in as:</span>
-          <strong id="login-email">Not signed in</strong>
+      <div class="login-status-block" aria-label="Status">
+        <p class="login-status-label" aria-hidden="true">Status</p>
+        <div class="login-status-row">
+          <div class="status-pill">
+            <span class="status-dot is-warn" id="login-status-dot" aria-hidden="true"></span>
+            <strong id="login-email">Not signed in</strong>
+          </div>
+          <a class="status-link" href="#privacy" data-route="privacy" aria-label="Privacy">
+            <span>Privacy</span>
+            <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+          </a>
         </div>
-        <button class="btn btn-outline-secondary d-none" type="button" id="login-logout">
-          Logout
+
+        <button class="btn btn-outline-secondary d-none login-logout" type="button" id="login-logout">
+          Log out
         </button>
       </div>
     </div>
