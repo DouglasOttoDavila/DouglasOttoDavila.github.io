@@ -8,8 +8,5 @@
       "github",
       "google"
     ]
-  },
-  "accessControl": {
-    "allowedEmails": []
   }
 }

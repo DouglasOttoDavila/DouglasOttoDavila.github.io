@@ -6,8 +6,11 @@ class SPARouter {
         this.routes = {
             'home': 'content/home.html',
             'about': 'content/about.html',
-            'prompt-explained': 'content/prompt-explained.html',
-            'user-story-analyzer': 'content/user-story-analyzer.html',
+            // These routes are backed by Supabase Storage (see `content/protected-pages.json`).
+            // Keep a non-sensitive placeholder fragment so the deployed site never ships the real content as static files.
+            'prompt-explained': 'content/protected-loading.html',
+            'user-story-analyzer': 'content/protected-loading.html',
+            'qa-ai-training-program': 'content/qa-ai-training-program.html',
             'login': 'content/login.html',
             'privacy': 'content/privacy.html',
             'profile': 'content/profile.html'
@@ -32,7 +35,9 @@ class SPARouter {
         this.authState = {
             initialized: false,
             isAuthenticated: false,
-            isAllowed: false,
+            hasPrivileges: false,
+            isAdmin: false,
+            privilegesLoaded: false,
             email: null,
             fullName: null,
             provider: null,
@@ -159,8 +164,109 @@ class SPARouter {
         document.body.classList.toggle('page-home', page === 'home');
     }
 
+    getSupabaseStorageSpec(spec) {
+        if (!spec || spec.type !== 'supabase_storage') return null;
+        const bucket = String(spec.bucket || '').trim();
+        const path = String(spec.path || '').trim();
+        if (!bucket || !path) return null;
+        return { bucket, path };
+    }
+
+    getProtectedContentHtmlSpec(routeId) {
+        const entry = this.protectedPagesIndex.get(routeId);
+        return this.getSupabaseStorageSpec(entry?.content?.html);
+    }
+
+    getProtectedDownloadSpec(routeId, elementId) {
+        const entry = this.protectedPagesIndex.get(routeId);
+        const downloads = Array.isArray(entry?.content?.downloads) ? entry.content.downloads : [];
+        const match = downloads.find(d => d && d.elementId === elementId);
+        if (!match) return null;
+
+        const storage = this.getSupabaseStorageSpec(match);
+        if (!storage) return null;
+
+        return {
+            ...storage,
+            filename: String(match.filename || '').trim() || null,
+            contentType: String(match.contentType || '').trim() || null
+        };
+    }
+
+    getProtectedIframeSpec(routeId) {
+        const entry = this.protectedPagesIndex.get(routeId);
+        const storage = this.getSupabaseStorageSpec(entry?.content?.iframe);
+        if (!storage) return null;
+
+        const rawExpiry = Number(entry?.content?.iframe?.expiresInSeconds);
+        const expiresInSeconds = Number.isFinite(rawExpiry) && rawExpiry > 0 ? Math.floor(rawExpiry) : 600;
+
+        return {
+            ...storage,
+            expiresInSeconds
+        };
+    }
+
+    async downloadFromSupabaseStorage(bucket, path) {
+        if (!this.supabase) {
+            throw new Error('Supabase client is not available.');
+        }
+
+        const { data, error } = await this.supabase.storage.from(bucket).download(path);
+        if (error) {
+            throw error;
+        }
+        if (!data) {
+            throw new Error('Storage download returned no data.');
+        }
+
+        return data; // Blob
+    }
+
+    async createSupabaseSignedUrl(bucket, path, expiresInSeconds = 600) {
+        if (!this.supabase) {
+            throw new Error('Supabase client is not available.');
+        }
+
+        const ttl = Number.isFinite(Number(expiresInSeconds)) ? Math.max(60, Math.floor(Number(expiresInSeconds))) : 600;
+        const { data, error } = await this.supabase.storage.from(bucket).createSignedUrl(path, ttl);
+        if (error) {
+            throw error;
+        }
+        if (!data?.signedUrl) {
+            throw new Error('Storage signed URL response is missing signedUrl.');
+        }
+
+        return data.signedUrl;
+    }
+
     async loadContent(page) {
         this.resetPromptEscapeHandler();
+
+        const protectedHtmlSpec = this.getProtectedContentHtmlSpec(page);
+        if (protectedHtmlSpec) {
+            // Render a non-sensitive placeholder while we fetch protected content.
+            this.contentArea.innerHTML = `
+                <section class="py-4">
+                  <div class="card shadow-sm">
+                    <div class="card-body p-4">
+                      <h1 class="h4 mb-2">Loading protected content</h1>
+                      <p class="text-body-secondary mb-3">Fetching this page from private storage...</p>
+                      <div class="d-flex align-items-center gap-2" role="status" aria-live="polite">
+                        <span class="spinner-border spinner-border-sm text-primary" aria-hidden="true"></span>
+                        <span>Working...</span>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+            `;
+
+            const blob = await this.downloadFromSupabaseStorage(protectedHtmlSpec.bucket, protectedHtmlSpec.path);
+            const markup = await blob.text();
+            this.contentArea.innerHTML = markup;
+            this.initializePageScripts(page);
+            return;
+        }
 
         const route = this.routes[page];
         const response = await fetch(route, { cache: 'no-store' });
@@ -261,28 +367,12 @@ class SPARouter {
 
             const runtimeUrl = parsed.supabase?.url;
             const runtimeAnonKey = parsed.supabase?.anonKey;
-            const runtimeAllowedEmails = parsed.accessControl?.allowedEmails;
-
             if (runtimeUrl && !this.authConfig.supabase.url) {
                 this.authConfig.supabase.url = runtimeUrl;
             }
 
             if (runtimeAnonKey && !this.authConfig.supabase.anonKey) {
                 this.authConfig.supabase.anonKey = runtimeAnonKey;
-            }
-
-            if (runtimeAllowedEmails) {
-                let allowlist = [];
-                if (Array.isArray(runtimeAllowedEmails)) {
-                    allowlist = runtimeAllowedEmails;
-                } else if (typeof runtimeAllowedEmails === 'string') {
-                    allowlist = runtimeAllowedEmails.split(',').map(v => v.trim()).filter(Boolean);
-                }
-
-                if (allowlist.length > 0) {
-                    this.authConfig.accessControl = this.authConfig.accessControl || {};
-                    this.authConfig.accessControl.allowedEmails = allowlist;
-                }
             }
         } catch {
             // Treat parse/network failures as "no runtime config".
@@ -297,19 +387,23 @@ class SPARouter {
         return true;
     }
 
-    getAllowedEmails() {
-        const list = this.authConfig?.accessControl?.allowedEmails;
-        if (!Array.isArray(list)) return [];
-        return list
-            .map(value => String(value || '').trim().toLowerCase())
-            .filter(Boolean);
-    }
+    updateProtectedAccessReason() {
+        if (!this.authState.isAuthenticated) {
+            sessionStorage.removeItem('auth_denied_reason');
+            return;
+        }
 
-    isEmailAllowed(email) {
-        const allowed = this.getAllowedEmails();
-        if (allowed.length === 0) return true;
-        if (!email) return false;
-        return allowed.includes(String(email).trim().toLowerCase());
+        if (!this.authState.privilegesLoaded) {
+            sessionStorage.setItem('auth_denied_reason', 'Your account is signed in, but your protected-content access is still being resolved.');
+            return;
+        }
+
+        if (!this.authState.hasPrivileges) {
+            sessionStorage.setItem('auth_denied_reason', 'Your account is signed in, but does not have privileges to access protected content.');
+            return;
+        }
+
+        sessionStorage.removeItem('auth_denied_reason');
     }
 
     async initSupabaseAuth() {
@@ -349,20 +443,29 @@ class SPARouter {
                 this.setAuthSession(null);
             } else {
                 this.setAuthSession(data?.session || null);
+                if (data?.session?.user) {
+                    await this.ensureProfileRow();
+                }
             }
 
-            this.supabase.auth.onAuthStateChange((event, session) => {
+            this.supabase.auth.onAuthStateChange(async (event, session) => {
                 this.setAuthSession(session || null);
+
+                if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && this.authState.isAuthenticated) {
+                    try {
+                        await this.ensureProfileRow();
+                    } catch (error) {
+                        console.warn('[profile] ensureProfileRow failed', error);
+                    }
+                }
+
+                this.updateProtectedAccessReason();
                 this.updateAuthUI();
                 this.applyNavVisibilityRules();
 
                 // If the user is currently on the login page, refresh its UI (hide SSO, update dot, etc.).
                 if (this.currentPage === 'login') {
                     this.setupLoginPage();
-                }
-
-                if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && this.authState.isAuthenticated) {
-                    this.ensureProfileRow().catch(error => console.warn('[profile] ensureProfileRow failed', error));
                 }
 
                 if (event === 'PASSWORD_RECOVERY') {
@@ -403,10 +506,11 @@ class SPARouter {
         const fullName = meta.full_name || meta.fullName || meta.name || null;
         const provider = session?.user?.app_metadata?.provider || meta.provider || null;
         const isAuthenticated = Boolean(session?.user);
-        const isAllowed = isAuthenticated && this.isEmailAllowed(email);
 
         this.authState.isAuthenticated = isAuthenticated;
-        this.authState.isAllowed = isAllowed;
+        this.authState.hasPrivileges = false;
+        this.authState.isAdmin = false;
+        this.authState.privilegesLoaded = !isAuthenticated;
         this.authState.email = email;
         this.authState.fullName = fullName;
         this.authState.provider = provider;
@@ -415,13 +519,11 @@ class SPARouter {
             this.authState.avatarOverrideUrl = null;
         }
 
-        if (isAuthenticated && !isAllowed) {
-            sessionStorage.setItem('auth_denied_reason', 'Your account is signed in, but not authorized to access protected pages.');
-        }
+        this.updateProtectedAccessReason();
     }
 
     isAuthedForProtectedPages() {
-        return this.authState.isAuthenticated && this.authState.isAllowed;
+        return this.authState.isAuthenticated && this.authState.privilegesLoaded && this.authState.hasPrivileges;
     }
 
     guardRoute(page) {
@@ -430,8 +532,8 @@ class SPARouter {
 
         if (page === (this.protectedPagesConfig.defaults?.redirectRoute || 'login')) return null;
 
-        // "requireAuth" means: signed in is required. Allowlist is a second layer used only for certain protected pages.
-        // Profile is available to any authenticated user so they can complete their details, even if not allowlisted.
+        // "requireAuth" means: signed in is required. Protected content is granted by `profiles.has_privileges`.
+        // Profile is available to any authenticated user so they can complete their details, even if not privileged.
         if (!this.authState.isAuthenticated) {
             return {
                 redirectTo: this.protectedPagesConfig.defaults?.redirectRoute || 'login',
@@ -457,7 +559,7 @@ class SPARouter {
 
     maybeRedirectAfterLogin() {
         const forceProfile = sessionStorage.getItem('post_auth_force_profile');
-        // Always allow redirecting to profile for any authenticated user (even if not allowlisted for protected pages).
+        // Always allow redirecting to profile for any authenticated user, even if they lack protected-content privileges.
         if ((forceProfile === '1' || this.currentPage === 'login') && this.authState.isAuthenticated) {
             sessionStorage.removeItem('post_auth_force_profile');
             sessionStorage.removeItem('post_login_redirect');
@@ -519,14 +621,18 @@ class SPARouter {
         const upsert = await this.supabase
             .from('profiles')
             .upsert(payload, { onConflict: 'email' })
-            .select('email, avatar_storage_path, oauth_avatar_url')
+            .select('email, avatar_storage_path, oauth_avatar_url, has_privileges, is_admin')
             .maybeSingle();
 
         if (upsert.error) throw upsert.error;
 
         const row = upsert.data;
+        this.authState.hasPrivileges = Boolean(row?.has_privileges);
+        this.authState.isAdmin = Boolean(row?.is_admin);
+        this.authState.privilegesLoaded = true;
         const overrideUrl = row?.avatar_storage_path ? this.getAvatarPublicUrl(row.avatar_storage_path) : null;
         this.authState.avatarOverrideUrl = overrideUrl;
+        this.updateProtectedAccessReason();
         this.updateAuthUI();
     }
 
@@ -721,6 +827,7 @@ class SPARouter {
             'about': "About Douglas D'Avila | QA Automation Engineer & SDET",
             'prompt-explained': 'Automation Prompt Analysis | Douglas D\'Avila',
             'user-story-analyzer': 'User Story Quality Analyzer | Douglas D\'Avila',
+            'qa-ai-training-program': 'QA AI Training Program | Douglas D\'Avila',
             'login': 'Sign in | Douglas D\'Avila',
             'privacy': 'Privacy | Douglas D\'Avila',
             'profile': 'Profile | Douglas D\'Avila'
@@ -735,7 +842,7 @@ class SPARouter {
                     window.hljs.highlightAll();
                 }
             }, 10);
-            this.setupPromptInteractions();
+            this.setupPromptInteractions(page);
         }
 
         if (page === 'home') {
@@ -744,6 +851,10 @@ class SPARouter {
 
         if (page === 'user-story-analyzer') {
             this.setupUserStoryAnalyzer();
+        }
+
+        if (page === 'qa-ai-training-program') {
+            this.setupQaAiTrainingPage();
         }
 
         if (page === 'login') {
@@ -1270,6 +1381,9 @@ class SPARouter {
         const nameEl = document.getElementById('profile-name');
         const emailEl = document.getElementById('profile-email');
         const providerEl = document.getElementById('profile-provider');
+        const privilegesEl = document.getElementById('profile-privileges');
+        const adminEl = document.getElementById('profile-admin-status');
+        const adminPanelEl = document.getElementById('profile-admin-panel');
 
         const countryEl = document.getElementById('profile-phone-country');
         const dialEl = document.getElementById('profile-phone-dial');
@@ -1295,6 +1409,9 @@ class SPARouter {
         if (nameEl) nameEl.value = identity.fullName || '';
         if (emailEl) emailEl.value = identity.email || '';
         if (providerEl) providerEl.value = identity.provider || '';
+        if (privilegesEl) privilegesEl.value = this.authState.hasPrivileges ? 'Enabled' : 'Disabled';
+        if (adminEl) adminEl.value = this.authState.isAdmin ? 'Enabled' : 'Disabled';
+        if (adminPanelEl) adminPanelEl.classList.toggle('d-none', !this.authState.isAdmin);
         if (badgeEl) badgeEl.textContent = 'Signed in';
         if (avatarEl) avatarEl.src = identity.avatarUrl || fallbackAvatar;
 
@@ -1396,7 +1513,7 @@ class SPARouter {
             if (!identity.email) return null;
             const { data, error } = await this.supabase
                 .from('profiles')
-                .select('email, role, company_website_url, phone_country_iso2, phone_dial_code, phone_number, avatar_storage_path, oauth_avatar_url')
+                .select('email, role, company_website_url, phone_country_iso2, phone_dial_code, phone_number, avatar_storage_path, oauth_avatar_url, has_privileges, is_admin')
                 .eq('email', identity.email)
                 .maybeSingle();
             if (error) throw error;
@@ -1405,6 +1522,8 @@ class SPARouter {
 
         const applyExisting = (row) => {
             if (!row) return;
+            this.authState.hasPrivileges = Boolean(row.has_privileges);
+            this.authState.isAdmin = Boolean(row.is_admin);
             if (roleEl) roleEl.value = row.role || '';
             if (companyUrlEl) companyUrlEl.value = row.company_website_url || '';
             if (phoneEl) phoneEl.value = row.phone_number || '';
@@ -1423,6 +1542,10 @@ class SPARouter {
             const overrideUrl = row.avatar_storage_path ? this.getAvatarPublicUrl(row.avatar_storage_path) : null;
             const effectiveAvatar = overrideUrl || identity.avatarUrl || row.oauth_avatar_url || fallbackAvatar;
             if (avatarEl) avatarEl.src = effectiveAvatar;
+            if (privilegesEl) privilegesEl.value = row.has_privileges ? 'Enabled' : 'Disabled';
+            if (adminEl) adminEl.value = row.is_admin ? 'Enabled' : 'Disabled';
+            if (adminPanelEl) adminPanelEl.classList.toggle('d-none', !row.is_admin);
+            this.updateProtectedAccessReason();
         };
 
         loadExisting()
@@ -1515,9 +1638,9 @@ class SPARouter {
         }
     }
 
-    setupPromptInteractions() {
+    setupPromptInteractions(routeId) {
         this.setupModals();
-        this.setupDownloadButton();
+        this.setupDownloadButton(routeId);
     }
 
     setupModals() {
@@ -1609,7 +1732,7 @@ class SPARouter {
         document.addEventListener('keydown', this.promptEscapeHandler);
     }
 
-    setupDownloadButton() {
+    setupDownloadButton(routeId) {
         const downloadBtn = document.getElementById('download-md');
         if (!downloadBtn) return;
 
@@ -1618,16 +1741,21 @@ class SPARouter {
 
         downloadBtn.addEventListener('click', async () => {
             try {
-                const response = await fetch('prompt_explained.md', { cache: 'no-store' });
-                if (!response.ok) {
-                    throw new Error(`Failed to retrieve markdown: ${response.status}`);
+                const page = String(routeId || 'prompt-explained');
+                const spec = this.getProtectedDownloadSpec(page, 'download-md');
+                if (!spec) {
+                    throw new Error('No protected download is configured for this page.');
                 }
 
-                const blob = new Blob([await response.text()], { type: 'text/markdown' });
+                const raw = await this.downloadFromSupabaseStorage(spec.bucket, spec.path);
+                let blob = raw;
+                if (spec.contentType && raw.type !== spec.contentType) {
+                    blob = new Blob([await raw.arrayBuffer()], { type: spec.contentType });
+                }
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
-                link.download = 'automation-prompt-analysis.md';
+                link.download = spec.filename || 'download.md';
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
@@ -1687,8 +1815,7 @@ class SPARouter {
                 const response = await fetch('https://douglasdavila.duckdns.org/webhook/analyze_user_story', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Basic ' + btoa('admin:aqEp%U-815*y')
+                        'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ story_content: story })
                 });
@@ -1727,6 +1854,46 @@ class SPARouter {
             errorMessage.classList.add('d-none');
             storyContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
+    }
+
+    async setupQaAiTrainingPage() {
+        const iframe = document.getElementById('qa-training-frame');
+        const status = document.getElementById('qa-training-status');
+        if (!iframe) return;
+
+        try {
+            if (!this.isAuthedForProtectedPages()) {
+                throw new Error('You are not authorized to access this protected training content.');
+            }
+
+            const spec = this.getProtectedIframeSpec('qa-ai-training-program');
+            if (!spec) {
+                throw new Error('Training iframe source is not configured in protected-pages.json.');
+            }
+
+            if (status) {
+                status.className = 'alert alert-info mb-3';
+                status.textContent = 'Loading protected training content...';
+            }
+
+            const blob = await this.downloadFromSupabaseStorage(spec.bucket, spec.path);
+            const html = await blob.text();
+            iframe.removeAttribute('src');
+            iframe.srcdoc = html;
+            iframe.addEventListener('load', () => {
+                if (status) {
+                    status.className = 'alert alert-success mb-3';
+                    status.textContent = 'Training content loaded.';
+                }
+            }, { once: true });
+        } catch (error) {
+            console.error('[training] failed to load protected iframe', error);
+            iframe.removeAttribute('src');
+            if (status) {
+                status.className = 'alert alert-danger mb-3';
+                status.textContent = 'Unable to load the training content right now.';
+            }
+        }
     }
 
     showAnalyzerError(message) {

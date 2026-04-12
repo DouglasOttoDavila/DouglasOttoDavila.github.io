@@ -44,17 +44,9 @@ Get-Content -LiteralPath $EnvPath | ForEach-Object {
 
 $supabaseUrl = $pairs["SUPABASE_URL"]
 $supabaseAnonKey = $pairs["SUPABASE_ANON_KEY"]
-$allowedEmailsRaw = $pairs["ALLOWED_EMAILS"]
 
 if (-not $supabaseUrl -or -not $supabaseAnonKey) {
   throw "SUPABASE_URL and SUPABASE_ANON_KEY must be set in $EnvPath"
-}
-
-$allowedEmails = @()
-if ($allowedEmailsRaw) {
-  $allowedEmails = $allowedEmailsRaw.Split(",") |
-    ForEach-Object { $_.Trim().ToLowerInvariant() } |
-    Where-Object { $_ }
 }
 
 $payload = [ordered]@{
@@ -62,9 +54,6 @@ $payload = [ordered]@{
   supabase = [ordered]@{
     url = $supabaseUrl
     anonKey = $supabaseAnonKey
-  }
-  accessControl = [ordered]@{
-    allowedEmails = $allowedEmails
   }
 }
 
@@ -77,4 +66,3 @@ if ($outDir -and -not (Test-Path -LiteralPath $outDir)) {
 
 Set-Content -LiteralPath $OutPath -Value $json -Encoding UTF8
 Write-Output "Wrote $OutPath"
-

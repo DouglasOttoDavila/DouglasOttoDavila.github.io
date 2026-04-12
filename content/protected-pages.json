@@ -7,12 +7,49 @@
     {
       "routeId": "prompt-explained",
       "requireAuth": true,
-      "hideWhenLoggedOut": true
+      "hideWhenLoggedOut": true,
+      "content": {
+        "html": {
+          "type": "supabase_storage",
+          "bucket": "protected-pages",
+          "path": "prompt-explained.html"
+        },
+        "downloads": [
+          {
+            "elementId": "download-md",
+            "type": "supabase_storage",
+            "bucket": "protected-pages",
+            "path": "prompt_explained.md",
+            "filename": "automation-prompt-analysis.md",
+            "contentType": "text/markdown"
+          }
+        ]
+      }
     },
     {
       "routeId": "user-story-analyzer",
       "requireAuth": true,
-      "hideWhenLoggedOut": true
+      "hideWhenLoggedOut": true,
+      "content": {
+        "html": {
+          "type": "supabase_storage",
+          "bucket": "protected-pages",
+          "path": "user-story-analyzer.html"
+        }
+      }
+    },
+    {
+      "routeId": "qa-ai-training-program",
+      "requireAuth": true,
+      "hideWhenLoggedOut": true,
+      "content": {
+        "iframe": {
+          "type": "supabase_storage",
+          "bucket": "protected-pages",
+          "path": "qa-ai-training-program.html",
+          "expiresInSeconds": 600
+        }
+      }
     },
     {
       "routeId": "profile",

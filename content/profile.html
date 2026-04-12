@@ -42,6 +42,18 @@
             <label class="profile-label" for="profile-provider">Provider</label>
             <input id="profile-provider" class="profile-input" type="text" readonly aria-readonly="true">
           </div>
+
+          <div class="profile-field">
+            <label class="profile-label" for="profile-privileges">Protected content access</label>
+            <input id="profile-privileges" class="profile-input" type="text" readonly aria-readonly="true">
+            <p class="profile-hint">Controlled by your backend access settings.</p>
+          </div>
+
+          <div class="profile-field">
+            <label class="profile-label" for="profile-admin-status">Admin access</label>
+            <input id="profile-admin-status" class="profile-input" type="text" readonly aria-readonly="true">
+            <p class="profile-hint">Controlled by your backend admin settings.</p>
+          </div>
         </div>
       </div>
     </section>
@@ -83,6 +95,16 @@
           </button>
         </div>
       </form>
+    </section>
+
+    <section id="profile-admin-panel" class="glass-card profile-card d-none" aria-label="Admin controls">
+      <div class="profile-card-header">
+        <h2 class="profile-card-title">Admin controls</h2>
+      </div>
+      <div class="profile-field">
+        <p class="mb-2">This area is available only for accounts with admin access.</p>
+        <p class="profile-hint mb-0">Use this section for future administrative controls tied to your account.</p>
+      </div>
     </section>
   </div>
 </section>

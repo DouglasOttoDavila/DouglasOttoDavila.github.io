@@ -2,7 +2,17 @@
 .env
 .env.*
 content/auth.runtime.json
+.local/
 !.github/
 !.github/workflows/
 !.github/workflows/**
 /thoughts
+/_bmad
+/_bmad-output
+/.agents
+/private_pages
+/supabase/.temp/
+/supabase/migrations/
+/docs/supabase-bootstrap.sql
+/docs/supabase-has-privileges-migration.sql
+/docs/supabase-recovery.md

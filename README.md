@@ -74,12 +74,66 @@ Note: `thoughts/` is ignored by default (`.gitignore`) so you can keep iterative
 
 ## Authentication Model (Important for Recruiters)
 
-This site is hosted as **static content** (GitHub Pages). That means:
+GitHub Pages is static hosting, so true access control requires the protected content to live **outside** the deployed static artifact.
 
-- The router can **hide links and block navigation** for protected routes.
-- The underlying HTML fragments under `content/` are still **publicly fetchable** if someone knows the URL.
+This project uses a layered approach:
 
-In other words: route protection here is **UI gating**, not server-side access control. Any truly sensitive data must be protected behind a backend/edge layer (API enforcement, signed URLs, or an access proxy).
+- **UI gating (SPA router):** protected routes are hidden/redirected based on auth state (`content/protected-pages.json`, enforced in `js/main.js`).
+- **Real content protection (Supabase Storage):** protected page bodies (HTML) and downloads (Markdown) are stored in a **private Supabase Storage bucket** and are downloaded at runtime using the authenticated session JWT. Storage **RLS policies** enforce who can read objects.
+
+Result:
+
+- The deployed `content/` fragments for protected routes are non-sensitive placeholders.
+- The “real” protected content is not publicly fetchable from GitHub Pages URLs.
+
+## Secure Private Pages (Supabase Storage)
+
+Protected pages are stored as **private objects** in Supabase Storage (not in this repo).
+
+### Bucket + Object Paths
+
+- Bucket (private): `protected-pages`
+- Objects (bucket root):
+  - `prompt-explained.html`
+  - `user-story-analyzer.html`
+  - `qa-ai-training-program.html`
+  - `prompt_explained.md` (used by the Download button on the Prompt Explained page)
+
+These are referenced by `content/protected-pages.json` and downloaded via `supabase.storage.from(bucket).download(path)` in `js/main.js`.
+
+### Access Control
+
+Protected content access and admin capabilities are enforced by Supabase Auth plus backend-controlled profile flags and RLS policies.
+
+The implementation intentionally keeps:
+
+- runtime credentials out of the repo
+- protected page bodies out of the GitHub Pages artifact
+- privileged authorization decisions in Supabase, not in static frontend config
+
+Detailed schema, migrations, and operational SQL are kept out of the public repository.
+
+### Updating Private Content
+
+To update a protected page:
+
+1. Edit the HTML/Markdown in your private source of truth (kept outside the repo).
+2. Upload/overwrite the corresponding object in the `protected-pages` bucket.
+3. Refresh the site; the SPA will load the latest object.
+
+### Automating Updates From Git Commits (CI Sync)
+
+This repo supports optional CI sync of protected content to Supabase Storage on every push to `main`:
+
+- Workflow: `.github/workflows/pages.yml`
+- Uploader: `scripts/upload-protected-pages.mjs`
+- Source directory (expected): `private_pages/`
+
+Important:
+
+- If this GitHub repo is **public**, committing real protected content to `private_pages/` makes it public in Git history.
+  - For true confidentiality, keep the repo private or pull `private_pages/` from a separate private repo during CI.
+- CI uploads require the Supabase `service_role` key stored as the GitHub Actions secret `SUPABASE_SERVICE_ROLE_KEY`.
 
 ## Local Development
 
@@ -90,6 +144,9 @@ Recommended:
 1. Open `index.html` with a local web server (not `file://`) so `fetch()` works.
 2. If using VS Code, the repo includes a small convenience setting:
    - `.vscode/settings.json` sets `livePreview.defaultPreviewPath` to `/index.html`.
+3. To see protected pages locally, you must have:
+   - Supabase Auth configured (see below)
+   - The protected objects uploaded to the `protected-pages` bucket
 
 ### Local Auth Runtime (Optional)
 
@@ -98,7 +155,6 @@ To avoid committing credentials, local auth config can be generated into `conten
 1. Create a local `.env` with:
    - `SUPABASE_URL`
    - `SUPABASE_ANON_KEY`
-   - `ALLOWED_EMAILS` (comma-separated allowlist; optional)
 2. Generate runtime config:
 
 ```powershell
@@ -117,12 +173,12 @@ Required GitHub Actions secrets:
 
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
-- `ALLOWED_EMAILS` (optional, comma-separated)
 
 ## Project Structure
 
 - `index.html`: shell layout + navbar + script includes
 - `content/`: page fragments, auth configs, protected page config
+- `content/protected-loading.html`: non-sensitive placeholder used for Storage-backed routes
 - `js/main.js`: SPA router, auth integration, gated navigation, page bootstrapping
 - `css/style.css`: custom theme, responsive layout, “space” login styling, components
 - `assets/`: images and static media used by the portfolio

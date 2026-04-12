@@ -23,12 +23,33 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Upload protected pages to Supabase Storage (optional)
+        shell: bash
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PROTECTED_PAGES_BUCKET: protected-pages
+          PROTECTED_PAGES_DIR: private_pages
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${SUPABASE_URL:-}" || -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]]; then
+            echo "Skipping protected pages upload (missing SUPABASE_URL and/or SUPABASE_SERVICE_ROLE_KEY)."
+            exit 0
+          fi
+
+          if [[ ! -d "${PROTECTED_PAGES_DIR}" ]]; then
+            echo "Skipping protected pages upload (missing ${PROTECTED_PAGES_DIR}/ directory)."
+            exit 0
+          fi
+
+          node scripts/upload-protected-pages.mjs
+
       - name: Generate runtime auth config (from Actions secrets)
         shell: bash
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-          ALLOWED_EMAILS: ${{ secrets.ALLOWED_EMAILS }}
         run: |
           set -euo pipefail
 
@@ -46,21 +67,12 @@ jobs:
 
           const supabaseUrl = process.env.SUPABASE_URL || '';
           const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
-          const allowedEmailsRaw = process.env.ALLOWED_EMAILS || '';
-
-          const allowedEmails = allowedEmailsRaw
-            .split(',')
-            .map(s => s.trim().toLowerCase())
-            .filter(Boolean);
 
           const payload = {
             version: 1,
             supabase: {
               url: supabaseUrl,
               anonKey: supabaseAnonKey
-            },
-            accessControl: {
-              allowedEmails
             }
           };
 
@@ -68,13 +80,29 @@ jobs:
           console.log('Wrote content/auth.runtime.json');
           NODE
 
+      - name: Build Pages artifact (dist)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          rm -rf dist
+          mkdir -p dist
+
+          # Copy only what the static site needs.
+          cp index.html dist/
+          cp -R assets content css js dist/
+
+          # Convenience: keep README out of the deploy artifact.
+          # Protected content sources (if present) must never be deployed.
+          rm -rf dist/private_pages || true
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: dist
 
   deploy:
     runs-on: ubuntu-latest
