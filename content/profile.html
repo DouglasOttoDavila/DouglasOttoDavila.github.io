@@ -101,9 +101,105 @@
       <div class="profile-card-header">
         <h2 class="profile-card-title">Admin controls</h2>
       </div>
-      <div class="profile-field">
-        <p class="mb-2">This area is available only for accounts with admin access.</p>
-        <p class="profile-hint mb-0">Use this section for future administrative controls tied to your account.</p>
+
+      <p class="profile-hint profile-admin-intro">
+        This area is available only for accounts with admin access. Use it to review registered users and manage
+        protected-content privileges without exposing backend credentials in the public site.
+      </p>
+
+      <div id="profile-admin-directory-status" class="profile-save-status" role="status" aria-live="polite"></div>
+
+      <div class="profile-admin-layout">
+        <section class="profile-admin-directory" aria-labelledby="profile-admin-directory-title">
+          <div class="profile-card-header profile-admin-subheader">
+            <h3 id="profile-admin-directory-title" class="profile-card-title">Registered users</h3>
+            <span id="profile-admin-count" class="profile-badge" aria-live="polite">0 users</span>
+          </div>
+
+          <div class="table-responsive profile-admin-table-wrap">
+            <table class="table table-sm align-middle profile-admin-table mb-0">
+              <thead>
+                <tr>
+                  <th scope="col">ID</th>
+                  <th scope="col">Full name</th>
+                  <th scope="col">Email</th>
+                  <th scope="col" class="text-end">Action</th>
+                </tr>
+              </thead>
+              <tbody id="profile-admin-users-body"></tbody>
+            </table>
+          </div>
+
+          <p id="profile-admin-empty" class="profile-hint d-none">No registered users were found.</p>
+        </section>
+
+        <section class="profile-admin-editor-shell" aria-labelledby="profile-admin-editor-title">
+          <div class="profile-card-header profile-admin-subheader">
+            <h3 id="profile-admin-editor-title" class="profile-card-title">Edit user</h3>
+            <button id="profile-admin-editor-close" class="btn btn-outline-secondary btn-sm d-none" type="button">
+              Close
+            </button>
+          </div>
+
+          <div id="profile-admin-placeholder" class="profile-admin-placeholder">
+            Select a user from the list to open the editor.
+          </div>
+
+          <form id="profile-admin-form" class="profile-form d-none" novalidate>
+            <div class="profile-field">
+              <label class="profile-label" for="profile-admin-user-id">User ID</label>
+              <input id="profile-admin-user-id" class="profile-input" type="text" readonly aria-readonly="true">
+            </div>
+
+            <div class="profile-field">
+              <label class="profile-label" for="profile-admin-user-email">Email</label>
+              <input id="profile-admin-user-email" class="profile-input" type="email" readonly aria-readonly="true">
+            </div>
+
+            <div class="profile-field">
+              <label class="profile-label" for="profile-admin-user-full-name">Full name</label>
+              <input id="profile-admin-user-full-name" class="profile-input" type="text" autocomplete="name">
+            </div>
+
+            <div class="profile-field">
+              <label class="profile-label" for="profile-admin-user-role">Role</label>
+              <input id="profile-admin-user-role" class="profile-input" type="text" autocomplete="organization-title">
+            </div>
+
+            <div class="profile-field">
+              <label class="profile-label" for="profile-admin-user-company-url">Company website URL</label>
+              <input id="profile-admin-user-company-url" class="profile-input" type="url" inputmode="url" autocomplete="url">
+            </div>
+
+            <div class="profile-field">
+              <label class="profile-label" for="profile-admin-user-phone-country">Phone</label>
+              <div class="profile-phone-row" aria-label="Admin phone editor">
+                <select id="profile-admin-user-phone-country" class="profile-select" aria-label="Admin phone country"></select>
+                <input id="profile-admin-user-phone-dial" class="profile-input profile-input--dial d-none" type="text"
+                  inputmode="tel" aria-label="Admin phone dial code" placeholder="+1">
+                <input id="profile-admin-user-phone" class="profile-input" type="tel" autocomplete="tel"
+                  placeholder="(555) 123-4567">
+              </div>
+            </div>
+
+            <div class="form-check form-switch profile-admin-toggle">
+              <input id="profile-admin-user-has-privileges" class="form-check-input" type="checkbox" role="switch">
+              <label class="form-check-label" for="profile-admin-user-has-privileges">Protected content access</label>
+            </div>
+
+            <div class="profile-actions">
+              <div id="profile-admin-save-status" class="profile-save-status" role="status" aria-live="polite"></div>
+              <div class="d-flex gap-2">
+                <button id="profile-admin-cancel" class="btn btn-outline-secondary profile-save-btn" type="button">
+                  Cancel
+                </button>
+                <button id="profile-admin-save" class="btn btn-primary profile-save-btn" type="submit">
+                  Save user
+                </button>
+              </div>
+            </div>
+          </form>
+        </section>
       </div>
     </section>
   </div>

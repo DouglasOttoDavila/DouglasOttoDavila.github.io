@@ -609,11 +609,19 @@ class SPARouter {
 
         if (!email) return;
 
+        const existing = await this.supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('email', email)
+            .maybeSingle();
+
+        if (existing.error) throw existing.error;
+
         // Email is used as the primary key per repo preference. Also store user_id for stable linkage + RLS checks.
         const payload = {
             email,
             user_id: user.id,
-            full_name: fullName,
+            full_name: existing.data?.full_name || fullName,
             provider,
             oauth_avatar_url: oauthAvatarUrl
         };
@@ -627,6 +635,7 @@ class SPARouter {
         if (upsert.error) throw upsert.error;
 
         const row = upsert.data;
+        this.authState.fullName = payload.full_name || fullName || this.authState.fullName;
         this.authState.hasPrivileges = Boolean(row?.has_privileges);
         this.authState.isAdmin = Boolean(row?.is_admin);
         this.authState.privilegesLoaded = true;
@@ -642,6 +651,30 @@ class SPARouter {
         const avatarUrl = this.authState.avatarOverrideUrl || this.authState.avatarUrl || null;
         const fullName = this.authState.fullName || null;
         return { email, provider, avatarUrl, fullName };
+    }
+
+    async listAdminProfiles() {
+        if (!this.supabase) {
+            throw new Error('Supabase client is not available.');
+        }
+
+        const { data, error } = await this.supabase.rpc('admin_list_profiles');
+        if (error) throw error;
+        return Array.isArray(data) ? data : [];
+    }
+
+    async updateAdminProfile(payload) {
+        if (!this.supabase) {
+            throw new Error('Supabase client is not available.');
+        }
+
+        const { data, error } = await this.supabase.rpc('admin_update_profile', payload);
+        if (error) throw error;
+        if (!Array.isArray(data) || data.length === 0) {
+            throw new Error('Admin update returned no profile row.');
+        }
+
+        return data[0];
     }
 
     bindAuthControls() {
@@ -1384,6 +1417,24 @@ class SPARouter {
         const privilegesEl = document.getElementById('profile-privileges');
         const adminEl = document.getElementById('profile-admin-status');
         const adminPanelEl = document.getElementById('profile-admin-panel');
+        const adminDirectoryStatusEl = document.getElementById('profile-admin-directory-status');
+        const adminCountEl = document.getElementById('profile-admin-count');
+        const adminUsersBodyEl = document.getElementById('profile-admin-users-body');
+        const adminEmptyEl = document.getElementById('profile-admin-empty');
+        const adminPlaceholderEl = document.getElementById('profile-admin-placeholder');
+        const adminFormEl = document.getElementById('profile-admin-form');
+        const adminEditorCloseEl = document.getElementById('profile-admin-editor-close');
+        const adminSaveStatusEl = document.getElementById('profile-admin-save-status');
+        const adminCancelEl = document.getElementById('profile-admin-cancel');
+        const adminIdEl = document.getElementById('profile-admin-user-id');
+        const adminEmailFieldEl = document.getElementById('profile-admin-user-email');
+        const adminFullNameEl = document.getElementById('profile-admin-user-full-name');
+        const adminRoleEl = document.getElementById('profile-admin-user-role');
+        const adminCompanyUrlEl = document.getElementById('profile-admin-user-company-url');
+        const adminCountryEl = document.getElementById('profile-admin-user-phone-country');
+        const adminDialEl = document.getElementById('profile-admin-user-phone-dial');
+        const adminPhoneEl = document.getElementById('profile-admin-user-phone');
+        const adminPrivilegesToggleEl = document.getElementById('profile-admin-user-has-privileges');
 
         const countryEl = document.getElementById('profile-phone-country');
         const dialEl = document.getElementById('profile-phone-dial');
@@ -1395,6 +1446,16 @@ class SPARouter {
         const setStatus = (message) => {
             if (!statusEl) return;
             statusEl.textContent = message || '';
+        };
+
+        const setAdminDirectoryStatus = (message) => {
+            if (!adminDirectoryStatusEl) return;
+            adminDirectoryStatusEl.textContent = message || '';
+        };
+
+        const setAdminSaveStatus = (message) => {
+            if (!adminSaveStatusEl) return;
+            adminSaveStatusEl.textContent = message || '';
         };
 
         if (!this.authState.isAuthenticated || !this.supabase) {
@@ -1447,40 +1508,52 @@ class SPARouter {
             return String.fromCodePoint(base + (chars[0].charCodeAt(0) - A), base + (chars[1].charCodeAt(0) - A));
         };
 
-        if (countryEl && !countryEl.dataset.bound) {
-            countryEl.innerHTML = '';
+        const populateCountrySelect = (selectEl, defaultValue = 'US') => {
+            if (!selectEl || selectEl.dataset.bound) return;
+            selectEl.innerHTML = '';
             countries.forEach(c => {
                 const opt = document.createElement('option');
                 opt.value = c.iso2;
                 const flag = c.iso2 === 'OTHER' ? '🌐' : toFlag(c.iso2);
                 opt.textContent = `${flag} ${c.name}${c.dial ? ` (${c.dial})` : ''}`;
                 opt.dataset.dial = c.dial || '';
-                countryEl.appendChild(opt);
+                selectEl.appendChild(opt);
             });
-            countryEl.value = 'US';
-            countryEl.dataset.bound = 'true';
-        }
+            selectEl.value = defaultValue;
+            selectEl.dataset.bound = 'true';
+        };
 
-        const syncDialInput = () => {
-            if (!countryEl || !dialEl) return;
-            const selected = countryEl.options[countryEl.selectedIndex];
+        const syncDialInput = (selectEl, dialInputEl) => {
+            if (!selectEl || !dialInputEl) return;
+            const selected = selectEl.options[selectEl.selectedIndex];
             const dial = selected?.dataset?.dial || '';
-            const isOther = countryEl.value === 'OTHER';
-            dialEl.classList.toggle('d-none', !isOther);
+            const isOther = selectEl.value === 'OTHER';
+            dialInputEl.classList.toggle('d-none', !isOther);
             if (!isOther) {
-                dialEl.value = dial;
-            } else if (!dialEl.value) {
-                dialEl.value = '+';
+                dialInputEl.value = dial;
+            } else if (!dialInputEl.value) {
+                dialInputEl.value = '+';
             }
         };
 
+        populateCountrySelect(countryEl);
+        populateCountrySelect(adminCountryEl);
+
         if (countryEl && dialEl && !countryEl.dataset.boundChange) {
-            countryEl.addEventListener('change', syncDialInput);
+            countryEl.addEventListener('change', () => syncDialInput(countryEl, dialEl));
             countryEl.dataset.boundChange = 'true';
         }
-        syncDialInput();
+        syncDialInput(countryEl, dialEl);
+
+        if (adminCountryEl && adminDialEl && !adminCountryEl.dataset.boundChange) {
+            adminCountryEl.addEventListener('change', () => syncDialInput(adminCountryEl, adminDialEl));
+            adminCountryEl.dataset.boundChange = 'true';
+        }
+        syncDialInput(adminCountryEl, adminDialEl);
 
         let pendingAvatarFile = null;
+        let adminUsers = [];
+        let selectedAdminUserId = null;
         if (avatarFileEl && !avatarFileEl.dataset.bound) {
             avatarFileEl.addEventListener('change', () => {
                 const file = avatarFileEl.files?.[0] || null;
@@ -1513,7 +1586,7 @@ class SPARouter {
             if (!identity.email) return null;
             const { data, error } = await this.supabase
                 .from('profiles')
-                .select('email, role, company_website_url, phone_country_iso2, phone_dial_code, phone_number, avatar_storage_path, oauth_avatar_url, has_privileges, is_admin')
+                .select('email, full_name, role, company_website_url, phone_country_iso2, phone_dial_code, phone_number, avatar_storage_path, oauth_avatar_url, has_privileges, is_admin')
                 .eq('email', identity.email)
                 .maybeSingle();
             if (error) throw error;
@@ -1522,8 +1595,10 @@ class SPARouter {
 
         const applyExisting = (row) => {
             if (!row) return;
+            this.authState.fullName = row.full_name || this.authState.fullName;
             this.authState.hasPrivileges = Boolean(row.has_privileges);
             this.authState.isAdmin = Boolean(row.is_admin);
+            if (nameEl) nameEl.value = row.full_name || identity.fullName || '';
             if (roleEl) roleEl.value = row.role || '';
             if (companyUrlEl) companyUrlEl.value = row.company_website_url || '';
             if (phoneEl) phoneEl.value = row.phone_number || '';
@@ -1537,7 +1612,7 @@ class SPARouter {
             if (dialEl) {
                 dialEl.value = row.phone_dial_code || '';
             }
-            syncDialInput();
+            syncDialInput(countryEl, dialEl);
 
             const overrideUrl = row.avatar_storage_path ? this.getAvatarPublicUrl(row.avatar_storage_path) : null;
             const effectiveAvatar = overrideUrl || identity.avatarUrl || row.oauth_avatar_url || fallbackAvatar;
@@ -1560,6 +1635,131 @@ class SPARouter {
             if (!raw) return '';
             if (/^https?:\/\//i.test(raw)) return raw;
             return `https://${raw}`;
+        };
+
+        const normalizeOptionalText = (value) => {
+            const raw = String(value || '').trim();
+            return raw || null;
+        };
+
+        const findAdminUser = (userId) => adminUsers.find(user => String(user.user_id || '') === String(userId || '')) || null;
+
+        const resetAdminEditor = () => {
+            selectedAdminUserId = null;
+            if (adminFormEl) adminFormEl.classList.add('d-none');
+            if (adminPlaceholderEl) adminPlaceholderEl.classList.remove('d-none');
+            if (adminEditorCloseEl) adminEditorCloseEl.classList.add('d-none');
+            if (adminIdEl) adminIdEl.value = '';
+            if (adminEmailFieldEl) adminEmailFieldEl.value = '';
+            if (adminFullNameEl) adminFullNameEl.value = '';
+            if (adminRoleEl) adminRoleEl.value = '';
+            if (adminCompanyUrlEl) adminCompanyUrlEl.value = '';
+            if (adminCountryEl) adminCountryEl.value = 'US';
+            if (adminDialEl) adminDialEl.value = '';
+            if (adminPhoneEl) adminPhoneEl.value = '';
+            if (adminPrivilegesToggleEl) adminPrivilegesToggleEl.checked = false;
+            syncDialInput(adminCountryEl, adminDialEl);
+            setAdminSaveStatus('');
+        };
+
+        const populateAdminEditor = (row) => {
+            if (!row) {
+                resetAdminEditor();
+                return;
+            }
+
+            selectedAdminUserId = row.user_id;
+            if (adminPlaceholderEl) adminPlaceholderEl.classList.add('d-none');
+            if (adminFormEl) adminFormEl.classList.remove('d-none');
+            if (adminEditorCloseEl) adminEditorCloseEl.classList.remove('d-none');
+            if (adminIdEl) adminIdEl.value = row.user_id || '';
+            if (adminEmailFieldEl) adminEmailFieldEl.value = row.email || '';
+            if (adminFullNameEl) adminFullNameEl.value = row.full_name || '';
+            if (adminRoleEl) adminRoleEl.value = row.role || '';
+            if (adminCompanyUrlEl) adminCompanyUrlEl.value = row.company_website_url || '';
+            if (adminPhoneEl) adminPhoneEl.value = row.phone_number || '';
+            if (adminCountryEl) {
+                const iso2 = row.phone_country_iso2 || '';
+                const option = Array.from(adminCountryEl.options || []).find(o => o.value === iso2);
+                adminCountryEl.value = option ? iso2 : 'OTHER';
+            }
+            if (adminDialEl) {
+                adminDialEl.value = row.phone_dial_code || '';
+            }
+            syncDialInput(adminCountryEl, adminDialEl);
+            if (adminPrivilegesToggleEl) adminPrivilegesToggleEl.checked = Boolean(row.has_privileges);
+            setAdminSaveStatus('');
+        };
+
+        const renderAdminUsers = () => {
+            if (!adminUsersBodyEl) return;
+            adminUsersBodyEl.innerHTML = '';
+
+            if (adminCountEl) {
+                adminCountEl.textContent = `${adminUsers.length} user${adminUsers.length === 1 ? '' : 's'}`;
+            }
+
+            if (adminEmptyEl) {
+                adminEmptyEl.classList.toggle('d-none', adminUsers.length > 0);
+            }
+
+            adminUsers.forEach(user => {
+                const tr = document.createElement('tr');
+                const isActive = String(user.user_id || '') === String(selectedAdminUserId || '');
+                if (isActive) {
+                    tr.classList.add('table-active');
+                }
+
+                const idTd = document.createElement('td');
+                idTd.className = 'profile-admin-user-id';
+                idTd.textContent = user.user_id || '';
+
+                const nameTd = document.createElement('td');
+                nameTd.className = 'profile-admin-user-name';
+                nameTd.textContent = user.full_name || '—';
+
+                const emailTd = document.createElement('td');
+                emailTd.className = 'profile-admin-user-email';
+                emailTd.textContent = user.email || '—';
+
+                const actionTd = document.createElement('td');
+                actionTd.className = 'text-end';
+
+                const editBtn = document.createElement('button');
+                editBtn.type = 'button';
+                editBtn.className = 'btn btn-outline-primary btn-sm profile-admin-edit-btn';
+                editBtn.dataset.userId = user.user_id || '';
+                editBtn.textContent = 'Edit';
+
+                actionTd.appendChild(editBtn);
+                tr.appendChild(idTd);
+                tr.appendChild(nameTd);
+                tr.appendChild(emailTd);
+                tr.appendChild(actionTd);
+                adminUsersBodyEl.appendChild(tr);
+            });
+        };
+
+        const loadAdminUsers = async () => {
+            if (!this.authState.isAdmin || !adminPanelEl) return;
+
+            setAdminDirectoryStatus('Loading registered users...');
+            try {
+                adminUsers = await this.listAdminProfiles();
+                renderAdminUsers();
+                if (selectedAdminUserId) {
+                    populateAdminEditor(findAdminUser(selectedAdminUserId));
+                } else {
+                    resetAdminEditor();
+                }
+                setAdminDirectoryStatus('');
+            } catch (error) {
+                console.error('[profile-admin] list failed', error);
+                adminUsers = [];
+                renderAdminUsers();
+                resetAdminEditor();
+                setAdminDirectoryStatus('Unable to load registered users right now.');
+            }
         };
 
         const save = async () => {
@@ -1635,6 +1835,83 @@ class SPARouter {
                 });
             });
             formEl.dataset.bound = 'true';
+        }
+
+        if (adminUsersBodyEl && !adminUsersBodyEl.dataset.bound) {
+            adminUsersBodyEl.addEventListener('click', (event) => {
+                const button = event.target.closest('[data-user-id]');
+                if (!button) return;
+                const userId = button.getAttribute('data-user-id');
+                populateAdminEditor(findAdminUser(userId));
+                renderAdminUsers();
+            });
+            adminUsersBodyEl.dataset.bound = 'true';
+        }
+
+        if (adminEditorCloseEl && !adminEditorCloseEl.dataset.bound) {
+            adminEditorCloseEl.addEventListener('click', () => {
+                resetAdminEditor();
+                renderAdminUsers();
+            });
+            adminEditorCloseEl.dataset.bound = 'true';
+        }
+
+        if (adminCancelEl && !adminCancelEl.dataset.bound) {
+            adminCancelEl.addEventListener('click', () => {
+                populateAdminEditor(findAdminUser(selectedAdminUserId));
+            });
+            adminCancelEl.dataset.bound = 'true';
+        }
+
+        if (adminFormEl && !adminFormEl.dataset.bound) {
+            adminFormEl.addEventListener('submit', async (event) => {
+                event.preventDefault();
+
+                if (!selectedAdminUserId) {
+                    setAdminSaveStatus('Select a user first.');
+                    return;
+                }
+
+                setAdminSaveStatus('Saving user...');
+                try {
+                    const row = await this.updateAdminProfile({
+                        p_user_id: selectedAdminUserId,
+                        p_full_name: normalizeOptionalText(adminFullNameEl?.value),
+                        p_role: normalizeOptionalText(adminRoleEl?.value),
+                        p_company_website_url: normalizeUrl(adminCompanyUrlEl?.value),
+                        p_phone_country_iso2: adminCountryEl?.value && adminCountryEl.value !== 'OTHER' ? adminCountryEl.value : null,
+                        p_phone_dial_code: normalizeOptionalText(adminDialEl?.value),
+                        p_phone_number: normalizeOptionalText(adminPhoneEl?.value),
+                        p_has_privileges: Boolean(adminPrivilegesToggleEl?.checked)
+                    });
+
+                    adminUsers = adminUsers.map(user => String(user.user_id) === String(row.user_id) ? { ...user, ...row } : user);
+                    if (String(row.email || '').toLowerCase() === String(this.authState.email || '').toLowerCase()) {
+                        this.authState.fullName = row.full_name || this.authState.fullName;
+                        this.authState.hasPrivileges = Boolean(row.has_privileges);
+                        this.authState.isAdmin = Boolean(row.is_admin);
+                        if (nameEl) nameEl.value = this.authState.fullName || '';
+                        if (privilegesEl) privilegesEl.value = this.authState.hasPrivileges ? 'Enabled' : 'Disabled';
+                        if (adminEl) adminEl.value = this.authState.isAdmin ? 'Enabled' : 'Disabled';
+                        if (adminPanelEl) adminPanelEl.classList.toggle('d-none', !this.authState.isAdmin);
+                        this.updateProtectedAccessReason();
+                    }
+                    renderAdminUsers();
+                    populateAdminEditor(row);
+                    setAdminSaveStatus('User saved.');
+                } catch (error) {
+                    console.error('[profile-admin] save failed', error);
+                    setAdminSaveStatus('Unable to save this user right now.');
+                }
+            });
+            adminFormEl.dataset.bound = 'true';
+        }
+
+        if (this.authState.isAdmin) {
+            loadAdminUsers();
+        } else {
+            resetAdminEditor();
+            setAdminDirectoryStatus('');
         }
     }
 

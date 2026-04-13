@@ -1495,6 +1495,123 @@ header .navbar-nav .nav-link.active {
   padding: 0.65rem 1.1rem;
 }
 
+.profile-admin-intro {
+  margin-bottom: 1rem;
+}
+
+.profile-admin-layout {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 1080px) {
+  .profile-admin-layout {
+    grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+    align-items: start;
+  }
+}
+
+.profile-admin-subheader {
+  margin-bottom: 0.85rem;
+}
+
+.profile-admin-table-wrap {
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  background: rgba(10, 12, 22, 0.15);
+}
+
+[data-bs-theme="light"] .profile-admin-table-wrap {
+  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(13, 110, 253, 0.12);
+}
+
+.profile-admin-table {
+  margin: 0;
+  color: var(--text);
+}
+
+.profile-admin-table thead th {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+  font-size: 0.82rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.profile-admin-table tbody td {
+  vertical-align: middle;
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+.profile-admin-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.profile-admin-user-id {
+  font-family: var(--bs-font-monospace);
+  font-size: 0.8rem;
+  opacity: 0.82;
+}
+
+.profile-admin-user-name {
+  font-weight: 600;
+}
+
+.profile-admin-user-email {
+  color: var(--muted);
+  word-break: break-word;
+}
+
+.profile-admin-edit-btn {
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.profile-admin-editor-shell {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.profile-admin-placeholder {
+  min-height: 180px;
+  display: grid;
+  place-items: center;
+  padding: 1.2rem;
+  border-radius: 1rem;
+  border: 1px dashed rgba(84, 183, 255, 0.25);
+  color: var(--muted);
+  text-align: center;
+  background: rgba(84, 183, 255, 0.05);
+}
+
+.profile-admin-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 42px;
+  margin-top: 0.25rem;
+}
+
+.profile-admin-toggle .form-check-input {
+  margin: 0;
+  width: 2.6rem;
+  height: 1.45rem;
+}
+
+.profile-admin-toggle .form-check-label {
+  margin: 0;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.profile-admin-directory .profile-hint,
+.profile-admin-editor-shell .profile-hint {
+  font-size: 0.88rem;
+}
+
 .cta-section .btn {
   border-radius: 999px;
 }
