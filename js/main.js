@@ -468,6 +468,10 @@ class SPARouter {
                     this.setupLoginPage();
                 }
 
+                if (this.currentPage === 'profile') {
+                    this.setupProfilePage();
+                }
+
                 if (event === 'PASSWORD_RECOVERY') {
                     // User came from a recovery email link; prompt them to set a new password.
                     sessionStorage.setItem('password_recovery', '1');
@@ -1623,13 +1627,6 @@ class SPARouter {
             this.updateProtectedAccessReason();
         };
 
-        loadExisting()
-            .then(applyExisting)
-            .catch(err => {
-                console.warn('[profile] load failed', err);
-                setStatus('Unable to load profile right now.');
-            });
-
         const normalizeUrl = (value) => {
             const raw = String(value || '').trim();
             if (!raw) return '';
@@ -1761,6 +1758,19 @@ class SPARouter {
                 setAdminDirectoryStatus('Unable to load registered users right now.');
             }
         };
+
+        loadExisting()
+            .then(row => {
+                applyExisting(row);
+                if (this.authState.isAdmin) {
+                    return loadAdminUsers();
+                }
+                return null;
+            })
+            .catch(err => {
+                console.warn('[profile] load failed', err);
+                setStatus('Unable to load profile right now.');
+            });
 
         const save = async () => {
             setStatus('Saving...');
