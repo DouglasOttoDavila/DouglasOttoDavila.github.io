@@ -1,0 +1,133 @@
+<section class="relationship-graph-page d-flex flex-column gap-4" id="relationship-graph-root">
+  <section class="relationship-graph-hero glass-card rounded-4 position-relative overflow-hidden">
+    <div class="relationship-graph-hero__grid">
+      <div>
+        <span class="badge rounded-pill bg-primary-subtle text-primary-emphasis px-3 py-2">Operational Context Graph</span>
+        <h1 class="relationship-graph-hero__title">Connected engineering context for AI-assisted delivery and QA exploration.</h1>
+        <p class="relationship-graph-hero__text">This portfolio concept maps fictional products, features, journeys, requirements, APIs, services, tests, defects, RCA findings, deployments, regions, languages, and AI capabilities into one interactive operational graph.</p>
+      </div>
+      <div class="relationship-graph-hero__stats" id="relationship-graph-summary">
+        <article class="relationship-graph-stat-card">
+          <span class="relationship-graph-stat-card__label">Dataset Nodes</span>
+          <strong class="relationship-graph-stat-card__value" data-summary-nodes>0</strong>
+        </article>
+        <article class="relationship-graph-stat-card">
+          <span class="relationship-graph-stat-card__label">Relationships</span>
+          <strong class="relationship-graph-stat-card__value" data-summary-links>0</strong>
+        </article>
+        <article class="relationship-graph-stat-card">
+          <span class="relationship-graph-stat-card__label">Entity Classes</span>
+          <strong class="relationship-graph-stat-card__value" data-summary-types>0</strong>
+        </article>
+        <article class="relationship-graph-stat-card">
+          <span class="relationship-graph-stat-card__label">AI Capabilities</span>
+          <strong class="relationship-graph-stat-card__value" data-summary-ai>0</strong>
+        </article>
+      </div>
+    </div>
+    <div class="relationship-graph-hero__glow relationship-graph-hero__glow--one"></div>
+    <div class="relationship-graph-hero__glow relationship-graph-hero__glow--two"></div>
+  </section>
+
+  <section class="relationship-graph-shell">
+    <div class="relationship-graph-toolbar">
+      <div class="relationship-graph-toolbar__inputs">
+        <label class="relationship-graph-field">
+          <span class="relationship-graph-field__label">Search operational nodes</span>
+          <input
+            id="relationship-graph-search"
+            class="relationship-graph-input"
+            type="search"
+            placeholder="Try Authentication & Session, REQ-AUTH-01, Auth API, or AI Failure Triage Assistant"
+            autocomplete="off">
+        </label>
+        <label class="relationship-graph-field relationship-graph-field--compact">
+          <span class="relationship-graph-field__label">Filter by node type</span>
+          <select id="relationship-graph-filter" class="relationship-graph-input relationship-graph-select">
+            <option value="all">All nodes</option>
+          </select>
+        </label>
+      </div>
+      <div class="relationship-graph-toolbar__actions">
+        <button id="relationship-graph-labels-toggle" class="btn btn-outline-secondary relationship-graph-reset-btn" type="button">
+          <i class="fa-solid fa-tags me-2" aria-hidden="true"></i><span data-label-toggle-text>Labels Off</span>
+        </button>
+        <button id="relationship-graph-fit" class="btn btn-outline-secondary relationship-graph-reset-btn" type="button">
+          <i class="fa-solid fa-expand me-2" aria-hidden="true"></i>Fit view
+        </button>
+        <button id="relationship-graph-clear-selection" class="btn btn-outline-secondary relationship-graph-reset-btn" type="button">
+          <i class="fa-solid fa-pointer me-2" aria-hidden="true"></i>Clear selection
+        </button>
+        <button id="relationship-graph-reset" class="btn btn-outline-primary relationship-graph-reset-btn" type="button">
+          <i class="fa-solid fa-rotate-left me-2" aria-hidden="true"></i>Reset all
+        </button>
+      </div>
+    </div>
+
+    <div class="relationship-graph-legend" id="relationship-graph-legend" aria-label="Graph legend"></div>
+    <div class="relationship-graph-search-results" id="relationship-graph-search-results" aria-live="polite"></div>
+
+    <div class="relationship-graph-workspace">
+      <article class="relationship-graph-canvas-card">
+        <div class="relationship-graph-canvas-header">
+          <div>
+            <p class="relationship-graph-kicker">Canvas</p>
+            <h2 class="h4 mb-1">Operational intelligence network</h2>
+            <p class="text-body-secondary mb-0">Pan, zoom, drag nodes, search the graph, and inspect how requirements, systems, tests, incidents, and AI capabilities connect.</p>
+          </div>
+          <div class="relationship-graph-chip-row">
+            <span class="relationship-graph-chip">Requirements review</span>
+            <span class="relationship-graph-chip">Test generation context</span>
+            <span class="relationship-graph-chip">Failure triage exploration</span>
+          </div>
+        </div>
+        <div class="relationship-graph-canvas" id="relationship-graph-canvas" aria-label="Interactive operational context graph"></div>
+        <div class="relationship-graph-tooltip" id="relationship-graph-tooltip" role="tooltip"></div>
+      </article>
+
+      <div class="relationship-graph-sidebar">
+        <aside class="relationship-graph-panel glass-card rounded-4" id="relationship-graph-panel">
+          <div class="relationship-graph-panel__inner">
+            <p class="relationship-graph-kicker">Details</p>
+            <h2 class="relationship-graph-panel__title">Select a node</h2>
+            <p class="relationship-graph-panel__text">Choose any operational node to inspect its description, metadata, and directly connected context grouped by relationship type.</p>
+            <div class="relationship-graph-panel__placeholder">
+              <span class="relationship-graph-panel__placeholder-icon"><i class="fa-solid fa-diagram-project" aria-hidden="true"></i></span>
+              <p class="mb-0">This fictional graph is designed to show how connected knowledge can support AI workflows for requirements review, test recommendation, and failure triage.</p>
+            </div>
+          </div>
+        </aside>
+
+        <aside class="relationship-graph-assistant glass-card rounded-4" id="relationship-graph-assistant">
+          <div class="relationship-graph-assistant__header">
+            <div>
+              <p class="relationship-graph-kicker">AI Assistant</p>
+              <h2 class="relationship-graph-assistant__title">Graph-aware Gemini copilot</h2>
+            </div>
+            <button class="btn btn-sm btn-outline-secondary relationship-graph-assistant__clear" id="relationship-graph-chat-clear" type="button">
+              Clear chat
+            </button>
+          </div>
+          <div class="relationship-graph-assistant__status" id="relationship-graph-chat-status" aria-live="polite">
+            Ask about nodes, clusters, defects, deployments, or AI capabilities. The assistant can respond and safely drive the graph UI.
+          </div>
+          <div class="relationship-graph-assistant__messages" id="relationship-graph-chat-messages" aria-live="polite"></div>
+          <form class="relationship-graph-assistant__composer" id="relationship-graph-chat-form">
+            <label class="visually-hidden" for="relationship-graph-chat-input">Ask the graph assistant</label>
+            <textarea
+              id="relationship-graph-chat-input"
+              class="relationship-graph-assistant__input"
+              rows="3"
+              placeholder="Ask: Which defects are related to access control?"></textarea>
+            <div class="relationship-graph-assistant__actions">
+              <p class="relationship-graph-assistant__hint">The assistant uses only the fictional operational graph currently loaded in this page.</p>
+              <button class="btn btn-primary relationship-graph-assistant__submit" id="relationship-graph-chat-submit" type="submit">
+                <i class="fa-solid fa-paper-plane me-2" aria-hidden="true"></i>Ask assistant
+              </button>
+            </div>
+          </form>
+        </aside>
+      </div>
+    </div>
+  </section>
+</section>

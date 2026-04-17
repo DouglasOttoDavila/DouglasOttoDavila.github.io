@@ -1,0 +1,1154 @@
+{
+  "meta": {
+    "name": "Operational Context Graph Concept Dataset",
+    "version": "1.0.0",
+    "description": "Fictional, graph-ready dataset for a portfolio concept showing relationships across products, features, journeys, requirements, APIs, services, tests, defects, RCA, deployments, regions, languages, and AI capabilities.",
+    "format": "nodes-links",
+    "nodeCount": 73,
+    "linkCount": 113,
+    "isFictional": true
+  },
+  "nodeTypes": [
+    "AICapability",
+    "API",
+    "Defect",
+    "Deployment",
+    "Feature",
+    "Language",
+    "Product",
+    "RCA",
+    "Region",
+    "Requirement",
+    "Screen",
+    "Service",
+    "TestCase",
+    "TestSuite",
+    "UserJourney"
+  ],
+  "edgeTypes": [
+    "AFFECTS_SCREEN",
+    "AVAILABLE_IN",
+    "BACKED_BY",
+    "CONSIDERS",
+    "CONTAINS",
+    "CONTEXTUALIZES_WITH",
+    "CORRELATES_WITH",
+    "DEPENDS_ON",
+    "ENRICHES",
+    "FAILED_ON",
+    "GENERATES_FROM",
+    "HAS_FEATURE",
+    "HAS_RCA",
+    "HAS_REQUIREMENT",
+    "IMPLEMENTS_VIA",
+    "INTRODUCED_IN",
+    "INVESTIGATES",
+    "LOOKS_BACK_TO",
+    "RECOMMENDS_SIMILAR_TO",
+    "RELATED_TO",
+    "RELATES_TO",
+    "SUPPORTED_LANGUAGE",
+    "SUPPORTS_JOURNEY",
+    "SURFACES",
+    "USES_NODE_CLASS",
+    "VALIDATED_BY"
+  ],
+  "nodes": [
+    {
+      "id": "product-alpha-suite",
+      "label": "Alpha Suite",
+      "type": "Product",
+      "group": "product",
+      "description": "Core platform product used in the concept model.",
+      "status": "active",
+      "priority": "high"
+    },
+    {
+      "id": "product-orbit-mobile",
+      "label": "Orbit Mobile",
+      "type": "Product",
+      "group": "product",
+      "description": "Companion mobile product connected to shared services.",
+      "status": "active",
+      "priority": "medium"
+    },
+    {
+      "id": "product-pulse-console",
+      "label": "Pulse Console",
+      "type": "Product",
+      "group": "product",
+      "description": "Operations console product for monitoring and triage flows.",
+      "status": "active",
+      "priority": "medium"
+    },
+    {
+      "id": "feature-auth-session",
+      "label": "Authentication & Session",
+      "type": "Feature",
+      "group": "feature",
+      "productId": "product-alpha-suite",
+      "description": "Login, token refresh, and session continuity."
+    },
+    {
+      "id": "feature-alert-routing",
+      "label": "Alert Routing",
+      "type": "Feature",
+      "group": "feature",
+      "productId": "product-alpha-suite",
+      "description": "Rule-based routing of operational alerts."
+    },
+    {
+      "id": "feature-case-timeline",
+      "label": "Case Timeline",
+      "type": "Feature",
+      "group": "feature",
+      "productId": "product-pulse-console",
+      "description": "Chronological event and activity view."
+    },
+    {
+      "id": "feature-device-sync",
+      "label": "Device Sync",
+      "type": "Feature",
+      "group": "feature",
+      "productId": "product-orbit-mobile",
+      "description": "Synchronization of assigned data to mobile clients."
+    },
+    {
+      "id": "feature-report-export",
+      "label": "Report Export",
+      "type": "Feature",
+      "group": "feature",
+      "productId": "product-pulse-console",
+      "description": "Export reports to document formats and download."
+    },
+    {
+      "id": "feature-access-control",
+      "label": "Access Control",
+      "type": "Feature",
+      "group": "feature",
+      "productId": "product-alpha-suite",
+      "description": "Role-based permissions and policy enforcement."
+    },
+    {
+      "id": "journey-new-user-login",
+      "label": "New User Login Journey",
+      "type": "UserJourney",
+      "group": "journey",
+      "description": "First-time login from credential entry to dashboard."
+    },
+    {
+      "id": "journey-alert-triage",
+      "label": "Alert Triage Journey",
+      "type": "UserJourney",
+      "group": "journey",
+      "description": "Review, assign, and escalate an incoming alert."
+    },
+    {
+      "id": "journey-mobile-sync",
+      "label": "Mobile Sync Journey",
+      "type": "UserJourney",
+      "group": "journey",
+      "description": "Refresh assigned content on mobile under mixed connectivity."
+    },
+    {
+      "id": "journey-report-download",
+      "label": "Report Download Journey",
+      "type": "UserJourney",
+      "group": "journey",
+      "description": "Generate and download a report with filters."
+    },
+    {
+      "id": "req-auth-01",
+      "label": "REQ-AUTH-01",
+      "type": "Requirement",
+      "group": "requirement",
+      "summary": "System must lock session after repeated invalid login attempts.",
+      "priority": "high"
+    },
+    {
+      "id": "req-auth-02",
+      "label": "REQ-AUTH-02",
+      "type": "Requirement",
+      "group": "requirement",
+      "summary": "System must preserve session through token refresh without data loss.",
+      "priority": "high"
+    },
+    {
+      "id": "req-routing-01",
+      "label": "REQ-ROUTE-01",
+      "type": "Requirement",
+      "group": "requirement",
+      "summary": "Routing rules must prioritize critical alerts.",
+      "priority": "high"
+    },
+    {
+      "id": "req-routing-02",
+      "label": "REQ-ROUTE-02",
+      "type": "Requirement",
+      "group": "requirement",
+      "summary": "Escalation must notify the assigned owner when no handler accepts within SLA.",
+      "priority": "medium"
+    },
+    {
+      "id": "req-sync-01",
+      "label": "REQ-SYNC-01",
+      "type": "Requirement",
+      "group": "requirement",
+      "summary": "Mobile sync must resume after temporary connectivity loss.",
+      "priority": "high"
+    },
+    {
+      "id": "req-export-01",
+      "label": "REQ-EXPORT-01",
+      "type": "Requirement",
+      "group": "requirement",
+      "summary": "Generated exports must reflect active filters and selected date range.",
+      "priority": "medium"
+    },
+    {
+      "id": "req-access-01",
+      "label": "REQ-ACCESS-01",
+      "type": "Requirement",
+      "group": "requirement",
+      "summary": "Restricted views must be hidden from unauthorized roles.",
+      "priority": "high"
+    },
+    {
+      "id": "req-access-02",
+      "label": "REQ-ACCESS-02",
+      "type": "Requirement",
+      "group": "requirement",
+      "summary": "Role changes must take effect on next permissions refresh.",
+      "priority": "medium"
+    },
+    {
+      "id": "screen-login",
+      "label": "Login Screen",
+      "type": "Screen",
+      "group": "screen"
+    },
+    {
+      "id": "screen-dashboard",
+      "label": "Dashboard",
+      "type": "Screen",
+      "group": "screen"
+    },
+    {
+      "id": "screen-alert-board",
+      "label": "Alert Board",
+      "type": "Screen",
+      "group": "screen"
+    },
+    {
+      "id": "screen-case-detail",
+      "label": "Case Detail",
+      "type": "Screen",
+      "group": "screen"
+    },
+    {
+      "id": "screen-sync-center",
+      "label": "Sync Center",
+      "type": "Screen",
+      "group": "screen"
+    },
+    {
+      "id": "screen-report-builder",
+      "label": "Report Builder",
+      "type": "Screen",
+      "group": "screen"
+    },
+    {
+      "id": "screen-admin-access",
+      "label": "Access Admin",
+      "type": "Screen",
+      "group": "screen"
+    },
+    {
+      "id": "api-auth-service",
+      "label": "Auth API",
+      "type": "API",
+      "group": "api",
+      "methodSet": [
+        "POST /login",
+        "POST /refresh"
+      ]
+    },
+    {
+      "id": "api-alert-service",
+      "label": "Alert API",
+      "type": "API",
+      "group": "api",
+      "methodSet": [
+        "GET /alerts",
+        "POST /assign",
+        "POST /escalate"
+      ]
+    },
+    {
+      "id": "api-sync-service",
+      "label": "Sync API",
+      "type": "API",
+      "group": "api",
+      "methodSet": [
+        "POST /sync",
+        "GET /delta"
+      ]
+    },
+    {
+      "id": "api-report-service",
+      "label": "Report API",
+      "type": "API",
+      "group": "api",
+      "methodSet": [
+        "POST /generate",
+        "GET /download"
+      ]
+    },
+    {
+      "id": "api-access-service",
+      "label": "Access API",
+      "type": "API",
+      "group": "api",
+      "methodSet": [
+        "GET /roles",
+        "POST /policy/evaluate"
+      ]
+    },
+    {
+      "id": "service-session-manager",
+      "label": "Session Manager",
+      "type": "Service",
+      "group": "service"
+    },
+    {
+      "id": "service-routing-engine",
+      "label": "Routing Engine",
+      "type": "Service",
+      "group": "service"
+    },
+    {
+      "id": "service-sync-orchestrator",
+      "label": "Sync Orchestrator",
+      "type": "Service",
+      "group": "service"
+    },
+    {
+      "id": "service-export-engine",
+      "label": "Export Engine",
+      "type": "Service",
+      "group": "service"
+    },
+    {
+      "id": "service-policy-engine",
+      "label": "Policy Engine",
+      "type": "Service",
+      "group": "service"
+    },
+    {
+      "id": "tc-auth-lockout",
+      "label": "TC Auth Lockout After Invalid Attempts",
+      "type": "TestCase",
+      "group": "testcase",
+      "automationStatus": "automated",
+      "severity": "high"
+    },
+    {
+      "id": "tc-auth-refresh",
+      "label": "TC Session Refresh Preserves State",
+      "type": "TestCase",
+      "group": "testcase",
+      "automationStatus": "automated",
+      "severity": "high"
+    },
+    {
+      "id": "tc-routing-priority",
+      "label": "TC Critical Alert Priority Routing",
+      "type": "TestCase",
+      "group": "testcase",
+      "automationStatus": "manual",
+      "severity": "high"
+    },
+    {
+      "id": "tc-routing-escalation",
+      "label": "TC Escalation Notification After SLA Breach",
+      "type": "TestCase",
+      "group": "testcase",
+      "automationStatus": "automated",
+      "severity": "medium"
+    },
+    {
+      "id": "tc-sync-resume",
+      "label": "TC Sync Resume After Connectivity Loss",
+      "type": "TestCase",
+      "group": "testcase",
+      "automationStatus": "automated",
+      "severity": "high"
+    },
+    {
+      "id": "tc-export-filters",
+      "label": "TC Export Honors Active Filters",
+      "type": "TestCase",
+      "group": "testcase",
+      "automationStatus": "manual",
+      "severity": "medium"
+    },
+    {
+      "id": "tc-access-hidden-view",
+      "label": "TC Unauthorized Views Hidden",
+      "type": "TestCase",
+      "group": "testcase",
+      "automationStatus": "automated",
+      "severity": "high"
+    },
+    {
+      "id": "tc-access-role-refresh",
+      "label": "TC Role Change Reflected On Refresh",
+      "type": "TestCase",
+      "group": "testcase",
+      "automationStatus": "manual",
+      "severity": "medium"
+    },
+    {
+      "id": "suite-auth-regression",
+      "label": "Authentication Regression Suite",
+      "type": "TestSuite",
+      "group": "testsuite"
+    },
+    {
+      "id": "suite-ops-smoke",
+      "label": "Operations Smoke Suite",
+      "type": "TestSuite",
+      "group": "testsuite"
+    },
+    {
+      "id": "suite-mobile-regression",
+      "label": "Mobile Regression Suite",
+      "type": "TestSuite",
+      "group": "testsuite"
+    },
+    {
+      "id": "suite-admin-security",
+      "label": "Admin Security Suite",
+      "type": "TestSuite",
+      "group": "testsuite"
+    },
+    {
+      "id": "defect-session-loop",
+      "label": "Session Refresh Loop",
+      "type": "Defect",
+      "group": "defect",
+      "severity": "high",
+      "status": "resolved"
+    },
+    {
+      "id": "defect-routing-stall",
+      "label": "Routing Escalation Stall",
+      "type": "Defect",
+      "group": "defect",
+      "severity": "high",
+      "status": "open"
+    },
+    {
+      "id": "defect-sync-duplication",
+      "label": "Duplicate Sync Payload",
+      "type": "Defect",
+      "group": "defect",
+      "severity": "medium",
+      "status": "resolved"
+    },
+    {
+      "id": "defect-export-timezone",
+      "label": "Export Timezone Offset",
+      "type": "Defect",
+      "group": "defect",
+      "severity": "medium",
+      "status": "open"
+    },
+    {
+      "id": "defect-access-cache",
+      "label": "Permissions Cache Delay",
+      "type": "Defect",
+      "group": "defect",
+      "severity": "high",
+      "status": "open"
+    },
+    {
+      "id": "rca-token-race",
+      "label": "RCA Token Refresh Race Condition",
+      "type": "RCA",
+      "group": "rca"
+    },
+    {
+      "id": "rca-routing-retry",
+      "label": "RCA Missing Retry Guard",
+      "type": "RCA",
+      "group": "rca"
+    },
+    {
+      "id": "rca-sync-idempotency",
+      "label": "RCA Missing Idempotency Check",
+      "type": "RCA",
+      "group": "rca"
+    },
+    {
+      "id": "rca-export-timezone-source",
+      "label": "RCA Mixed Timezone Source",
+      "type": "RCA",
+      "group": "rca"
+    },
+    {
+      "id": "rca-policy-cache",
+      "label": "RCA Delayed Policy Cache Invalidation",
+      "type": "RCA",
+      "group": "rca"
+    },
+    {
+      "id": "deploy-2026-01-12",
+      "label": "Deployment 2026.01.12",
+      "type": "Deployment",
+      "group": "deployment",
+      "releaseTrain": "winter"
+    },
+    {
+      "id": "deploy-2026-02-03",
+      "label": "Deployment 2026.02.03",
+      "type": "Deployment",
+      "group": "deployment",
+      "releaseTrain": "winter"
+    },
+    {
+      "id": "deploy-2026-03-18",
+      "label": "Deployment 2026.03.18",
+      "type": "Deployment",
+      "group": "deployment",
+      "releaseTrain": "spring"
+    },
+    {
+      "id": "region-north",
+      "label": "North Region",
+      "type": "Region",
+      "group": "region"
+    },
+    {
+      "id": "region-south",
+      "label": "South Region",
+      "type": "Region",
+      "group": "region"
+    },
+    {
+      "id": "region-central",
+      "label": "Central Region",
+      "type": "Region",
+      "group": "region"
+    },
+    {
+      "id": "lang-en",
+      "label": "English",
+      "type": "Language",
+      "group": "language"
+    },
+    {
+      "id": "lang-pt",
+      "label": "Portuguese",
+      "type": "Language",
+      "group": "language"
+    },
+    {
+      "id": "lang-es",
+      "label": "Spanish",
+      "type": "Language",
+      "group": "language"
+    },
+    {
+      "id": "ai-req-reviewer",
+      "label": "AI Requirements Reviewer",
+      "type": "AICapability",
+      "group": "ai"
+    },
+    {
+      "id": "ai-tc-generator",
+      "label": "AI Test Case Generator",
+      "type": "AICapability",
+      "group": "ai"
+    },
+    {
+      "id": "ai-tc-recommender",
+      "label": "AI Test Case Recommender",
+      "type": "AICapability",
+      "group": "ai"
+    },
+    {
+      "id": "ai-failure-triage",
+      "label": "AI Failure Triage Assistant",
+      "type": "AICapability",
+      "group": "ai"
+    }
+  ],
+  "links": [
+    {
+      "source": "product-alpha-suite",
+      "target": "feature-auth-session",
+      "type": "HAS_FEATURE"
+    },
+    {
+      "source": "product-alpha-suite",
+      "target": "feature-alert-routing",
+      "type": "HAS_FEATURE"
+    },
+    {
+      "source": "product-alpha-suite",
+      "target": "feature-access-control",
+      "type": "HAS_FEATURE"
+    },
+    {
+      "source": "product-orbit-mobile",
+      "target": "feature-device-sync",
+      "type": "HAS_FEATURE"
+    },
+    {
+      "source": "product-pulse-console",
+      "target": "feature-case-timeline",
+      "type": "HAS_FEATURE"
+    },
+    {
+      "source": "product-pulse-console",
+      "target": "feature-report-export",
+      "type": "HAS_FEATURE"
+    },
+    {
+      "source": "feature-auth-session",
+      "target": "journey-new-user-login",
+      "type": "SUPPORTS_JOURNEY"
+    },
+    {
+      "source": "feature-alert-routing",
+      "target": "journey-alert-triage",
+      "type": "SUPPORTS_JOURNEY"
+    },
+    {
+      "source": "feature-device-sync",
+      "target": "journey-mobile-sync",
+      "type": "SUPPORTS_JOURNEY"
+    },
+    {
+      "source": "feature-report-export",
+      "target": "journey-report-download",
+      "type": "SUPPORTS_JOURNEY"
+    },
+    {
+      "source": "feature-auth-session",
+      "target": "req-auth-01",
+      "type": "HAS_REQUIREMENT"
+    },
+    {
+      "source": "feature-auth-session",
+      "target": "req-auth-02",
+      "type": "HAS_REQUIREMENT"
+    },
+    {
+      "source": "feature-alert-routing",
+      "target": "req-routing-01",
+      "type": "HAS_REQUIREMENT"
+    },
+    {
+      "source": "feature-alert-routing",
+      "target": "req-routing-02",
+      "type": "HAS_REQUIREMENT"
+    },
+    {
+      "source": "feature-device-sync",
+      "target": "req-sync-01",
+      "type": "HAS_REQUIREMENT"
+    },
+    {
+      "source": "feature-report-export",
+      "target": "req-export-01",
+      "type": "HAS_REQUIREMENT"
+    },
+    {
+      "source": "feature-access-control",
+      "target": "req-access-01",
+      "type": "HAS_REQUIREMENT"
+    },
+    {
+      "source": "feature-access-control",
+      "target": "req-access-02",
+      "type": "HAS_REQUIREMENT"
+    },
+    {
+      "source": "req-auth-01",
+      "target": "screen-login",
+      "type": "AFFECTS_SCREEN"
+    },
+    {
+      "source": "req-auth-02",
+      "target": "screen-dashboard",
+      "type": "AFFECTS_SCREEN"
+    },
+    {
+      "source": "req-routing-01",
+      "target": "screen-alert-board",
+      "type": "AFFECTS_SCREEN"
+    },
+    {
+      "source": "req-routing-02",
+      "target": "screen-case-detail",
+      "type": "AFFECTS_SCREEN"
+    },
+    {
+      "source": "req-sync-01",
+      "target": "screen-sync-center",
+      "type": "AFFECTS_SCREEN"
+    },
+    {
+      "source": "req-export-01",
+      "target": "screen-report-builder",
+      "type": "AFFECTS_SCREEN"
+    },
+    {
+      "source": "req-access-01",
+      "target": "screen-admin-access",
+      "type": "AFFECTS_SCREEN"
+    },
+    {
+      "source": "req-access-02",
+      "target": "screen-admin-access",
+      "type": "AFFECTS_SCREEN"
+    },
+    {
+      "source": "req-auth-01",
+      "target": "api-auth-service",
+      "type": "IMPLEMENTS_VIA"
+    },
+    {
+      "source": "req-auth-02",
+      "target": "api-auth-service",
+      "type": "IMPLEMENTS_VIA"
+    },
+    {
+      "source": "req-routing-01",
+      "target": "api-alert-service",
+      "type": "IMPLEMENTS_VIA"
+    },
+    {
+      "source": "req-routing-02",
+      "target": "api-alert-service",
+      "type": "IMPLEMENTS_VIA"
+    },
+    {
+      "source": "req-sync-01",
+      "target": "api-sync-service",
+      "type": "IMPLEMENTS_VIA"
+    },
+    {
+      "source": "req-export-01",
+      "target": "api-report-service",
+      "type": "IMPLEMENTS_VIA"
+    },
+    {
+      "source": "req-access-01",
+      "target": "api-access-service",
+      "type": "IMPLEMENTS_VIA"
+    },
+    {
+      "source": "req-access-02",
+      "target": "api-access-service",
+      "type": "IMPLEMENTS_VIA"
+    },
+    {
+      "source": "api-auth-service",
+      "target": "service-session-manager",
+      "type": "BACKED_BY"
+    },
+    {
+      "source": "api-alert-service",
+      "target": "service-routing-engine",
+      "type": "BACKED_BY"
+    },
+    {
+      "source": "api-sync-service",
+      "target": "service-sync-orchestrator",
+      "type": "BACKED_BY"
+    },
+    {
+      "source": "api-report-service",
+      "target": "service-export-engine",
+      "type": "BACKED_BY"
+    },
+    {
+      "source": "api-access-service",
+      "target": "service-policy-engine",
+      "type": "BACKED_BY"
+    },
+    {
+      "source": "req-auth-01",
+      "target": "tc-auth-lockout",
+      "type": "VALIDATED_BY"
+    },
+    {
+      "source": "req-auth-02",
+      "target": "tc-auth-refresh",
+      "type": "VALIDATED_BY"
+    },
+    {
+      "source": "req-routing-01",
+      "target": "tc-routing-priority",
+      "type": "VALIDATED_BY"
+    },
+    {
+      "source": "req-routing-02",
+      "target": "tc-routing-escalation",
+      "type": "VALIDATED_BY"
+    },
+    {
+      "source": "req-sync-01",
+      "target": "tc-sync-resume",
+      "type": "VALIDATED_BY"
+    },
+    {
+      "source": "req-export-01",
+      "target": "tc-export-filters",
+      "type": "VALIDATED_BY"
+    },
+    {
+      "source": "req-access-01",
+      "target": "tc-access-hidden-view",
+      "type": "VALIDATED_BY"
+    },
+    {
+      "source": "req-access-02",
+      "target": "tc-access-role-refresh",
+      "type": "VALIDATED_BY"
+    },
+    {
+      "source": "suite-auth-regression",
+      "target": "tc-auth-lockout",
+      "type": "CONTAINS"
+    },
+    {
+      "source": "suite-auth-regression",
+      "target": "tc-auth-refresh",
+      "type": "CONTAINS"
+    },
+    {
+      "source": "suite-ops-smoke",
+      "target": "tc-routing-priority",
+      "type": "CONTAINS"
+    },
+    {
+      "source": "suite-ops-smoke",
+      "target": "tc-routing-escalation",
+      "type": "CONTAINS"
+    },
+    {
+      "source": "suite-mobile-regression",
+      "target": "tc-sync-resume",
+      "type": "CONTAINS"
+    },
+    {
+      "source": "suite-admin-security",
+      "target": "tc-access-hidden-view",
+      "type": "CONTAINS"
+    },
+    {
+      "source": "suite-admin-security",
+      "target": "tc-access-role-refresh",
+      "type": "CONTAINS"
+    },
+    {
+      "source": "suite-ops-smoke",
+      "target": "tc-export-filters",
+      "type": "CONTAINS"
+    },
+    {
+      "source": "defect-session-loop",
+      "target": "req-auth-02",
+      "type": "RELATES_TO"
+    },
+    {
+      "source": "defect-session-loop",
+      "target": "tc-auth-refresh",
+      "type": "FAILED_ON"
+    },
+    {
+      "source": "defect-session-loop",
+      "target": "rca-token-race",
+      "type": "HAS_RCA"
+    },
+    {
+      "source": "defect-session-loop",
+      "target": "deploy-2026-01-12",
+      "type": "INTRODUCED_IN"
+    },
+    {
+      "source": "defect-routing-stall",
+      "target": "req-routing-02",
+      "type": "RELATES_TO"
+    },
+    {
+      "source": "defect-routing-stall",
+      "target": "tc-routing-escalation",
+      "type": "FAILED_ON"
+    },
+    {
+      "source": "defect-routing-stall",
+      "target": "rca-routing-retry",
+      "type": "HAS_RCA"
+    },
+    {
+      "source": "defect-routing-stall",
+      "target": "deploy-2026-03-18",
+      "type": "INTRODUCED_IN"
+    },
+    {
+      "source": "defect-sync-duplication",
+      "target": "req-sync-01",
+      "type": "RELATES_TO"
+    },
+    {
+      "source": "defect-sync-duplication",
+      "target": "tc-sync-resume",
+      "type": "FAILED_ON"
+    },
+    {
+      "source": "defect-sync-duplication",
+      "target": "rca-sync-idempotency",
+      "type": "HAS_RCA"
+    },
+    {
+      "source": "defect-sync-duplication",
+      "target": "deploy-2026-02-03",
+      "type": "INTRODUCED_IN"
+    },
+    {
+      "source": "defect-export-timezone",
+      "target": "req-export-01",
+      "type": "RELATES_TO"
+    },
+    {
+      "source": "defect-export-timezone",
+      "target": "tc-export-filters",
+      "type": "FAILED_ON"
+    },
+    {
+      "source": "defect-export-timezone",
+      "target": "rca-export-timezone-source",
+      "type": "HAS_RCA"
+    },
+    {
+      "source": "defect-export-timezone",
+      "target": "deploy-2026-03-18",
+      "type": "INTRODUCED_IN"
+    },
+    {
+      "source": "defect-access-cache",
+      "target": "req-access-02",
+      "type": "RELATES_TO"
+    },
+    {
+      "source": "defect-access-cache",
+      "target": "tc-access-role-refresh",
+      "type": "FAILED_ON"
+    },
+    {
+      "source": "defect-access-cache",
+      "target": "rca-policy-cache",
+      "type": "HAS_RCA"
+    },
+    {
+      "source": "defect-access-cache",
+      "target": "deploy-2026-03-18",
+      "type": "INTRODUCED_IN"
+    },
+    {
+      "source": "product-alpha-suite",
+      "target": "region-north",
+      "type": "AVAILABLE_IN"
+    },
+    {
+      "source": "product-alpha-suite",
+      "target": "region-south",
+      "type": "AVAILABLE_IN"
+    },
+    {
+      "source": "product-pulse-console",
+      "target": "region-central",
+      "type": "AVAILABLE_IN"
+    },
+    {
+      "source": "product-orbit-mobile",
+      "target": "region-south",
+      "type": "AVAILABLE_IN"
+    },
+    {
+      "source": "product-alpha-suite",
+      "target": "lang-en",
+      "type": "SUPPORTED_LANGUAGE"
+    },
+    {
+      "source": "product-alpha-suite",
+      "target": "lang-pt",
+      "type": "SUPPORTED_LANGUAGE"
+    },
+    {
+      "source": "product-pulse-console",
+      "target": "lang-en",
+      "type": "SUPPORTED_LANGUAGE"
+    },
+    {
+      "source": "product-pulse-console",
+      "target": "lang-es",
+      "type": "SUPPORTED_LANGUAGE"
+    },
+    {
+      "source": "product-orbit-mobile",
+      "target": "lang-en",
+      "type": "SUPPORTED_LANGUAGE"
+    },
+    {
+      "source": "product-orbit-mobile",
+      "target": "lang-pt",
+      "type": "SUPPORTED_LANGUAGE"
+    },
+    {
+      "source": "feature-auth-session",
+      "target": "feature-access-control",
+      "type": "DEPENDS_ON"
+    },
+    {
+      "source": "feature-case-timeline",
+      "target": "feature-alert-routing",
+      "type": "DEPENDS_ON"
+    },
+    {
+      "source": "feature-report-export",
+      "target": "feature-case-timeline",
+      "type": "DEPENDS_ON"
+    },
+    {
+      "source": "journey-alert-triage",
+      "target": "journey-report-download",
+      "type": "RELATED_TO"
+    },
+    {
+      "source": "journey-new-user-login",
+      "target": "journey-mobile-sync",
+      "type": "RELATED_TO"
+    },
+    {
+      "source": "ai-req-reviewer",
+      "target": "Requirement",
+      "type": "USES_NODE_CLASS"
+    },
+    {
+      "source": "ai-req-reviewer",
+      "target": "UserJourney",
+      "type": "USES_NODE_CLASS"
+    },
+    {
+      "source": "ai-req-reviewer",
+      "target": "Defect",
+      "type": "USES_NODE_CLASS"
+    },
+    {
+      "source": "ai-tc-generator",
+      "target": "Requirement",
+      "type": "USES_NODE_CLASS"
+    },
+    {
+      "source": "ai-tc-generator",
+      "target": "API",
+      "type": "USES_NODE_CLASS"
+    },
+    {
+      "source": "ai-tc-generator",
+      "target": "Screen",
+      "type": "USES_NODE_CLASS"
+    },
+    {
+      "source": "ai-tc-recommender",
+      "target": "TestCase",
+      "type": "USES_NODE_CLASS"
+    },
+    {
+      "source": "ai-tc-recommender",
+      "target": "Defect",
+      "type": "USES_NODE_CLASS"
+    },
+    {
+      "source": "ai-tc-recommender",
+      "target": "Feature",
+      "type": "USES_NODE_CLASS"
+    },
+    {
+      "source": "ai-failure-triage",
+      "target": "Defect",
+      "type": "USES_NODE_CLASS"
+    },
+    {
+      "source": "ai-failure-triage",
+      "target": "RCA",
+      "type": "USES_NODE_CLASS"
+    },
+    {
+      "source": "ai-failure-triage",
+      "target": "Deployment",
+      "type": "USES_NODE_CLASS"
+    },
+    {
+      "source": "ai-req-reviewer",
+      "target": "req-routing-02",
+      "type": "ENRICHES"
+    },
+    {
+      "source": "ai-req-reviewer",
+      "target": "journey-alert-triage",
+      "type": "ENRICHES"
+    },
+    {
+      "source": "ai-req-reviewer",
+      "target": "defect-routing-stall",
+      "type": "LOOKS_BACK_TO"
+    },
+    {
+      "source": "ai-tc-generator",
+      "target": "req-auth-01",
+      "type": "GENERATES_FROM"
+    },
+    {
+      "source": "ai-tc-generator",
+      "target": "screen-login",
+      "type": "CONSIDERS"
+    },
+    {
+      "source": "ai-tc-generator",
+      "target": "api-auth-service",
+      "type": "CONSIDERS"
+    },
+    {
+      "source": "ai-tc-recommender",
+      "target": "tc-access-hidden-view",
+      "type": "RECOMMENDS_SIMILAR_TO"
+    },
+    {
+      "source": "ai-tc-recommender",
+      "target": "feature-access-control",
+      "type": "CONTEXTUALIZES_WITH"
+    },
+    {
+      "source": "ai-failure-triage",
+      "target": "defect-access-cache",
+      "type": "INVESTIGATES"
+    },
+    {
+      "source": "ai-failure-triage",
+      "target": "rca-policy-cache",
+      "type": "SURFACES"
+    },
+    {
+      "source": "ai-failure-triage",
+      "target": "deploy-2026-03-18",
+      "type": "CORRELATES_WITH"
+    }
+  ]
+}

@@ -46,6 +46,11 @@
               </a>
               <ul class="dropdown-menu dropdown-menu-panel dropdown-menu-end" aria-labelledby="privateDropdown">
                 <li>
+                  <a class="dropdown-item" href="#relationship-graph" data-route="relationship-graph">
+                    Context Graph
+                  </a>
+                </li>
+                <li>
                   <a class="dropdown-item" href="#prompt-explained" data-route="prompt-explained">
                     Playwright Prompt Explained
                   </a>
@@ -98,6 +103,13 @@
                   </a>
                 </li>
                 <li>
+                  <a class="dropdown-item user-menu-item" href="#relationship-graph" data-route="relationship-graph"
+                    role="menuitem">
+                    <i class="fa-solid fa-diagram-project user-menu-icon" aria-hidden="true"></i>
+                    <span>Context Graph</span>
+                  </a>
+                </li>
+                <li>
                   <a class="dropdown-item user-menu-item" href="#prompt-explained" data-route="prompt-explained"
                     role="menuitem">
                     <i class="fa-solid fa-lock user-menu-icon" aria-hidden="true"></i>
@@ -146,6 +158,18 @@
     integrity="sha512-cHv9Jx7Dnk3a1JpN96CBvs1+qsSVqS+8CA0nVddOZXS6jttuPAoBs+K6TfGsDzpDHK5vVsQt1zArhcXd1LSeXQ=="
     crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+  <script defer src="js/relationship-graph/config.js"></script>
+  <script defer src="js/relationship-graph/data-loader.js"></script>
+  <script defer src="js/relationship-graph/adapter.js"></script>
+  <script defer src="js/relationship-graph/details.js"></script>
+  <script defer src="js/relationship-graph/traversal-utils.js"></script>
+  <script defer src="js/relationship-graph/context-provider.js"></script>
+  <script defer src="js/relationship-graph/prompt-builder.js"></script>
+  <script defer src="js/relationship-graph/assistant-service.js"></script>
+  <script defer src="js/relationship-graph/action-interpreter.js"></script>
+  <script defer src="js/relationship-graph/chat-panel.js"></script>
+  <script defer src="js/relationship-graph/index.js"></script>
   <script defer src="js/main.js"></script>
 </body>
 

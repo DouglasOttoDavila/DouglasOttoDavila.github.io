@@ -5,6 +5,11 @@
   },
   "pages": [
     {
+      "routeId": "relationship-graph",
+      "requireAuth": true,
+      "hideWhenLoggedOut": true
+    },
+    {
       "routeId": "prompt-explained",
       "requireAuth": true,
       "hideWhenLoggedOut": true,

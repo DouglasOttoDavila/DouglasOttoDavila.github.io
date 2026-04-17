@@ -6,6 +6,7 @@ class SPARouter {
         this.routes = {
             'home': 'content/home.html',
             'about': 'content/about.html',
+            'relationship-graph': 'content/relationship-graph.html',
             // These routes are backed by Supabase Storage (see `content/protected-pages.json`).
             // Keep a non-sensitive placeholder fragment so the deployed site never ships the real content as static files.
             'prompt-explained': 'content/protected-loading.html',
@@ -241,6 +242,7 @@ class SPARouter {
     }
 
     async loadContent(page) {
+        this.cleanupPageScripts();
         this.resetPromptEscapeHandler();
 
         const protectedHtmlSpec = this.getProtectedContentHtmlSpec(page);
@@ -862,6 +864,7 @@ class SPARouter {
         const titles = {
             'home': "Douglas D'Avila | QA Automation Engineer & SDET",
             'about': "About Douglas D'Avila | QA Automation Engineer & SDET",
+            'relationship-graph': 'Operational Context Graph | Douglas D\'Avila',
             'prompt-explained': 'Automation Prompt Analysis | Douglas D\'Avila',
             'user-story-analyzer': 'User Story Quality Analyzer | Douglas D\'Avila',
             'qa-ai-training-program': 'QA AI Training Program | Douglas D\'Avila',
@@ -870,6 +873,12 @@ class SPARouter {
             'profile': 'Profile | Douglas D\'Avila'
         };
         document.title = titles[page] || titles.home;
+    }
+
+    cleanupPageScripts() {
+        if (window.RelationshipGraphFeature?.unmount) {
+            window.RelationshipGraphFeature.unmount();
+        }
     }
 
     initializePageScripts(page) {
@@ -884,6 +893,10 @@ class SPARouter {
 
         if (page === 'home') {
             this.setupHomeCarousel();
+        }
+
+        if (page === 'relationship-graph') {
+            window.RelationshipGraphFeature?.mount?.();
         }
 
         if (page === 'user-story-analyzer') {
