@@ -2523,12 +2523,18 @@ header .navbar-nav .nav-link.active {
 .relationship-graph-panel__metrics span {
   display: inline-flex;
   align-items: center;
+  gap: 0.35rem;
   min-height: 2.2rem;
   padding: 0 0.8rem;
   border-radius: 999px;
   border: 1px solid var(--graph-panel-stroke);
   background: rgba(255, 255, 255, 0.03);
   color: var(--graph-label);
+  white-space: nowrap;
+}
+
+.relationship-graph-panel__metrics strong {
+  font-variant-numeric: tabular-nums;
 }
 
 [data-bs-theme="light"] .relationship-graph-panel__metrics span {

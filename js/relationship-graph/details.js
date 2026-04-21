@@ -155,9 +155,9 @@
                 <p class="relationship-graph-panel__subtitle">${escapeHtml(node.type)}</p>
                 <p class="relationship-graph-panel__text">${escapeHtml(summary)}</p>
                 <div class="relationship-graph-panel__metrics">
-                    <span><strong>${selectedState.connectedCount}</strong> direct links</span>
-                    <span><strong>${selectedState.relationGroupCount}</strong> relationship groups</span>
-                    <span><strong>${node.connectionCount}</strong> total adjacent edges</span>
+                    <span><strong>${selectedState.connectedCount}</strong><span>direct links</span></span>
+                    <span><strong>${selectedState.relationGroupCount}</strong><span>relationship groups</span></span>
+                    <span><strong>${node.connectionCount}</strong><span>total adjacent edges</span></span>
                 </div>
                 ${factsMarkup ? `
                     <div class="relationship-graph-panel__section">
