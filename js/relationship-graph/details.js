@@ -32,6 +32,10 @@
         return escapeHtml(value);
     }
 
+    function getEndpointId(endpoint) {
+        return endpoint?.id || endpoint;
+    }
+
     function toFactListItems(node) {
         const skippedKeys = new Set(['productId']);
         return Object.entries(node.attributes || {})
@@ -53,11 +57,13 @@
         let connectedCount = 0;
 
         dataset.links.forEach(link => {
-            const isSource = link.source === nodeId;
-            const isTarget = link.target === nodeId;
+            const sourceId = getEndpointId(link.source);
+            const targetId = getEndpointId(link.target);
+            const isSource = sourceId === nodeId;
+            const isTarget = targetId === nodeId;
             if (!isSource && !isTarget) return;
 
-            const neighborId = isSource ? link.target : link.source;
+            const neighborId = isSource ? targetId : sourceId;
             const neighbor = dataset.nodeById.get(neighborId);
             if (!neighbor) return;
 

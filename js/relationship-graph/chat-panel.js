@@ -63,9 +63,9 @@
 
             this.clearEl?.addEventListener('click', () => {
                 this.messages = [];
-                this.graphController.resetAssistantState();
+                this.graphController.resetAssistantTransientState();
                 this.seedWelcomeMessage();
-                this.setStatus('Chat cleared. The graph reset to its assistant-neutral state.');
+                this.setStatus('Chat cleared. Assistant-applied highlights remain active until the page is refreshed.');
                 this.renderMessages();
             }, { signal });
 

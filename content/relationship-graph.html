@@ -30,43 +30,6 @@
   </section>
 
   <section class="relationship-graph-shell">
-    <div class="relationship-graph-toolbar">
-      <div class="relationship-graph-toolbar__inputs">
-        <label class="relationship-graph-field">
-          <span class="relationship-graph-field__label">Search operational nodes</span>
-          <input
-            id="relationship-graph-search"
-            class="relationship-graph-input"
-            type="search"
-            placeholder="Try Authentication & Session, REQ-AUTH-01, Auth API, or AI Failure Triage Assistant"
-            autocomplete="off">
-        </label>
-        <label class="relationship-graph-field relationship-graph-field--compact">
-          <span class="relationship-graph-field__label">Filter by node type</span>
-          <select id="relationship-graph-filter" class="relationship-graph-input relationship-graph-select">
-            <option value="all">All nodes</option>
-          </select>
-        </label>
-      </div>
-      <div class="relationship-graph-toolbar__actions">
-        <button id="relationship-graph-labels-toggle" class="btn btn-outline-secondary relationship-graph-reset-btn" type="button">
-          <i class="fa-solid fa-tags me-2" aria-hidden="true"></i><span data-label-toggle-text>Labels Off</span>
-        </button>
-        <button id="relationship-graph-fit" class="btn btn-outline-secondary relationship-graph-reset-btn" type="button">
-          <i class="fa-solid fa-expand me-2" aria-hidden="true"></i>Fit view
-        </button>
-        <button id="relationship-graph-clear-selection" class="btn btn-outline-secondary relationship-graph-reset-btn" type="button">
-          <i class="fa-solid fa-pointer me-2" aria-hidden="true"></i>Clear selection
-        </button>
-        <button id="relationship-graph-reset" class="btn btn-outline-primary relationship-graph-reset-btn" type="button">
-          <i class="fa-solid fa-rotate-left me-2" aria-hidden="true"></i>Reset all
-        </button>
-      </div>
-    </div>
-
-    <div class="relationship-graph-legend" id="relationship-graph-legend" aria-label="Graph legend"></div>
-    <div class="relationship-graph-search-results" id="relationship-graph-search-results" aria-live="polite"></div>
-
     <div class="relationship-graph-workspace">
       <article class="relationship-graph-canvas-card">
         <div class="relationship-graph-canvas-header">
@@ -82,6 +45,44 @@
           </div>
         </div>
         <div class="relationship-graph-canvas" id="relationship-graph-canvas" aria-label="Interactive operational context graph"></div>
+        <div class="relationship-graph-canvas-controls">
+          <div class="relationship-graph-toolbar">
+            <div class="relationship-graph-toolbar__inputs">
+              <label class="relationship-graph-field">
+                <span class="relationship-graph-field__label">Search operational nodes</span>
+                <input
+                  id="relationship-graph-search"
+                  class="relationship-graph-input"
+                  type="search"
+                  placeholder="Try Authentication & Session, REQ-AUTH-01, Auth API, or AI Failure Triage Assistant"
+                  autocomplete="off">
+              </label>
+              <label class="relationship-graph-field relationship-graph-field--compact">
+                <span class="relationship-graph-field__label">Filter by node type</span>
+                <select id="relationship-graph-filter" class="relationship-graph-input relationship-graph-select">
+                  <option value="all">All nodes</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <div class="relationship-graph-legend" id="relationship-graph-legend" aria-label="Graph legend"></div>
+          <div class="relationship-graph-search-results" id="relationship-graph-search-results" aria-live="polite"></div>
+        </div>
+        <div class="relationship-graph-toolbar__actions relationship-graph-toolbar__actions--below-canvas">
+          <button id="relationship-graph-labels-toggle" class="btn btn-outline-secondary relationship-graph-reset-btn" type="button">
+            <i class="fa-solid fa-tags me-2" aria-hidden="true"></i><span data-label-toggle-text>Labels Off</span>
+          </button>
+          <button id="relationship-graph-fit" class="btn btn-outline-secondary relationship-graph-reset-btn" type="button">
+            <i class="fa-solid fa-expand me-2" aria-hidden="true"></i>Fit view
+          </button>
+          <button id="relationship-graph-clear-selection" class="btn btn-outline-secondary relationship-graph-reset-btn" type="button">
+            <i class="fa-solid fa-pointer me-2" aria-hidden="true"></i>Clear selection
+          </button>
+          <button id="relationship-graph-reset" class="btn btn-outline-primary relationship-graph-reset-btn" type="button">
+            <i class="fa-solid fa-rotate-left me-2" aria-hidden="true"></i>Reset all
+          </button>
+        </div>
         <div class="relationship-graph-tooltip" id="relationship-graph-tooltip" role="tooltip"></div>
       </article>
 

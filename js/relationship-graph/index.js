@@ -474,6 +474,12 @@
             this.updateVisualState();
         }
 
+        resetAssistantTransientState() {
+            this.assistantNodeTypeFilter = null;
+            this.updateSearchResults();
+            this.updateVisualState();
+        }
+
         highlightNodes(nodeIds) {
             nodeIds.forEach(nodeId => {
                 if (this.nodeById.has(nodeId)) {
@@ -511,7 +517,7 @@
             this.filterValue = 'all';
             this.showLabels = false;
             this.updateLabelsToggleText();
-            this.resetAssistantState();
+            this.resetAssistantTransientState();
             this.clearSelection(origin);
             this.updateSearchResults();
             this.fitToViewport(true);
@@ -618,10 +624,18 @@
 
         moveTooltip(event) {
             if (!this.tooltipEl || !this.tooltipEl.classList.contains('is-visible')) return;
-            const bounds = this.canvasEl.getBoundingClientRect();
-            const offsetX = event.clientX - bounds.left + 18;
-            const offsetY = event.clientY - bounds.top + 18;
-            this.tooltipEl.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+            const hostEl = this.tooltipEl.offsetParent || this.canvasEl;
+            const hostBounds = hostEl.getBoundingClientRect();
+            const tooltipBounds = this.tooltipEl.getBoundingClientRect();
+            const padding = 14;
+            const x = event.clientX - hostBounds.left + 18;
+            const y = event.clientY - hostBounds.top + 18;
+            const maxX = Math.max(padding, hostBounds.width - tooltipBounds.width - padding);
+            const maxY = Math.max(padding, hostBounds.height - tooltipBounds.height - padding);
+            const nextX = Math.min(Math.max(padding, x), maxX);
+            const nextY = Math.min(Math.max(padding, y), maxY);
+
+            this.tooltipEl.style.transform = `translate(${nextX}px, ${nextY}px)`;
         }
 
         hideTooltip() {

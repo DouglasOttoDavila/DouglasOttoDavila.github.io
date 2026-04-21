@@ -2128,6 +2128,10 @@ header .navbar-nav .nav-link.active {
   align-items: center;
 }
 
+.relationship-graph-toolbar__actions--below-canvas {
+  margin-top: 0.9rem;
+}
+
 .relationship-graph-field {
   display: grid;
   gap: 0.4rem;
@@ -2283,6 +2287,12 @@ header .navbar-nav .nav-link.active {
   padding: 1rem;
 }
 
+.relationship-graph-canvas-controls {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 1rem;
+}
+
 .relationship-graph-canvas-header {
   display: flex;
   flex-wrap: wrap;
@@ -2415,6 +2425,32 @@ header .navbar-nav .nav-link.active {
 .relationship-graph-node.is-hovered .relationship-graph-node__shape {
   stroke-width: 2.8px;
   filter: drop-shadow(0 12px 26px rgba(255, 255, 255, 0.16));
+}
+
+.relationship-graph-node.is-assistant-highlighted .relationship-graph-node__halo {
+  fill: color-mix(in srgb, var(--node-accent, var(--bs-primary)) 24%, transparent);
+  opacity: 0.42;
+}
+
+.relationship-graph-node.is-assistant-highlighted .relationship-graph-node__shape {
+  stroke: color-mix(in srgb, var(--node-accent, var(--bs-primary)) 76%, white 24%);
+  stroke-width: 2.35px;
+  filter:
+    drop-shadow(0 0 10px color-mix(in srgb, var(--node-accent, var(--bs-primary)) 24%, transparent))
+    drop-shadow(0 10px 20px rgba(255, 255, 255, 0.08));
+}
+
+.relationship-graph-node.is-selected .relationship-graph-node__halo,
+.relationship-graph-node.is-hovered .relationship-graph-node__halo {
+  opacity: 1;
+}
+
+.relationship-graph-node.is-selected .relationship-graph-node__shape,
+.relationship-graph-node.is-hovered .relationship-graph-node__shape {
+  stroke-width: 3px;
+  filter:
+    drop-shadow(0 0 18px rgba(255, 255, 255, 0.2))
+    drop-shadow(0 14px 28px rgba(255, 255, 255, 0.14));
 }
 
 .relationship-graph-node.is-connected .relationship-graph-node__shape,
