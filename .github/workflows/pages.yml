@@ -131,6 +131,11 @@ jobs:
           cp index.html dist/
           cp -R assets content css js dist/
 
+          # The operational graph runtime fetches this fictional dataset at page load.
+          # Copy only the runtime JSON instead of publishing the whole docs folder.
+          mkdir -p dist/docs/relationship-graph-refactor
+          cp docs/relationship-graph-refactor/operational-context-graph.dataset.json dist/docs/relationship-graph-refactor/
+
           # Convenience: keep README out of the deploy artifact.
           # Protected content sources (if present) must never be deployed.
           rm -rf dist/private_pages || true
