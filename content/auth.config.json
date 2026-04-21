@@ -2,7 +2,7 @@
   "version": 1,
   "provider": "supabase",
   "supabase": {
-    "url": "",
+    "url": "https://zlixsxbovbshsyptxymp.supabase.co",
     "anonKey": "",
     "oauthProviders": [
       "github",

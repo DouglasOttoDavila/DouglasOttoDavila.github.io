@@ -161,6 +161,8 @@ To avoid committing credentials, local auth config can be generated into `conten
 powershell -ExecutionPolicy Bypass -File scripts/generate-auth-runtime.ps1
 ```
 
+`content/auth.config.json` pins the public Supabase project URL. The generator validates that your local `SUPABASE_URL` and `SUPABASE_ANON_KEY` both target that same project before writing `content/auth.runtime.json`.
+
 ## Deployment (GitHub Pages)
 
 - Workflow: `.github/workflows/pages.yml`
@@ -173,6 +175,8 @@ Required GitHub Actions secrets:
 
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
+
+The workflow validates that both secrets target the Supabase project pinned in `content/auth.config.json`. If they drift, the deploy fails instead of publishing a broken OAuth flow.
 
 ## Project Structure
 

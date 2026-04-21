@@ -15,6 +15,38 @@ function info(msg) {
   console.log(`[protected-pages] ${msg}`);
 }
 
+function getProjectRefFromUrl(url) {
+  const match = String(url).trim().match(/^https:\/\/([^.]+)\.supabase\.co\/?$/i);
+  return match ? match[1] : '';
+}
+
+function decodeBase64Url(segment) {
+  const normalized = String(segment).replace(/-/g, '+').replace(/_/g, '/');
+  return Buffer.from(normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '='), 'base64').toString('utf8');
+}
+
+function getProjectRefFromJwt(jwt) {
+  try {
+    const [, payload = ''] = String(jwt).split('.');
+    const parsed = JSON.parse(decodeBase64Url(payload));
+    return typeof parsed.ref === 'string' ? parsed.ref : '';
+  } catch {
+    return '';
+  }
+}
+
+function readExpectedSupabaseUrl() {
+  const authConfigPath = path.resolve(process.cwd(), 'content', 'auth.config.json');
+  if (!fs.existsSync(authConfigPath)) return '';
+
+  try {
+    const parsed = JSON.parse(fs.readFileSync(authConfigPath, 'utf8'));
+    return parsed?.supabase?.url || '';
+  } catch (error) {
+    fail(`Unable to parse ${authConfigPath}: ${error.message}`);
+  }
+}
+
 function readFileAbs(absPath) {
   return fs.readFileSync(absPath);
 }
@@ -97,6 +129,17 @@ async function putObject({ bucket, remotePath, body, contentType }) {
 async function main() {
   if (!SUPABASE_URL) fail('Missing SUPABASE_URL.');
   if (!SUPABASE_SERVICE_ROLE_KEY) fail('Missing SUPABASE_SERVICE_ROLE_KEY.');
+
+  const expectedSupabaseUrl = readExpectedSupabaseUrl();
+  if (expectedSupabaseUrl && SUPABASE_URL !== expectedSupabaseUrl) {
+    fail(`SUPABASE_URL mismatch. Expected ${expectedSupabaseUrl} but received ${SUPABASE_URL}.`);
+  }
+
+  const urlRef = getProjectRefFromUrl(SUPABASE_URL || expectedSupabaseUrl);
+  const serviceRoleRef = getProjectRefFromJwt(SUPABASE_SERVICE_ROLE_KEY);
+  if (urlRef && serviceRoleRef && urlRef !== serviceRoleRef) {
+    fail(`SUPABASE_SERVICE_ROLE_KEY targets project "${serviceRoleRef}" but SUPABASE_URL targets "${urlRef}".`);
+  }
 
   const absDir = path.resolve(process.cwd(), SOURCE_DIR);
   if (!fs.existsSync(absDir)) {

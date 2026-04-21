@@ -67,11 +67,50 @@ jobs:
 
           const supabaseUrl = process.env.SUPABASE_URL || '';
           const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
+          const authConfigPath = 'content/auth.config.json';
+
+          function getProjectRefFromUrl(url) {
+            const match = String(url).trim().match(/^https:\/\/([^.]+)\.supabase\.co\/?$/i);
+            return match ? match[1] : '';
+          }
+
+          function decodeBase64Url(segment) {
+            const normalized = String(segment).replace(/-/g, '+').replace(/_/g, '/');
+            return Buffer.from(normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '='), 'base64').toString('utf8');
+          }
+
+          function getProjectRefFromJwt(jwt) {
+            try {
+              const [, payload = ''] = String(jwt).split('.');
+              const parsed = JSON.parse(decodeBase64Url(payload));
+              return typeof parsed.ref === 'string' ? parsed.ref : '';
+            } catch {
+              return '';
+            }
+          }
+
+          let expectedSupabaseUrl = '';
+          try {
+            const authConfig = JSON.parse(fs.readFileSync(authConfigPath, 'utf8'));
+            expectedSupabaseUrl = authConfig?.supabase?.url || '';
+          } catch (error) {
+            throw new Error(`Unable to read ${authConfigPath}: ${error.message}`);
+          }
+
+          if (expectedSupabaseUrl && supabaseUrl !== expectedSupabaseUrl) {
+            throw new Error(`SUPABASE_URL secret mismatch. Expected ${expectedSupabaseUrl} but received ${supabaseUrl}.`);
+          }
+
+          const urlRef = getProjectRefFromUrl(supabaseUrl || expectedSupabaseUrl);
+          const anonRef = getProjectRefFromJwt(supabaseAnonKey);
+          if (urlRef && anonRef && urlRef !== anonRef) {
+            throw new Error(`SUPABASE_ANON_KEY targets project "${anonRef}" but SUPABASE_URL targets "${urlRef}".`);
+          }
 
           const payload = {
             version: 1,
             supabase: {
-              url: supabaseUrl,
+              url: expectedSupabaseUrl || supabaseUrl,
               anonKey: supabaseAnonKey
             }
           };
