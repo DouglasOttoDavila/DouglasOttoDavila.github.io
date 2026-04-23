@@ -1119,6 +1119,12 @@ class SPARouter {
                 setStatus(null);
             };
 
+            // Defaults to link confirmation because many Supabase projects are configured for magic links.
+            const emailVerificationMode =
+                String(this.authConfig?.supabase?.emailVerificationMode || 'link').toLowerCase() === 'code'
+                    ? 'code'
+                    : 'link';
+
             const sanitizeOtp = (value) => String(value || '').replace(/\D+/g, '').slice(0, 6);
 
             if (tabSignin) {
@@ -1203,31 +1209,58 @@ class SPARouter {
                     }
 
                     try {
-                        setStatus('Sending verification code...');
-                        this.pendingEmailSignup = { email, password, fullName };
+                        if (emailVerificationMode === 'code') {
+                            setStatus('Sending verification code...');
+                            this.pendingEmailSignup = { email, password, fullName };
 
-                        // Uses Supabase email OTP. Your Supabase email template must include the token to display a code.
-                        const { error } = await this.supabase.auth.signInWithOtp({
+                            // Uses Supabase email OTP. Your Supabase email template must include the token to display a code.
+                            const { error } = await this.supabase.auth.signInWithOtp({
+                                email,
+                                options: {
+                                    shouldCreateUser: true,
+                                    data: fullName ? { full_name: fullName } : undefined
+                                }
+                            });
+                            if (error) throw error;
+
+                            if (verifyEmail) verifyEmail.value = email;
+                            if (verifyCode) verifyCode.value = '';
+                            setMode('verify');
+                            setStatus('Check your email for the verification code.');
+                            if (verifyCode && typeof verifyCode.focus === 'function') {
+                                verifyCode.focus({ preventScroll: true });
+                            }
+                            return;
+                        }
+
+                        setStatus('Creating account...');
+                        const redirectTo = `${window.location.origin}${window.location.pathname}#login`;
+                        const { data, error } = await this.supabase.auth.signUp({
                             email,
+                            password,
                             options: {
-                                shouldCreateUser: true,
+                                emailRedirectTo: redirectTo,
                                 data: fullName ? { full_name: fullName } : undefined
                             }
                         });
                         if (error) throw error;
 
-                        if (verifyEmail) verifyEmail.value = email;
-                        if (verifyCode) verifyCode.value = '';
-                        setMode('verify');
-                        setStatus('Check your email for the verification code.');
-                        if (verifyCode && typeof verifyCode.focus === 'function') {
-                            verifyCode.focus({ preventScroll: true });
+                        this.pendingEmailSignup = null;
+                        if (data?.session?.user) {
+                            // Email confirmation might be disabled in Supabase; user is signed in immediately.
+                            sessionStorage.setItem('post_auth_force_profile', '1');
+                            setStatus('Account created. Redirecting to profile...');
+                        } else {
+                            if (signinEmail) signinEmail.value = email;
+                            if (signinPassword) signinPassword.value = '';
+                            setMode('signin');
+                            setStatus('Check your email and open the confirmation link. Then sign in with your password.');
                         }
                     } catch (error) {
-                        console.error('[auth] signInWithOtp failed', error);
+                        console.error('[auth] email signup failed', error);
                         this.pendingEmailSignup = null;
                         setStatus(null);
-                        setError('Unable to send a verification code right now. Please try again.');
+                        setError('Unable to create your account right now. Please try again.');
                     }
                 });
             }
