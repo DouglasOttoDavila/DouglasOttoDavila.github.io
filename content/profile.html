@@ -201,6 +201,128 @@
           </form>
         </section>
       </div>
+
+      <section class="profile-admin-prompts" aria-labelledby="profile-admin-prompts-title">
+        <div class="profile-card-header profile-admin-subheader">
+          <h3 id="profile-admin-prompts-title" class="profile-card-title">AI prompt catalog</h3>
+          <span id="profile-admin-prompts-count" class="profile-badge" aria-live="polite">0 prompts</span>
+        </div>
+
+        <p class="profile-hint profile-admin-prompts-intro">
+          Manage prompt text used by AI-driven tools. Changes take effect without code commits.
+        </p>
+
+        <div id="profile-admin-prompts-status" class="profile-save-status" role="status" aria-live="polite"></div>
+
+        <div class="profile-admin-prompts-actions">
+          <button id="profile-admin-prompts-seed" class="btn btn-outline-secondary profile-save-btn" type="button">
+            Seed Missing Required Keys
+          </button>
+        </div>
+
+        <div class="profile-admin-layout profile-admin-layout--prompts">
+          <section class="profile-admin-directory" aria-labelledby="profile-admin-prompts-directory-title">
+            <div class="profile-card-header profile-admin-subheader">
+              <h4 id="profile-admin-prompts-directory-title" class="profile-card-title">Registered prompts</h4>
+            </div>
+
+            <div class="profile-admin-prompts-filters" role="group" aria-label="Prompt table filters">
+              <div class="profile-field mb-0">
+                <label class="profile-label" for="profile-admin-prompts-filter-search">Search</label>
+                <input id="profile-admin-prompts-filter-search" class="profile-input" type="search"
+                  placeholder="Tool, prompt key, or description">
+              </div>
+
+              <div class="profile-field mb-0">
+                <label class="profile-label" for="profile-admin-prompts-filter-tool">Tool</label>
+                <select id="profile-admin-prompts-filter-tool" class="profile-select">
+                  <option value="">All tools</option>
+                </select>
+              </div>
+
+              <div class="profile-field mb-0">
+                <label class="profile-label" for="profile-admin-prompts-filter-active">Active</label>
+                <select id="profile-admin-prompts-filter-active" class="profile-select">
+                  <option value="">All</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+
+              <div class="profile-field mb-0">
+                <label class="profile-label" for="profile-admin-prompts-sort">Order by</label>
+                <select id="profile-admin-prompts-sort" class="profile-select">
+                  <option value="tool_asc">Tool + key (A-Z)</option>
+                  <option value="tool_desc">Tool + key (Z-A)</option>
+                  <option value="updated_desc">Recently updated</option>
+                  <option value="updated_asc">Least recently updated</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="table-responsive profile-admin-table-wrap">
+              <table class="table table-sm align-middle profile-admin-table mb-0">
+                <thead>
+                  <tr>
+                    <th scope="col">Tool</th>
+                    <th scope="col">Prompt key</th>
+                    <th scope="col">Active</th>
+                    <th scope="col">Updated</th>
+                    <th scope="col" class="text-end">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="profile-admin-prompts-body"></tbody>
+              </table>
+            </div>
+
+            <p id="profile-admin-prompts-empty" class="profile-hint d-none">No prompt entries were found yet.</p>
+          </section>
+
+          <section class="profile-admin-editor-shell" aria-labelledby="profile-admin-prompt-editor-title">
+            <div class="profile-card-header profile-admin-subheader">
+              <h4 id="profile-admin-prompt-editor-title" class="profile-card-title">Edit prompt</h4>
+            </div>
+
+            <form id="profile-admin-prompt-form" class="profile-form" novalidate>
+              <input id="profile-admin-prompt-id" type="hidden">
+
+              <div class="profile-field">
+                <label class="profile-label" for="profile-admin-prompt-tool">Tool key</label>
+                <input id="profile-admin-prompt-tool" class="profile-input" type="text" placeholder="operational-graph-assistant" required>
+              </div>
+
+              <div class="profile-field">
+                <label class="profile-label" for="profile-admin-prompt-key">Prompt key</label>
+                <input id="profile-admin-prompt-key" class="profile-input" type="text" placeholder="system" required>
+              </div>
+
+              <div class="profile-field">
+                <label class="profile-label" for="profile-admin-prompt-description">Description</label>
+                <input id="profile-admin-prompt-description" class="profile-input" type="text" placeholder="Short purpose note (optional)">
+              </div>
+
+              <div class="profile-field">
+                <label class="profile-label" for="profile-admin-prompt-content">Prompt content</label>
+                <textarea id="profile-admin-prompt-content" class="profile-input profile-input--multiline" rows="9" required></textarea>
+              </div>
+
+              <div class="form-check form-switch profile-admin-toggle">
+                <input id="profile-admin-prompt-active" class="form-check-input" type="checkbox" role="switch" checked>
+                <label class="form-check-label" for="profile-admin-prompt-active">Active</label>
+              </div>
+
+              <div class="profile-actions">
+                <div id="profile-admin-prompt-save-status" class="profile-save-status" role="status" aria-live="polite"></div>
+                <div class="d-flex gap-2">
+                  <button id="profile-admin-prompt-new" class="btn btn-outline-secondary profile-save-btn" type="button">New</button>
+                  <button id="profile-admin-prompt-delete" class="btn btn-outline-danger profile-save-btn" type="button">Delete</button>
+                  <button id="profile-admin-prompt-save" class="btn btn-primary profile-save-btn" type="submit">Save prompt</button>
+                </div>
+              </div>
+            </form>
+          </section>
+        </div>
+      </section>
     </section>
   </div>
 </section>

@@ -1629,6 +1629,57 @@ header .navbar-nav .nav-link.active {
   font-size: 0.88rem;
 }
 
+.profile-admin-prompts {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+[data-bs-theme="light"] .profile-admin-prompts {
+  border-top-color: rgba(13, 110, 253, 0.12);
+}
+
+.profile-admin-prompts-intro {
+  margin-bottom: 0.75rem;
+}
+
+.profile-admin-prompts-actions {
+  margin-bottom: 0.75rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.profile-admin-layout--prompts {
+  margin-top: 0.55rem;
+}
+
+.profile-admin-prompts-filters {
+  display: grid;
+  gap: 0.7rem;
+  margin-bottom: 0.85rem;
+}
+
+@media (min-width: 860px) {
+  .profile-admin-prompts-filters {
+    grid-template-columns: minmax(240px, 1.2fr) minmax(180px, 1fr) minmax(140px, 180px) minmax(220px, 1fr);
+    align-items: end;
+  }
+}
+
+.profile-admin-prompt-tool,
+.profile-admin-prompt-key {
+  font-family: var(--bs-font-monospace);
+  font-size: 0.82rem;
+}
+
+.profile-input--multiline {
+  min-height: 220px;
+  height: auto;
+  padding: 0.75rem 0.85rem;
+  resize: vertical;
+  line-height: 1.4;
+}
+
 .cta-section .btn {
   border-radius: 999px;
 }

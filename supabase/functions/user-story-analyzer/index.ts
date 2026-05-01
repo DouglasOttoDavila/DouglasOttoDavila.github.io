@@ -9,6 +9,10 @@ type AnalyzerRequestPayload = {
   story_content?: string;
 };
 
+type AnalyzerPromptCatalog = {
+  [key: string]: string;
+};
+
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -29,8 +33,9 @@ Deno.serve(async (request) => {
     if (!storyContent) {
       return jsonResponse({ error: 'User story content is required.' }, 400);
     }
+    const promptCatalog = await loadAnalyzerPromptCatalog();
     // Local deterministic analysis mode (no external webhook dependency).
-    const localAnalysis = buildLocalAnalysis(storyContent);
+    const localAnalysis = buildLocalAnalysis(storyContent, promptCatalog);
     return jsonResponse(localAnalysis, 200);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unexpected analyzer error.';
@@ -104,7 +109,7 @@ function jsonResponse(body: Record<string, unknown>, status: number) {
   });
 }
 
-function buildLocalAnalysis(storyContent: string): Record<string, unknown> {
+function buildLocalAnalysis(storyContent: string, prompts: AnalyzerPromptCatalog): Record<string, unknown> {
   const normalized = storyContent.trim();
   const lower = normalized.toLowerCase();
 
@@ -129,21 +134,25 @@ function buildLocalAnalysis(storyContent: string): Record<string, unknown> {
   const testable = clampScore(2 + (hasGivenWhenThen ? 2 : 0) + (/\bacceptance criteria\b/i.test(lower) ? 1 : 0) + (hasEstimateSignals ? 1 : 0));
 
   const missing: string[] = [];
-  if (!hasActor) missing.push('The user/persona is not explicit.');
-  if (!hasWant) missing.push('The user intent ("I want ...") is not explicit.');
-  if (!hasBenefit) missing.push('The business or user value ("so that ...") is missing.');
-  if (!hasGivenWhenThen) missing.push('Acceptance criteria in Given/When/Then format are missing.');
-  if (!hasEstimateSignals) missing.push('No measurable thresholds (time, quantity, accuracy) were identified.');
+  if (!hasActor) missing.push(prompts['missing.actor']);
+  if (!hasWant) missing.push(prompts['missing.want']);
+  if (!hasBenefit) missing.push(prompts['missing.benefit']);
+  if (!hasGivenWhenThen) missing.push(prompts['missing.gherkin']);
+  if (!hasEstimateSignals) missing.push(prompts['missing.thresholds']);
 
-  const actor = safeText(actorMatch?.[1]) || 'user';
-  const desiredOutcome = safeText(wantMatch?.[1]) || 'achieve the intended outcome';
-  const benefit = safeText(benefitMatch?.[1]) || 'I can deliver value with clear outcomes';
+  const actor = safeText(actorMatch?.[1]) || prompts['rewrite.default_actor'];
+  const desiredOutcome = safeText(wantMatch?.[1]) || prompts['rewrite.default_outcome'];
+  const benefit = safeText(benefitMatch?.[1]) || prompts['rewrite.default_benefit'];
 
-  const rewrittenStory = `As a ${actor}, I want to ${desiredOutcome} so that ${benefit}.`;
+  const rewrittenStory = formatPromptTemplate(prompts['rewrite.story_template'], {
+    actor,
+    desiredOutcome,
+    benefit
+  });
   const gherkinAcceptanceCriteria = [
-    'Given I am an authenticated and approved user,',
-    `When I ${desiredOutcome},`,
-    'Then the expected result is completed within defined measurable thresholds.'
+    formatPromptTemplate(prompts['gherkin.given_template'], { desiredOutcome }),
+    formatPromptTemplate(prompts['gherkin.when_template'], { desiredOutcome }),
+    formatPromptTemplate(prompts['gherkin.then_template'], { desiredOutcome })
   ].join('\n');
 
   const overallComment = createOverallComment({
@@ -153,7 +162,7 @@ function buildLocalAnalysis(storyContent: string): Record<string, unknown> {
     estimable,
     small,
     testable
-  });
+  }, prompts);
 
   return {
     source: 'local',
@@ -169,28 +178,28 @@ function buildLocalAnalysis(storyContent: string): Record<string, unknown> {
     story_improvement: {
       body: {
         independentSuggestion: hasAnd
-          ? 'Split the story into one primary outcome. Move secondary outcomes into separate stories.'
-          : 'Keep the story focused on one outcome and avoid bundling unrelated behaviors.',
+          ? prompts['suggestion.independent.split']
+          : prompts['suggestion.independent.focus'],
         negotiableSuggestion: hasAmbiguousWords
-          ? 'Replace vague terms like "fast" or "better" with explicit constraints.'
-          : 'Keep room for implementation discussion by describing outcomes instead of technical design.',
+          ? prompts['suggestion.negotiable.replace_ambiguous']
+          : prompts['suggestion.negotiable.keep_outcome_focused'],
         valuableSuggestion: hasBenefit
-          ? 'Retain the value statement and tie it to a measurable product or user impact.'
-          : 'Add a "so that" clause describing customer or business value.',
+          ? prompts['suggestion.valuable.retain_value']
+          : prompts['suggestion.valuable.add_so_that'],
         estimableSuggestion: hasEstimateSignals
-          ? 'Good start on measurable expectations. Add clear scope boundaries for effort estimation.'
-          : 'Include measurable targets (time, volume, quality) so the effort can be estimated confidently.',
+          ? prompts['suggestion.estimable.refine_scope']
+          : prompts['suggestion.estimable.add_metrics'],
         smallSuggestion: length > 500 || hasAnd
-          ? 'Reduce scope to one thin vertical slice that can be delivered and validated quickly.'
-          : 'Scope appears manageable. Keep acceptance criteria concise and focused.',
+          ? prompts['suggestion.small.reduce_scope']
+          : prompts['suggestion.small.keep_concise'],
         testableSuggestion: hasGivenWhenThen
-          ? 'Keep Given/When/Then criteria tied to pass/fail conditions and edge cases.'
-          : 'Add at least one Given/When/Then acceptance criterion with measurable expected results.',
+          ? prompts['suggestion.testable.keep_gherkin']
+          : prompts['suggestion.testable.add_gherkin'],
         rewrittenStory,
         gherkinAcceptanceCriteria,
         missingContextOrDependencies: missing.length
           ? missing.join(' ')
-          : 'No major context gaps detected from the provided text.',
+          : prompts['missing.none'],
         overallComment
       }
     }
@@ -204,7 +213,7 @@ function createOverallComment(scores: {
   estimable: number;
   small: number;
   testable: number;
-}): string {
+}, prompts: AnalyzerPromptCatalog): string {
   const average = (
     scores.independent
     + scores.negotiable
@@ -215,12 +224,12 @@ function createOverallComment(scores: {
   ) / 6;
 
   if (average >= 4.5) {
-    return 'Strong INVEST quality. Minor refinements to acceptance criteria can further improve delivery confidence.';
+    return prompts['overall.high'];
   }
   if (average >= 3.5) {
-    return 'Moderate INVEST quality. Clarify measurable outcomes and tighten scope to improve implementation confidence.';
+    return prompts['overall.medium'];
   }
-  return 'Low INVEST quality. Rewrite the story with clear value, measurable criteria, and narrower scope.';
+  return prompts['overall.low'];
 }
 
 function clampScore(value: number): number {
@@ -229,4 +238,92 @@ function clampScore(value: number): number {
 
 function safeText(value: string | undefined): string {
   return String(value || '').replace(/\s+/g, ' ').trim();
+}
+
+function formatPromptTemplate(template: string, values: Record<string, string>) {
+  return String(template || '').replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_match, key) => {
+    const value = values[key];
+    return value === undefined || value === null ? '' : value;
+  });
+}
+
+async function loadAnalyzerPromptCatalog(): Promise<AnalyzerPromptCatalog> {
+  const requiredPromptKeys = [
+    'missing.actor',
+    'missing.want',
+    'missing.benefit',
+    'missing.gherkin',
+    'missing.thresholds',
+    'missing.none',
+    'rewrite.default_actor',
+    'rewrite.default_outcome',
+    'rewrite.default_benefit',
+    'rewrite.story_template',
+    'gherkin.given_template',
+    'gherkin.when_template',
+    'gherkin.then_template',
+    'suggestion.independent.split',
+    'suggestion.independent.focus',
+    'suggestion.negotiable.replace_ambiguous',
+    'suggestion.negotiable.keep_outcome_focused',
+    'suggestion.valuable.retain_value',
+    'suggestion.valuable.add_so_that',
+    'suggestion.estimable.refine_scope',
+    'suggestion.estimable.add_metrics',
+    'suggestion.small.reduce_scope',
+    'suggestion.small.keep_concise',
+    'suggestion.testable.keep_gherkin',
+    'suggestion.testable.add_gherkin',
+    'overall.high',
+    'overall.medium',
+    'overall.low'
+  ];
+
+  const catalog = await loadToolPromptCatalog('user-story-analyzer');
+  const missingKeys = requiredPromptKeys.filter((key) => !String(catalog[key] || '').trim());
+  if (missingKeys.length > 0) {
+    throw new Error(`Analyzer prompts are not configured for keys: ${missingKeys.join(', ')}`);
+  }
+
+  return catalog;
+}
+
+async function loadToolPromptCatalog(toolKey: string): Promise<AnalyzerPromptCatalog> {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
+
+  if (!supabaseUrl || (!serviceRoleKey && !anonKey)) {
+    throw new Error('Prompt catalog access is not configured.');
+  }
+
+  const authToken = serviceRoleKey || anonKey || '';
+  const query = new URLSearchParams({
+    select: 'prompt_key,content,is_active',
+    tool_key: `eq.${toolKey}`
+  });
+
+  const response = await fetch(`${supabaseUrl}/rest/v1/ai_tool_prompts?${query.toString()}`, {
+    headers: {
+      apikey: authToken,
+      Authorization: `Bearer ${authToken}`,
+      Accept: 'application/json'
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error('Unable to load analyzer prompt catalog from Supabase.');
+  }
+
+  const rows = await response.json() as Array<{ prompt_key?: string; content?: string; is_active?: boolean }>;
+  const catalog: AnalyzerPromptCatalog = {};
+  rows.forEach((row) => {
+    if (!row?.is_active) return;
+    const key = String(row.prompt_key || '').trim();
+    const content = String(row.content || '').trim();
+    if (!key || !content) return;
+    catalog[key] = content;
+  });
+
+  return catalog;
 }

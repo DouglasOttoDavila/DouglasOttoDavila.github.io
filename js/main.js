@@ -1010,6 +1010,41 @@ class SPARouter {
         return data[0];
     }
 
+    async listAdminAiPrompts() {
+        if (!this.supabase) {
+            throw new Error('Supabase client is not available.');
+        }
+
+        const { data, error } = await this.supabase.rpc('admin_list_ai_prompts');
+        if (error) throw error;
+        return Array.isArray(data) ? data : [];
+    }
+
+    async upsertAdminAiPrompt(payload) {
+        if (!this.supabase) {
+            throw new Error('Supabase client is not available.');
+        }
+
+        const { data, error } = await this.supabase.rpc('admin_upsert_ai_prompt', payload);
+        if (error) throw error;
+        if (!Array.isArray(data) || data.length === 0) {
+            throw new Error('Prompt save returned no prompt row.');
+        }
+
+        return data[0];
+    }
+
+    async deleteAdminAiPrompt(promptId) {
+        if (!this.supabase) {
+            throw new Error('Supabase client is not available.');
+        }
+
+        const { error } = await this.supabase.rpc('admin_delete_ai_prompt', {
+            p_id: promptId
+        });
+        if (error) throw error;
+    }
+
     bindAuthControls() {
         const logoutBtn = this.authControls.logoutBtn;
         if (logoutBtn && !logoutBtn.dataset.bound) {
@@ -1818,6 +1853,25 @@ class SPARouter {
         const adminDialEl = document.getElementById('profile-admin-user-phone-dial');
         const adminPhoneEl = document.getElementById('profile-admin-user-phone');
         const adminPrivilegesToggleEl = document.getElementById('profile-admin-user-has-privileges');
+        const adminPromptsStatusEl = document.getElementById('profile-admin-prompts-status');
+        const adminPromptsCountEl = document.getElementById('profile-admin-prompts-count');
+        const adminPromptsBodyEl = document.getElementById('profile-admin-prompts-body');
+        const adminPromptsEmptyEl = document.getElementById('profile-admin-prompts-empty');
+        const adminPromptsFilterSearchEl = document.getElementById('profile-admin-prompts-filter-search');
+        const adminPromptsFilterToolEl = document.getElementById('profile-admin-prompts-filter-tool');
+        const adminPromptsFilterActiveEl = document.getElementById('profile-admin-prompts-filter-active');
+        const adminPromptsSortEl = document.getElementById('profile-admin-prompts-sort');
+        const adminPromptsSeedEl = document.getElementById('profile-admin-prompts-seed');
+        const adminPromptFormEl = document.getElementById('profile-admin-prompt-form');
+        const adminPromptIdEl = document.getElementById('profile-admin-prompt-id');
+        const adminPromptToolEl = document.getElementById('profile-admin-prompt-tool');
+        const adminPromptKeyEl = document.getElementById('profile-admin-prompt-key');
+        const adminPromptDescriptionEl = document.getElementById('profile-admin-prompt-description');
+        const adminPromptContentEl = document.getElementById('profile-admin-prompt-content');
+        const adminPromptActiveEl = document.getElementById('profile-admin-prompt-active');
+        const adminPromptSaveStatusEl = document.getElementById('profile-admin-prompt-save-status');
+        const adminPromptNewEl = document.getElementById('profile-admin-prompt-new');
+        const adminPromptDeleteEl = document.getElementById('profile-admin-prompt-delete');
 
         const countryEl = document.getElementById('profile-phone-country');
         const dialEl = document.getElementById('profile-phone-dial');
@@ -1839,6 +1893,16 @@ class SPARouter {
         const setAdminSaveStatus = (message) => {
             if (!adminSaveStatusEl) return;
             adminSaveStatusEl.textContent = message || '';
+        };
+
+        const setAdminPromptsStatus = (message) => {
+            if (!adminPromptsStatusEl) return;
+            adminPromptsStatusEl.textContent = message || '';
+        };
+
+        const setAdminPromptSaveStatus = (message) => {
+            if (!adminPromptSaveStatusEl) return;
+            adminPromptSaveStatusEl.textContent = message || '';
         };
 
         if (!this.authState.isAuthenticated || !this.supabase) {
@@ -1937,6 +2001,8 @@ class SPARouter {
         let pendingAvatarFile = null;
         let adminUsers = [];
         let selectedAdminUserId = null;
+        let adminPrompts = [];
+        let selectedAdminPromptId = null;
         if (avatarFileEl && !avatarFileEl.dataset.bound) {
             avatarFileEl.addEventListener('change', () => {
                 const file = avatarFileEl.files?.[0] || null;
@@ -2018,7 +2084,285 @@ class SPARouter {
             return raw || null;
         };
 
+        const normalizePromptKeyPart = (value) => String(value || '').trim().toLowerCase();
+
+        const REQUIRED_PROMPT_SPECS = [
+            { toolKey: 'operational-graph-assistant', promptKey: 'system', description: 'System prompt template for graph assistant.' },
+            { toolKey: 'operational-graph-assistant', promptKey: 'user', description: 'User prompt template for graph assistant.' },
+            { toolKey: 'user-story-analyzer', promptKey: 'missing.actor', description: 'Analyzer prompt setting: missing.actor' },
+            { toolKey: 'user-story-analyzer', promptKey: 'missing.want', description: 'Analyzer prompt setting: missing.want' },
+            { toolKey: 'user-story-analyzer', promptKey: 'missing.benefit', description: 'Analyzer prompt setting: missing.benefit' },
+            { toolKey: 'user-story-analyzer', promptKey: 'missing.gherkin', description: 'Analyzer prompt setting: missing.gherkin' },
+            { toolKey: 'user-story-analyzer', promptKey: 'missing.thresholds', description: 'Analyzer prompt setting: missing.thresholds' },
+            { toolKey: 'user-story-analyzer', promptKey: 'missing.none', description: 'Analyzer prompt setting: missing.none' },
+            { toolKey: 'user-story-analyzer', promptKey: 'rewrite.default_actor', description: 'Analyzer prompt setting: rewrite.default_actor' },
+            { toolKey: 'user-story-analyzer', promptKey: 'rewrite.default_outcome', description: 'Analyzer prompt setting: rewrite.default_outcome' },
+            { toolKey: 'user-story-analyzer', promptKey: 'rewrite.default_benefit', description: 'Analyzer prompt setting: rewrite.default_benefit' },
+            { toolKey: 'user-story-analyzer', promptKey: 'rewrite.story_template', description: 'Analyzer prompt setting: rewrite.story_template' },
+            { toolKey: 'user-story-analyzer', promptKey: 'gherkin.given_template', description: 'Analyzer prompt setting: gherkin.given_template' },
+            { toolKey: 'user-story-analyzer', promptKey: 'gherkin.when_template', description: 'Analyzer prompt setting: gherkin.when_template' },
+            { toolKey: 'user-story-analyzer', promptKey: 'gherkin.then_template', description: 'Analyzer prompt setting: gherkin.then_template' },
+            { toolKey: 'user-story-analyzer', promptKey: 'suggestion.independent.split', description: 'Analyzer prompt setting: suggestion.independent.split' },
+            { toolKey: 'user-story-analyzer', promptKey: 'suggestion.independent.focus', description: 'Analyzer prompt setting: suggestion.independent.focus' },
+            { toolKey: 'user-story-analyzer', promptKey: 'suggestion.negotiable.replace_ambiguous', description: 'Analyzer prompt setting: suggestion.negotiable.replace_ambiguous' },
+            { toolKey: 'user-story-analyzer', promptKey: 'suggestion.negotiable.keep_outcome_focused', description: 'Analyzer prompt setting: suggestion.negotiable.keep_outcome_focused' },
+            { toolKey: 'user-story-analyzer', promptKey: 'suggestion.valuable.retain_value', description: 'Analyzer prompt setting: suggestion.valuable.retain_value' },
+            { toolKey: 'user-story-analyzer', promptKey: 'suggestion.valuable.add_so_that', description: 'Analyzer prompt setting: suggestion.valuable.add_so_that' },
+            { toolKey: 'user-story-analyzer', promptKey: 'suggestion.estimable.refine_scope', description: 'Analyzer prompt setting: suggestion.estimable.refine_scope' },
+            { toolKey: 'user-story-analyzer', promptKey: 'suggestion.estimable.add_metrics', description: 'Analyzer prompt setting: suggestion.estimable.add_metrics' },
+            { toolKey: 'user-story-analyzer', promptKey: 'suggestion.small.reduce_scope', description: 'Analyzer prompt setting: suggestion.small.reduce_scope' },
+            { toolKey: 'user-story-analyzer', promptKey: 'suggestion.small.keep_concise', description: 'Analyzer prompt setting: suggestion.small.keep_concise' },
+            { toolKey: 'user-story-analyzer', promptKey: 'suggestion.testable.keep_gherkin', description: 'Analyzer prompt setting: suggestion.testable.keep_gherkin' },
+            { toolKey: 'user-story-analyzer', promptKey: 'suggestion.testable.add_gherkin', description: 'Analyzer prompt setting: suggestion.testable.add_gherkin' },
+            { toolKey: 'user-story-analyzer', promptKey: 'overall.high', description: 'Analyzer prompt setting: overall.high' },
+            { toolKey: 'user-story-analyzer', promptKey: 'overall.medium', description: 'Analyzer prompt setting: overall.medium' },
+            { toolKey: 'user-story-analyzer', promptKey: 'overall.low', description: 'Analyzer prompt setting: overall.low' }
+        ];
+
         const findAdminUser = (userId) => adminUsers.find(user => String(user.user_id || '') === String(userId || '')) || null;
+        const findAdminPrompt = (promptId) => adminPrompts.find(prompt => String(prompt.id || '') === String(promptId || '')) || null;
+
+        const parseTimestamp = (value) => {
+            const ts = value ? Date.parse(String(value)) : NaN;
+            return Number.isFinite(ts) ? ts : 0;
+        };
+
+        const getFilteredAndSortedAdminPrompts = () => {
+            const searchQuery = String(adminPromptsFilterSearchEl?.value || '').trim().toLowerCase();
+            const toolFilter = String(adminPromptsFilterToolEl?.value || '');
+            const activeFilter = String(adminPromptsFilterActiveEl?.value || '');
+            const sortBy = String(adminPromptsSortEl?.value || 'tool_asc');
+
+            const filtered = adminPrompts.filter(prompt => {
+                if (searchQuery) {
+                    const haystack = [
+                        String(prompt.tool_key || ''),
+                        String(prompt.prompt_key || ''),
+                        String(prompt.description || '')
+                    ].join(' ').toLowerCase();
+
+                    if (!haystack.includes(searchQuery)) {
+                        return false;
+                    }
+                }
+
+                if (toolFilter && String(prompt.tool_key || '') !== toolFilter) {
+                    return false;
+                }
+                if (activeFilter === 'active' && !prompt.is_active) {
+                    return false;
+                }
+                if (activeFilter === 'inactive' && Boolean(prompt.is_active)) {
+                    return false;
+                }
+                return true;
+            });
+
+            filtered.sort((a, b) => {
+                const aTool = String(a.tool_key || '');
+                const bTool = String(b.tool_key || '');
+                const aKey = String(a.prompt_key || '');
+                const bKey = String(b.prompt_key || '');
+                const aUpdated = parseTimestamp(a.updated_at);
+                const bUpdated = parseTimestamp(b.updated_at);
+
+                if (sortBy === 'updated_desc') {
+                    if (aUpdated !== bUpdated) return bUpdated - aUpdated;
+                    const toolDiff = aTool.localeCompare(bTool);
+                    if (toolDiff !== 0) return toolDiff;
+                    return aKey.localeCompare(bKey);
+                }
+
+                if (sortBy === 'updated_asc') {
+                    if (aUpdated !== bUpdated) return aUpdated - bUpdated;
+                    const toolDiff = aTool.localeCompare(bTool);
+                    if (toolDiff !== 0) return toolDiff;
+                    return aKey.localeCompare(bKey);
+                }
+
+                if (sortBy === 'tool_desc') {
+                    const toolDiff = bTool.localeCompare(aTool);
+                    if (toolDiff !== 0) return toolDiff;
+                    return bKey.localeCompare(aKey);
+                }
+
+                const toolDiff = aTool.localeCompare(bTool);
+                if (toolDiff !== 0) return toolDiff;
+                return aKey.localeCompare(bKey);
+            });
+
+            return filtered;
+        };
+
+        const refreshPromptFilterToolOptions = () => {
+            if (!adminPromptsFilterToolEl) return;
+            const previousValue = String(adminPromptsFilterToolEl.value || '');
+            const tools = Array.from(new Set(adminPrompts
+                .map(prompt => String(prompt.tool_key || '').trim())
+                .filter(Boolean)))
+                .sort((a, b) => a.localeCompare(b));
+
+            adminPromptsFilterToolEl.innerHTML = '';
+            const allOption = document.createElement('option');
+            allOption.value = '';
+            allOption.textContent = 'All tools';
+            adminPromptsFilterToolEl.appendChild(allOption);
+
+            tools.forEach(tool => {
+                const option = document.createElement('option');
+                option.value = tool;
+                option.textContent = tool;
+                adminPromptsFilterToolEl.appendChild(option);
+            });
+
+            const hasPrevious = tools.includes(previousValue);
+            adminPromptsFilterToolEl.value = hasPrevious ? previousValue : '';
+        };
+
+        const buildPromptIndexKey = (toolKey, promptKey) => `${String(toolKey || '').trim().toLowerCase()}::${String(promptKey || '').trim().toLowerCase()}`;
+
+        const seedMissingRequiredPrompts = async () => {
+            const existing = new Set(adminPrompts.map(prompt => buildPromptIndexKey(prompt.tool_key, prompt.prompt_key)));
+            const missingSpecs = REQUIRED_PROMPT_SPECS.filter(spec => !existing.has(buildPromptIndexKey(spec.toolKey, spec.promptKey)));
+
+            if (missingSpecs.length === 0) {
+                setAdminPromptsStatus('All required prompt keys already exist.');
+                return;
+            }
+
+            setAdminPromptsStatus(`Seeding ${missingSpecs.length} missing prompt key(s)...`);
+            if (adminPromptsSeedEl) adminPromptsSeedEl.disabled = true;
+
+            try {
+                for (const spec of missingSpecs) {
+                    await this.upsertAdminAiPrompt({
+                        p_id: null,
+                        p_tool_key: spec.toolKey,
+                        p_prompt_key: spec.promptKey,
+                        p_content: `[TODO] Configure prompt content for ${spec.toolKey}.${spec.promptKey}`,
+                        p_description: spec.description,
+                        p_is_active: true
+                    });
+                }
+
+                await loadAdminPrompts();
+                setAdminPromptsStatus(`Seeded ${missingSpecs.length} missing prompt key(s). Review and update placeholder content.`);
+            } catch (error) {
+                console.error('[profile-admin] prompt seed failed', error);
+                setAdminPromptsStatus('Unable to seed missing prompt keys right now.');
+            } finally {
+                if (adminPromptsSeedEl) adminPromptsSeedEl.disabled = false;
+            }
+        };
+
+        const resetAdminPromptEditor = () => {
+            selectedAdminPromptId = null;
+            if (adminPromptIdEl) adminPromptIdEl.value = '';
+            if (adminPromptToolEl) adminPromptToolEl.value = '';
+            if (adminPromptKeyEl) adminPromptKeyEl.value = '';
+            if (adminPromptDescriptionEl) adminPromptDescriptionEl.value = '';
+            if (adminPromptContentEl) adminPromptContentEl.value = '';
+            if (adminPromptActiveEl) adminPromptActiveEl.checked = true;
+            if (adminPromptDeleteEl) adminPromptDeleteEl.disabled = true;
+            setAdminPromptSaveStatus('');
+        };
+
+        const populateAdminPromptEditor = (row) => {
+            if (!row) {
+                resetAdminPromptEditor();
+                return;
+            }
+
+            selectedAdminPromptId = row.id || null;
+            if (adminPromptIdEl) adminPromptIdEl.value = row.id || '';
+            if (adminPromptToolEl) adminPromptToolEl.value = row.tool_key || '';
+            if (adminPromptKeyEl) adminPromptKeyEl.value = row.prompt_key || '';
+            if (adminPromptDescriptionEl) adminPromptDescriptionEl.value = row.description || '';
+            if (adminPromptContentEl) adminPromptContentEl.value = row.content || '';
+            if (adminPromptActiveEl) adminPromptActiveEl.checked = Boolean(row.is_active);
+            if (adminPromptDeleteEl) adminPromptDeleteEl.disabled = false;
+            setAdminPromptSaveStatus('');
+        };
+
+        const renderAdminPrompts = () => {
+            if (!adminPromptsBodyEl) return;
+            adminPromptsBodyEl.innerHTML = '';
+
+            const rows = getFilteredAndSortedAdminPrompts();
+
+            if (adminPromptsCountEl) {
+                adminPromptsCountEl.textContent = `${rows.length} prompt${rows.length === 1 ? '' : 's'}`;
+            }
+
+            if (adminPromptsEmptyEl) {
+                adminPromptsEmptyEl.classList.toggle('d-none', rows.length > 0);
+            }
+
+            rows.forEach(prompt => {
+                const tr = document.createElement('tr');
+                const isActive = String(prompt.id || '') === String(selectedAdminPromptId || '');
+                if (isActive) {
+                    tr.classList.add('table-active');
+                }
+
+                const toolTd = document.createElement('td');
+                toolTd.className = 'profile-admin-prompt-tool';
+                toolTd.textContent = prompt.tool_key || '—';
+
+                const keyTd = document.createElement('td');
+                keyTd.className = 'profile-admin-prompt-key';
+                keyTd.textContent = prompt.prompt_key || '—';
+
+                const activeTd = document.createElement('td');
+                activeTd.textContent = prompt.is_active ? 'Yes' : 'No';
+
+                const updatedTd = document.createElement('td');
+                updatedTd.textContent = prompt.updated_at
+                    ? new Date(prompt.updated_at).toLocaleString()
+                    : '—';
+
+                const actionTd = document.createElement('td');
+                actionTd.className = 'text-end';
+
+                const editBtn = document.createElement('button');
+                editBtn.type = 'button';
+                editBtn.className = 'btn btn-outline-primary btn-sm profile-admin-edit-btn';
+                editBtn.dataset.promptId = prompt.id || '';
+                editBtn.textContent = 'Edit';
+
+                actionTd.appendChild(editBtn);
+                tr.appendChild(toolTd);
+                tr.appendChild(keyTd);
+                tr.appendChild(activeTd);
+                tr.appendChild(updatedTd);
+                tr.appendChild(actionTd);
+                adminPromptsBodyEl.appendChild(tr);
+            });
+        };
+
+        const loadAdminPrompts = async () => {
+            if (!this.authState.isAdmin || !adminPanelEl) return;
+
+            setAdminPromptsStatus('Loading prompt catalog...');
+            try {
+                adminPrompts = await this.listAdminAiPrompts();
+                refreshPromptFilterToolOptions();
+                renderAdminPrompts();
+                if (selectedAdminPromptId) {
+                    populateAdminPromptEditor(findAdminPrompt(selectedAdminPromptId));
+                } else {
+                    resetAdminPromptEditor();
+                }
+                setAdminPromptsStatus('');
+            } catch (error) {
+                console.error('[profile-admin] prompt list failed', error);
+                adminPrompts = [];
+                refreshPromptFilterToolOptions();
+                renderAdminPrompts();
+                resetAdminPromptEditor();
+                setAdminPromptsStatus('Unable to load prompt catalog right now.');
+            }
+        };
 
         const resetAdminEditor = () => {
             selectedAdminUserId = null;
@@ -2142,7 +2486,7 @@ class SPARouter {
             .then(row => {
                 applyExisting(row);
                 if (this.authState.isAdmin) {
-                    return loadAdminUsers();
+                    return Promise.all([loadAdminUsers(), loadAdminPrompts()]);
                 }
                 return null;
             })
@@ -2296,11 +2640,127 @@ class SPARouter {
             adminFormEl.dataset.bound = 'true';
         }
 
+        if (adminPromptsBodyEl && !adminPromptsBodyEl.dataset.bound) {
+            adminPromptsBodyEl.addEventListener('click', (event) => {
+                const button = event.target.closest('[data-prompt-id]');
+                if (!button) return;
+                const promptId = button.getAttribute('data-prompt-id');
+                populateAdminPromptEditor(findAdminPrompt(promptId));
+                renderAdminPrompts();
+            });
+            adminPromptsBodyEl.dataset.bound = 'true';
+        }
+
+        if (adminPromptNewEl && !adminPromptNewEl.dataset.bound) {
+            adminPromptNewEl.addEventListener('click', () => {
+                resetAdminPromptEditor();
+                if (adminPromptToolEl && typeof adminPromptToolEl.focus === 'function') {
+                    adminPromptToolEl.focus({ preventScroll: true });
+                }
+                renderAdminPrompts();
+            });
+            adminPromptNewEl.dataset.bound = 'true';
+        }
+
+        if (adminPromptDeleteEl && !adminPromptDeleteEl.dataset.bound) {
+            adminPromptDeleteEl.addEventListener('click', async () => {
+                if (!selectedAdminPromptId) {
+                    setAdminPromptSaveStatus('Select a prompt first.');
+                    return;
+                }
+
+                setAdminPromptSaveStatus('Deleting prompt...');
+                try {
+                    await this.deleteAdminAiPrompt(selectedAdminPromptId);
+                    adminPrompts = adminPrompts.filter(prompt => String(prompt.id || '') !== String(selectedAdminPromptId));
+                    resetAdminPromptEditor();
+                    renderAdminPrompts();
+                    setAdminPromptSaveStatus('Prompt deleted.');
+                } catch (error) {
+                    console.error('[profile-admin] prompt delete failed', error);
+                    setAdminPromptSaveStatus('Unable to delete this prompt right now.');
+                }
+            });
+            adminPromptDeleteEl.dataset.bound = 'true';
+        }
+
+        if (adminPromptFormEl && !adminPromptFormEl.dataset.bound) {
+            adminPromptFormEl.addEventListener('submit', async (event) => {
+                event.preventDefault();
+
+                const toolKey = normalizePromptKeyPart(adminPromptToolEl?.value);
+                const promptKey = normalizePromptKeyPart(adminPromptKeyEl?.value);
+                const promptContent = String(adminPromptContentEl?.value || '').trim();
+
+                if (!toolKey || !promptKey || !promptContent) {
+                    setAdminPromptSaveStatus('Tool key, prompt key, and prompt content are required.');
+                    return;
+                }
+
+                setAdminPromptSaveStatus('Saving prompt...');
+                try {
+                    const row = await this.upsertAdminAiPrompt({
+                        p_id: selectedAdminPromptId || null,
+                        p_tool_key: toolKey,
+                        p_prompt_key: promptKey,
+                        p_content: promptContent,
+                        p_description: normalizeOptionalText(adminPromptDescriptionEl?.value),
+                        p_is_active: Boolean(adminPromptActiveEl?.checked)
+                    });
+
+                    const rowId = String(row.id || '');
+                    const existingIndex = adminPrompts.findIndex(prompt => String(prompt.id || '') === rowId);
+                    if (existingIndex >= 0) {
+                        adminPrompts[existingIndex] = row;
+                    } else {
+                        adminPrompts.push(row);
+                    }
+
+                    refreshPromptFilterToolOptions();
+
+                    populateAdminPromptEditor(row);
+                    renderAdminPrompts();
+                    setAdminPromptSaveStatus('Prompt saved.');
+                } catch (error) {
+                    console.error('[profile-admin] prompt save failed', error);
+                    setAdminPromptSaveStatus('Unable to save this prompt right now.');
+                }
+            });
+            adminPromptFormEl.dataset.bound = 'true';
+        }
+
+        const bindPromptFilter = (el) => {
+            if (!el || el.dataset.bound) return;
+            el.addEventListener('change', () => {
+                renderAdminPrompts();
+            });
+            el.dataset.bound = 'true';
+        };
+        if (adminPromptsFilterSearchEl && !adminPromptsFilterSearchEl.dataset.bound) {
+            adminPromptsFilterSearchEl.addEventListener('input', () => {
+                renderAdminPrompts();
+            });
+            adminPromptsFilterSearchEl.dataset.bound = 'true';
+        }
+        bindPromptFilter(adminPromptsFilterToolEl);
+        bindPromptFilter(adminPromptsFilterActiveEl);
+        bindPromptFilter(adminPromptsSortEl);
+
+        if (adminPromptsSeedEl && !adminPromptsSeedEl.dataset.bound) {
+            adminPromptsSeedEl.addEventListener('click', () => {
+                seedMissingRequiredPrompts();
+            });
+            adminPromptsSeedEl.dataset.bound = 'true';
+        }
+
         if (this.authState.isAdmin) {
             loadAdminUsers();
+            loadAdminPrompts();
         } else {
             resetAdminEditor();
+            resetAdminPromptEditor();
             setAdminDirectoryStatus('');
+            setAdminPromptsStatus('');
         }
     }
 

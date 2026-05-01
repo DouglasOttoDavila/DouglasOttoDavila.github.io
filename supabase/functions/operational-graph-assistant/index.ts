@@ -1,5 +1,8 @@
 import { corsHeaders } from '../_shared/cors.ts';
-import { buildGraphAssistantSystemPrompt, buildGraphAssistantUserPrompt } from './prompt.ts';
+import {
+  buildGraphAssistantSystemPrompt,
+  buildGraphAssistantUserPrompt
+} from './prompt.ts';
 import { getAssistantResponseSchema, normalizeAssistantResponse, parseGeminiJsonResponse } from './response.ts';
 
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
@@ -46,6 +49,22 @@ Deno.serve(async (request) => {
       return jsonResponse({ error: 'Graph context is missing nodes or links.' }, 400);
     }
 
+    const promptCatalog = await loadToolPromptCatalog('operational-graph-assistant');
+    const systemPromptTemplate = promptCatalog['system'];
+    const userPromptTemplate = promptCatalog['user'];
+
+    if (!systemPromptTemplate || !userPromptTemplate) {
+      const missingKeys = [
+        !systemPromptTemplate ? 'system' : null,
+        !userPromptTemplate ? 'user' : null
+      ].filter(Boolean).join(', ');
+
+      return jsonResponse(
+        { error: `Prompt catalog is missing required keys for operational-graph-assistant: ${missingKeys}.` },
+        500
+      );
+    }
+
     const geminiResponse = await fetch(`${GEMINI_API_BASE}/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`, {
       method: 'POST',
       headers: {
@@ -55,7 +74,7 @@ Deno.serve(async (request) => {
         system_instruction: {
           parts: [
             {
-              text: buildGraphAssistantSystemPrompt(graphContext)
+              text: buildGraphAssistantSystemPrompt(graphContext, systemPromptTemplate)
             }
           ]
         },
@@ -68,7 +87,7 @@ Deno.serve(async (request) => {
                   question,
                   conversationHistory: payload.conversationHistory || [],
                   graphContext
-                })
+                }, userPromptTemplate)
               }
             ]
           }
@@ -164,4 +183,45 @@ function jsonResponse(body: Record<string, unknown>, status: number) {
       'Content-Type': 'application/json'
     }
   });
+}
+
+async function loadToolPromptCatalog(toolKey: string): Promise<Record<string, string>> {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
+
+  if (!supabaseUrl || (!serviceRoleKey && !anonKey)) {
+    throw new Error('Prompt catalog access is not configured.');
+  }
+
+  const authToken = serviceRoleKey || anonKey || '';
+  const query = new URLSearchParams({
+    select: 'prompt_key,content,is_active',
+    tool_key: `eq.${toolKey}`
+  });
+
+  const response = await fetch(`${supabaseUrl}/rest/v1/ai_tool_prompts?${query.toString()}`, {
+    headers: {
+      apikey: authToken,
+      Authorization: `Bearer ${authToken}`,
+      Accept: 'application/json'
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error('Unable to load prompt catalog from Supabase.');
+  }
+
+  const rows = await response.json() as Array<{ prompt_key?: string; content?: string; is_active?: boolean }>;
+  const catalog: Record<string, string> = {};
+
+  rows.forEach((row) => {
+    if (!row?.is_active) return;
+    const key = String(row.prompt_key || '').trim();
+    const content = String(row.content || '').trim();
+    if (!key || !content) return;
+    catalog[key] = content;
+  });
+
+  return catalog;
 }
