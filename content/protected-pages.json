@@ -5,9 +5,10 @@
   },
   "pages": [
     {
-      "routeId": "relationship-graph",
+      "routeId": "relationship-entity",
       "requireAuth": true,
-      "hideWhenLoggedOut": true
+      "requirePrivileges": false,
+      "hideWhenLoggedOut": false
     },
     {
       "routeId": "prompt-explained",
@@ -29,18 +30,6 @@
             "contentType": "text/markdown"
           }
         ]
-      }
-    },
-    {
-      "routeId": "user-story-analyzer",
-      "requireAuth": true,
-      "hideWhenLoggedOut": true,
-      "content": {
-        "html": {
-          "type": "supabase_storage",
-          "bucket": "protected-pages",
-          "path": "user-story-analyzer.html"
-        }
       }
     },
     {

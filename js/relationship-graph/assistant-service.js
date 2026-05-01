@@ -4,6 +4,7 @@
     class GraphAssistantService {
         constructor(options = {}) {
             this.functionName = options.functionName || 'operational-graph-assistant';
+            this.getAccessToken = typeof options.getAccessToken === 'function' ? options.getAccessToken : null;
             this.runtimePromise = null;
         }
 
@@ -13,21 +14,39 @@
                 throw new Error('Supabase runtime config is missing. The assistant cannot reach the server-side Gemini function.');
             }
 
+            const accessToken = this.getAccessToken ? await this.getAccessToken() : null;
+            if (!accessToken) {
+                throw new Error('Log in to unlock the graph AI assistant.');
+            }
+
             const response = await fetch(`${runtime.url}/functions/v1/${this.functionName}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${runtime.anonKey}`,
+                    'Authorization': `Bearer ${accessToken}`,
                     'apikey': runtime.anonKey
                 },
                 body: JSON.stringify(payload)
             });
 
             const contentType = response.headers.get('content-type') || '';
-            const data = contentType.includes('application/json') ? await response.json() : { error: await response.text() };
+            const responseText = await response.text();
+            let data = {};
+            if (contentType.includes('application/json') && responseText) {
+                try {
+                    data = JSON.parse(responseText);
+                } catch {
+                    data = { error: responseText };
+                }
+            } else {
+                data = { error: responseText };
+            }
 
             if (!response.ok) {
-                throw new Error(data?.error || `Assistant request failed with status ${response.status}.`);
+                const detail = String(data?.error || '').trim();
+                throw new Error(detail
+                    ? `Assistant request failed with status ${response.status}: ${detail}`
+                    : `Assistant request failed with status ${response.status}.`);
             }
 
             return data;

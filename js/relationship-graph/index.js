@@ -11,6 +11,7 @@
     const GraphAssistantService = global.GraphAssistantService;
     const GraphActionInterpreter = global.GraphActionInterpreter;
     const GraphChatPanel = global.GraphChatPanel;
+    const GRAPH_FOCUS_STORAGE_KEY = 'relationship_graph_focus_node';
 
     function formatHsl(accent) {
         return `hsl(${accent})`;
@@ -20,10 +21,28 @@
         return global.crypto?.randomUUID?.() || `graph-id-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     }
 
+    function getGraphEntityIdFromUrl() {
+        const fromStorage = global.sessionStorage?.getItem?.(GRAPH_FOCUS_STORAGE_KEY);
+        if (fromStorage) return fromStorage;
+
+        const hash = String(global.location.hash || '').replace(/^#/, '');
+        const queryIndex = hash.indexOf('?');
+        if (queryIndex !== -1) {
+            const routeId = hash.slice(0, queryIndex);
+            if (routeId === 'relationship-graph') {
+                const fromHash = new URLSearchParams(hash.slice(queryIndex + 1)).get('entity');
+                if (fromHash) return fromHash;
+            }
+        }
+
+        return new URLSearchParams(global.location.search).get('entity') || '';
+    }
+
     class OperationalContextGraphApp {
-        constructor(root, dataset) {
+        constructor(root, dataset, options = {}) {
             this.root = root;
             this.dataset = dataset;
+            this.assistantAccess = normalizeAssistantAccess(options.assistantAccess || options);
             this.nodes = dataset.nodes.map(node => ({ ...node }));
             this.links = dataset.links.map(link => ({ ...link }));
             this.nodeById = new Map(this.nodes.map(node => [node.id, node]));
@@ -48,6 +67,10 @@
             this.assistantNodeTypeFilter = null;
             this.chatPanel = null;
             this.abortController = new AbortController();
+            this.initialEntityId = getGraphEntityIdFromUrl();
+            this.initialSelectionApplied = false;
+            this.isPanelMinimized = false;
+            this.isAssistantMinimized = false;
 
             this.canvasEl = root.querySelector('#relationship-graph-canvas');
             this.panelEl = root.querySelector('#relationship-graph-panel');
@@ -57,11 +80,16 @@
             this.resetEl = root.querySelector('#relationship-graph-reset');
             this.clearSelectionEl = root.querySelector('#relationship-graph-clear-selection');
             this.fitEl = root.querySelector('#relationship-graph-fit');
+            this.layoutToggleEl = root.querySelector('#relationship-graph-layout-toggle');
+            this.layoutToggleTextEl = root.querySelector('[data-layout-toggle-text]');
             this.labelsToggleEl = root.querySelector('#relationship-graph-labels-toggle');
             this.labelsToggleTextEl = root.querySelector('[data-label-toggle-text]');
             this.resultsEl = root.querySelector('#relationship-graph-search-results');
             this.legendEl = root.querySelector('#relationship-graph-legend');
             this.assistantRootEl = root.querySelector('#relationship-graph-assistant');
+            this.assistantSlotEl = root.querySelector('#relationship-graph-assistant-slot');
+            this.assistantCanvasSlotEl = root.querySelector('#relationship-graph-assistant-canvas-slot');
+            this.assistantLockEl = root.querySelector('#relationship-graph-assistant-lock-message');
 
             this.buildIndexes();
             this.populateSummary();
@@ -70,7 +98,11 @@
             this.initializeGraph();
             this.bindUI();
             this.initializeAssistant();
+            this.applyAssistantAccess(this.assistantAccess);
+            this.ensureAssistantMinimizeControl();
             this.updateLabelsToggleText();
+            this.updateLayoutToggleText();
+            this.syncAssistantPlacement();
             this.updateSearchResults();
             this.renderPanel(null);
         }
@@ -257,6 +289,7 @@
             }
 
             global.setTimeout(() => this.fitToViewport(false), 220);
+            this.scheduleInitialSelection();
             this.updateVisualState();
         }
 
@@ -268,9 +301,39 @@
                 graphController: this,
                 contextProvider: new GraphContextProvider(this),
                 promptBuilder: GraphPromptBuilder,
-                assistantService: new GraphAssistantService(),
+                assistantService: new GraphAssistantService({
+                    getAccessToken: () => this.assistantAccess.getAccessToken?.()
+                }),
                 actionInterpreter: new GraphActionInterpreter(this)
             });
+        }
+
+        applyAssistantAccess(access) {
+            this.assistantAccess = normalizeAssistantAccess(access);
+            if (!this.assistantRootEl) return;
+
+            const isLocked = !this.assistantAccess.canUseAssistant;
+            this.assistantRootEl.classList.toggle('is-locked', isLocked);
+            this.assistantRootEl.setAttribute('aria-disabled', String(isLocked));
+
+            [this.assistantRootEl.querySelector('#relationship-graph-chat-clear'),
+                this.assistantRootEl.querySelector('#relationship-graph-chat-input'),
+                this.assistantRootEl.querySelector('#relationship-graph-chat-submit')]
+                .filter(Boolean)
+                .forEach(control => {
+                    control.disabled = isLocked;
+                    control.setAttribute('aria-disabled', String(isLocked));
+                    control.tabIndex = isLocked ? -1 : 0;
+                });
+
+            if (this.assistantLockEl) {
+                const titleEl = this.assistantLockEl.querySelector('strong');
+                const detailEl = this.assistantLockEl.querySelector('span');
+                const actionEl = this.assistantLockEl.querySelector('a[data-route="login"]');
+                if (titleEl) titleEl.textContent = this.assistantAccess.lockedMessage;
+                if (detailEl) detailEl.textContent = this.assistantAccess.lockedDetail;
+                if (actionEl) actionEl.classList.toggle('d-none', Boolean(this.assistantAccess.isAuthenticated));
+            }
         }
 
         bindUI() {
@@ -318,6 +381,10 @@
                 }
             }, { signal });
 
+            this.layoutToggleEl?.addEventListener('click', () => {
+                this.toggleCanvasLayout();
+            }, { signal });
+
             this.clearSelectionEl?.addEventListener('click', () => {
                 this.clearSelection('user');
             }, { signal });
@@ -325,11 +392,59 @@
             this.resetEl?.addEventListener('click', () => {
                 this.resetGraphState('user');
             }, { signal });
+
+            global.addEventListener('resize', () => {
+                this.syncAssistantPlacement();
+            }, { signal });
         }
 
         updateLabelsToggleText() {
             if (!this.labelsToggleTextEl) return;
             this.labelsToggleTextEl.textContent = this.showLabels ? 'Labels On' : 'Labels Off';
+        }
+
+        updateLayoutToggleText() {
+            const isExpanded = this.root.classList.contains('is-graph-expanded');
+            if (this.layoutToggleTextEl) {
+                this.layoutToggleTextEl.textContent = isExpanded ? 'Standard layout' : 'Wide canvas';
+            }
+            if (this.layoutToggleEl) {
+                this.layoutToggleEl.setAttribute('aria-pressed', String(isExpanded));
+            }
+        }
+
+        syncAssistantPlacement() {
+            if (!this.assistantRootEl || !this.assistantSlotEl || !this.assistantCanvasSlotEl) return;
+
+            const isExpanded = this.root.classList.contains('is-graph-expanded');
+            const canOverlayInCanvas = global.matchMedia?.('(min-width: 1100px)')?.matches ?? true;
+            const shouldUseCanvasOverlay = isExpanded && canOverlayInCanvas;
+            const targetContainer = shouldUseCanvasOverlay ? this.assistantCanvasSlotEl : this.assistantSlotEl;
+
+            if (this.assistantRootEl.parentElement !== targetContainer) {
+                targetContainer.appendChild(this.assistantRootEl);
+            }
+
+            this.assistantRootEl.classList.toggle('relationship-graph-assistant--overlay', shouldUseCanvasOverlay);
+        }
+
+        toggleCanvasLayout() {
+            this.root.classList.toggle('is-graph-expanded');
+            this.updateLayoutToggleText();
+            this.syncAssistantPlacement();
+            this.ensureAssistantMinimizeControl();
+
+            global.requestAnimationFrame(() => {
+                this.handleResize();
+                global.setTimeout(() => {
+                    const highlightedNodeIds = this.getHighlightedNodeIds();
+                    if (highlightedNodeIds.length > 0) {
+                        this.fitNodeIds(highlightedNodeIds);
+                    } else {
+                        this.fitToViewport(true);
+                    }
+                }, 90);
+            });
         }
 
         matchesManualFilter(node) {
@@ -393,7 +508,71 @@
                 ? graphDetails.renderSelectedNodePanel(graphDetails.buildSelectedNodeState(nodeId, this.datasetContext))
                 : graphDetails.renderEmptyPanel(this.datasetContext);
 
+            this.panelEl.classList.toggle('is-minimized', this.isPanelMinimized);
+            this.ensurePanelMinimizeControl();
+
             this.panelEl.querySelector('[data-inline-reset]')?.addEventListener('click', () => this.clearSelection('user'), { once: true });
+        }
+
+        ensurePanelMinimizeControl() {
+            if (!this.panelEl) return;
+
+            let button = this.panelEl.querySelector('.relationship-graph-panel__minimize-btn');
+            if (!button) {
+                button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'btn btn-sm btn-outline-secondary relationship-graph-panel__minimize-btn';
+                button.addEventListener('click', () => this.togglePanelMinimized());
+                this.panelEl.appendChild(button);
+            }
+
+            const icon = this.isPanelMinimized ? 'fa-angles-right' : 'fa-angles-left';
+            const label = this.isPanelMinimized ? 'Expand details' : 'Collapse details';
+            button.innerHTML = `<i class="fa-solid ${icon}" aria-hidden="true"></i>`;
+            button.setAttribute('aria-label', label);
+            button.setAttribute('title', label);
+            button.setAttribute('aria-expanded', String(!this.isPanelMinimized));
+        }
+
+        ensureAssistantMinimizeControl() {
+            if (!this.assistantRootEl) return;
+
+            const isExpanded = this.root.classList.contains('is-graph-expanded');
+            if (!isExpanded) {
+                this.isAssistantMinimized = false;
+                this.assistantRootEl.classList.remove('is-minimized');
+                this.assistantRootEl.querySelector('.relationship-graph-assistant__minimize-btn')?.remove();
+                return;
+            }
+
+            let button = this.assistantRootEl.querySelector('.relationship-graph-assistant__minimize-btn');
+            if (!button) {
+                button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'btn btn-sm btn-outline-secondary relationship-graph-assistant__minimize-btn';
+                button.addEventListener('click', () => this.toggleAssistantMinimized());
+                this.assistantRootEl.appendChild(button);
+            }
+
+            const icon = this.isAssistantMinimized ? 'fa-angles-left' : 'fa-angles-right';
+            const label = this.isAssistantMinimized ? 'Expand assistant' : 'Collapse assistant';
+            button.innerHTML = `<i class="fa-solid ${icon}" aria-hidden="true"></i>`;
+            button.setAttribute('aria-label', label);
+            button.setAttribute('title', label);
+            button.setAttribute('aria-expanded', String(!this.isAssistantMinimized));
+
+            this.assistantRootEl.classList.toggle('is-minimized', this.isAssistantMinimized);
+        }
+
+        togglePanelMinimized() {
+            this.isPanelMinimized = !this.isPanelMinimized;
+            this.panelEl?.classList.toggle('is-minimized', this.isPanelMinimized);
+            this.ensurePanelMinimizeControl();
+        }
+
+        toggleAssistantMinimized() {
+            this.isAssistantMinimized = !this.isAssistantMinimized;
+            this.ensureAssistantMinimizeControl();
         }
 
         selectNode(nodeId, shouldFocus, origin = 'user') {
@@ -521,6 +700,36 @@
             this.clearSelection(origin);
             this.updateSearchResults();
             this.fitToViewport(true);
+        }
+
+        applyInitialRouteSelection(attempt = 0, delayOverride = null) {
+            if (!this.initialEntityId || this.initialSelectionApplied) return;
+            if (!this.nodeById.has(this.initialEntityId)) {
+                global.sessionStorage?.removeItem?.(GRAPH_FOCUS_STORAGE_KEY);
+                this.initialSelectionApplied = true;
+                return;
+            }
+
+            const node = this.nodeById.get(this.initialEntityId);
+            const hasCoordinates = Number.isFinite(node?.x) && Number.isFinite(node?.y);
+
+            if (!hasCoordinates && attempt < 10) {
+                global.setTimeout(() => this.applyInitialRouteSelection(attempt + 1, delayOverride), 120);
+                return;
+            }
+
+            const delay = typeof delayOverride === 'number'
+                ? delayOverride
+                : (attempt === 0 ? 260 : 0);
+            global.setTimeout(() => {
+                this.selectNode(this.initialEntityId, true, 'user');
+                global.sessionStorage?.removeItem?.(GRAPH_FOCUS_STORAGE_KEY);
+                this.initialSelectionApplied = true;
+            }, delay);
+        }
+
+        scheduleInitialSelection(attempt = 0) {
+            this.applyInitialRouteSelection(attempt);
         }
 
         getHighlightedNodeIds() {
@@ -792,7 +1001,18 @@
         `;
     }
 
-    async function mount() {
+    function normalizeAssistantAccess(access = {}) {
+        const canUseAssistant = Boolean(access.canUseAssistant);
+        return {
+            canUseAssistant,
+            isAuthenticated: Boolean(access.isAuthenticated),
+            lockedMessage: access.lockedMessage || 'Log In to Unlock this Feature',
+            lockedDetail: access.lockedDetail || 'The graph remains available, but the AI assistant requires an approved account.',
+            getAccessToken: typeof access.getAccessToken === 'function' ? access.getAccessToken : null
+        };
+    }
+
+    async function mount(options = {}) {
         const root = document.getElementById('relationship-graph-root');
         if (!root) return;
 
@@ -808,7 +1028,12 @@
                 currentApp.destroy();
             }
 
-            currentApp = new OperationalContextGraphApp(root, dataset);
+            currentApp = new OperationalContextGraphApp(root, dataset, options);
+            if (currentApp.initialEntityId) {
+                global.setTimeout(() => {
+                    currentApp?.applyInitialRouteSelection?.(0, 380);
+                }, 0);
+            }
         } catch (error) {
             console.error('[relationship-graph] failed to initialize', error);
             renderErrorState(root, error);
@@ -824,6 +1049,9 @@
 
     global.RelationshipGraphFeature = {
         mount,
-        unmount
+        unmount,
+        setAssistantAccess(access) {
+            currentApp?.applyAssistantAccess?.(access);
+        }
     };
 })(window);

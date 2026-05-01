@@ -1,0 +1,62 @@
+<section class="relationship-entity-page d-flex flex-column gap-4" id="relationship-entity-root">
+  <section class="relationship-entity-hero glass-card rounded-4 position-relative overflow-hidden">
+    <div class="relationship-entity-hero__grid">
+      <div>
+        <span class="badge rounded-pill bg-primary-subtle text-primary-emphasis px-3 py-2">Operational Context Record</span>
+        <h1 class="relationship-entity-hero__title" data-entity-title>Loading entity record...</h1>
+        <p class="relationship-entity-hero__text" data-entity-summary>
+          Preparing a mock system page for this fictional operational entity.
+        </p>
+      </div>
+      <div class="relationship-entity-hero__actions">
+        <a class="btn btn-outline-secondary relationship-entity-hero__action" href="#relationship-graph" data-route="relationship-graph">
+          <i class="fa-solid fa-arrow-left me-2" aria-hidden="true"></i>Back to graph
+        </a>
+        <button class="btn btn-outline-primary relationship-entity-hero__action" id="relationship-entity-open-graph-focus" type="button">
+          <i class="fa-solid fa-diagram-project me-2" aria-hidden="true"></i>Open in graph
+        </button>
+      </div>
+    </div>
+    <div class="relationship-entity-hero__glow relationship-entity-hero__glow--one"></div>
+    <div class="relationship-entity-hero__glow relationship-entity-hero__glow--two"></div>
+  </section>
+
+  <section class="relationship-entity-shell">
+    <div class="relationship-entity-summary" id="relationship-entity-summary">
+      <article class="relationship-entity-stat-card">
+        <span class="relationship-entity-stat-card__label">Record type</span>
+        <strong class="relationship-entity-stat-card__value" data-entity-type>...</strong>
+      </article>
+      <article class="relationship-entity-stat-card">
+        <span class="relationship-entity-stat-card__label">Direct links</span>
+        <strong class="relationship-entity-stat-card__value" data-entity-direct-links>0</strong>
+      </article>
+      <article class="relationship-entity-stat-card">
+        <span class="relationship-entity-stat-card__label">Relationship groups</span>
+        <strong class="relationship-entity-stat-card__value" data-entity-group-count>0</strong>
+      </article>
+      <article class="relationship-entity-stat-card">
+        <span class="relationship-entity-stat-card__label">Adjacent edges</span>
+        <strong class="relationship-entity-stat-card__value" data-entity-edge-count>0</strong>
+      </article>
+    </div>
+
+    <div class="relationship-entity-workspace">
+      <article class="relationship-entity-main glass-card rounded-4" id="relationship-entity-main">
+        <div class="relationship-entity-placeholder">
+          <p class="relationship-graph-kicker">Loading</p>
+          <h2 class="relationship-entity-section__title">Preparing record view</h2>
+          <p class="mb-0 text-body-secondary">Loading the fictional operational entity and its connected context.</p>
+        </div>
+      </article>
+
+      <aside class="relationship-entity-sidebar glass-card rounded-4" id="relationship-entity-sidebar">
+        <div class="relationship-entity-placeholder">
+          <p class="relationship-graph-kicker">Details</p>
+          <h2 class="relationship-entity-section__title">Connected context</h2>
+          <p class="mb-0 text-body-secondary">Related records and grouped relationships will appear here.</p>
+        </div>
+      </aside>
+    </div>
+  </section>
+</section>

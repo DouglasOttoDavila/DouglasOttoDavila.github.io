@@ -44,7 +44,38 @@
             <span class="relationship-graph-chip">Failure triage exploration</span>
           </div>
         </div>
-        <div class="relationship-graph-canvas" id="relationship-graph-canvas" aria-label="Interactive operational context graph"></div>
+        <div class="relationship-graph-canvas" id="relationship-graph-canvas" aria-label="Interactive operational context graph">
+          <aside class="relationship-graph-panel relationship-graph-panel--overlay glass-card rounded-4" id="relationship-graph-panel">
+            <div class="relationship-graph-panel__inner">
+              <p class="relationship-graph-kicker">Details</p>
+              <h2 class="relationship-graph-panel__title">Select a node</h2>
+              <p class="relationship-graph-panel__text">Choose any operational node to inspect its description, metadata, and directly connected context grouped by relationship type.</p>
+              <div class="relationship-graph-panel__placeholder">
+                <span class="relationship-graph-panel__placeholder-icon"><i class="fa-solid fa-diagram-project" aria-hidden="true"></i></span>
+                <p class="mb-0">This fictional graph is designed to show how connected knowledge can support AI workflows for requirements review, test recommendation, and failure triage.</p>
+              </div>
+            </div>
+          </aside>
+
+          <div class="relationship-graph-toolbar__actions relationship-graph-toolbar__actions--below-canvas relationship-graph-toolbar__actions--overlay">
+            <button id="relationship-graph-labels-toggle" class="btn btn-sm btn-outline-secondary relationship-graph-reset-btn" type="button">
+              <i class="fa-solid fa-tags me-1" aria-hidden="true"></i><span data-label-toggle-text>Labels Off</span>
+            </button>
+            <button id="relationship-graph-fit" class="btn btn-sm btn-outline-secondary relationship-graph-reset-btn" type="button">
+              <i class="fa-solid fa-expand me-1" aria-hidden="true"></i>Fit view
+            </button>
+            <button id="relationship-graph-layout-toggle" class="btn btn-sm btn-outline-secondary relationship-graph-reset-btn" type="button" aria-pressed="false">
+              <i class="fa-solid fa-up-right-and-down-left-from-center me-1" aria-hidden="true"></i><span data-layout-toggle-text>Wide canvas</span>
+            </button>
+            <button id="relationship-graph-clear-selection" class="btn btn-sm btn-outline-secondary relationship-graph-reset-btn" type="button">
+              <i class="fa-solid fa-pointer me-1" aria-hidden="true"></i>Clear selection
+            </button>
+            <button id="relationship-graph-reset" class="btn btn-sm btn-outline-primary relationship-graph-reset-btn" type="button">
+              <i class="fa-solid fa-rotate-left me-1" aria-hidden="true"></i>Reset all
+            </button>
+          </div>
+          <div class="relationship-graph-assistant-canvas-slot" id="relationship-graph-assistant-canvas-slot"></div>
+        </div>
         <div class="relationship-graph-canvas-controls">
           <div class="relationship-graph-toolbar">
             <div class="relationship-graph-toolbar__inputs">
@@ -69,37 +100,12 @@
           <div class="relationship-graph-legend" id="relationship-graph-legend" aria-label="Graph legend"></div>
           <div class="relationship-graph-search-results" id="relationship-graph-search-results" aria-live="polite"></div>
         </div>
-        <div class="relationship-graph-toolbar__actions relationship-graph-toolbar__actions--below-canvas">
-          <button id="relationship-graph-labels-toggle" class="btn btn-outline-secondary relationship-graph-reset-btn" type="button">
-            <i class="fa-solid fa-tags me-2" aria-hidden="true"></i><span data-label-toggle-text>Labels Off</span>
-          </button>
-          <button id="relationship-graph-fit" class="btn btn-outline-secondary relationship-graph-reset-btn" type="button">
-            <i class="fa-solid fa-expand me-2" aria-hidden="true"></i>Fit view
-          </button>
-          <button id="relationship-graph-clear-selection" class="btn btn-outline-secondary relationship-graph-reset-btn" type="button">
-            <i class="fa-solid fa-pointer me-2" aria-hidden="true"></i>Clear selection
-          </button>
-          <button id="relationship-graph-reset" class="btn btn-outline-primary relationship-graph-reset-btn" type="button">
-            <i class="fa-solid fa-rotate-left me-2" aria-hidden="true"></i>Reset all
-          </button>
-        </div>
         <div class="relationship-graph-tooltip" id="relationship-graph-tooltip" role="tooltip"></div>
       </article>
 
-      <div class="relationship-graph-sidebar">
-        <aside class="relationship-graph-panel glass-card rounded-4" id="relationship-graph-panel">
-          <div class="relationship-graph-panel__inner">
-            <p class="relationship-graph-kicker">Details</p>
-            <h2 class="relationship-graph-panel__title">Select a node</h2>
-            <p class="relationship-graph-panel__text">Choose any operational node to inspect its description, metadata, and directly connected context grouped by relationship type.</p>
-            <div class="relationship-graph-panel__placeholder">
-              <span class="relationship-graph-panel__placeholder-icon"><i class="fa-solid fa-diagram-project" aria-hidden="true"></i></span>
-              <p class="mb-0">This fictional graph is designed to show how connected knowledge can support AI workflows for requirements review, test recommendation, and failure triage.</p>
-            </div>
-          </div>
-        </aside>
-
-        <aside class="relationship-graph-assistant glass-card rounded-4" id="relationship-graph-assistant">
+      <div class="relationship-graph-assistant-slot" id="relationship-graph-assistant-slot">
+        <aside class="relationship-graph-assistant glass-card rounded-4 is-locked" id="relationship-graph-assistant"
+          aria-describedby="relationship-graph-assistant-lock-message">
           <div class="relationship-graph-assistant__header">
             <div>
               <p class="relationship-graph-kicker">AI Assistant</p>
@@ -127,6 +133,14 @@
               </button>
             </div>
           </form>
+          <div class="relationship-graph-assistant__lock" id="relationship-graph-assistant-lock-message" role="status">
+            <i class="fa-solid fa-lock relationship-graph-assistant__lock-icon" aria-hidden="true"></i>
+            <strong>Log In to Unlock this Feature</strong>
+            <span>The graph remains available, but the AI assistant requires an approved account.</span>
+            <a class="btn btn-primary relationship-graph-assistant__lock-action" href="#login" data-route="login">
+              Log In
+            </a>
+          </div>
         </aside>
       </div>
     </div>

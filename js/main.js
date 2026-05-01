@@ -7,16 +7,18 @@ class SPARouter {
             'home': 'content/home.html',
             'about': 'content/about.html',
             'relationship-graph': 'content/relationship-graph.html',
+            'relationship-entity': 'content/relationship-entity.html',
             // These routes are backed by Supabase Storage (see `content/protected-pages.json`).
             // Keep a non-sensitive placeholder fragment so the deployed site never ships the real content as static files.
             'prompt-explained': 'content/protected-loading.html',
-            'user-story-analyzer': 'content/protected-loading.html',
+            'user-story-analyzer': 'content/user-story-analyzer.html',
             'qa-ai-training-program': 'content/qa-ai-training-program.html',
             'login': 'content/login.html',
             'privacy': 'content/privacy.html',
             'profile': 'content/profile.html'
         };
         this.currentPage = '';
+        this.currentRouteTarget = '';
         this.navContainer = document.getElementById('primaryNav');
         this.promptEscapeHandler = null;
 
@@ -42,9 +44,17 @@ class SPARouter {
             email: null,
             fullName: null,
             provider: null,
+            userId: null,
             avatarUrl: null,
             avatarOverrideUrl: null
         };
+        this.authCallbackHandled = false;
+        this.pendingPostAuthNavigationTarget = null;
+        this.authReadyPromise = new Promise(resolve => {
+            this.resolveAuthReady = resolve;
+        });
+        this.privilegesReadyPromise = Promise.resolve();
+        this.resolvePrivilegesReady = null;
 
         this.authControls = {
             loginLink: document.getElementById('nav-login'),
@@ -57,6 +67,35 @@ class SPARouter {
         };
     }
 
+    markAuthInitialized() {
+        if (this.authState.initialized) return;
+        this.authState.initialized = true;
+        if (typeof this.resolveAuthReady === 'function') {
+            this.resolveAuthReady();
+        }
+    }
+
+    waitForAuthReady() {
+        return this.authState.initialized ? Promise.resolve() : this.authReadyPromise;
+    }
+
+    resetPrivilegesReady() {
+        this.privilegesReadyPromise = new Promise(resolve => {
+            this.resolvePrivilegesReady = resolve;
+        });
+    }
+
+    markPrivilegesReady() {
+        if (typeof this.resolvePrivilegesReady === 'function') {
+            this.resolvePrivilegesReady();
+            this.resolvePrivilegesReady = null;
+        }
+    }
+
+    waitForPrivilegesReady() {
+        return this.authState.privilegesLoaded ? Promise.resolve() : this.privilegesReadyPromise;
+    }
+
     normalizeRouteId(value) {
         // Support both "#route" and "#/route" style hashes, plus accidental trailing slashes/query strings.
         return String(value || '')
@@ -65,6 +104,21 @@ class SPARouter {
             .replace(/\/+$/, '')
             .split('?')[0]
             .trim();
+    }
+
+    normalizeRouteTarget(value) {
+        return String(value || '')
+            .replace(/^#/, '')
+            .replace(/^\/+/, '')
+            .trim();
+    }
+
+    buildRedirectTarget(requestedTarget, page) {
+        if ((page === 'relationship-entity' || page === 'relationship-graph') && window.location.search) {
+            return `${window.location.search}#${requestedTarget}`;
+        }
+
+        return requestedTarget;
     }
 
     async start() {
@@ -78,21 +132,27 @@ class SPARouter {
 
             event.preventDefault();
             const targetPage = target.dataset.route || 'home';
+            if (targetPage === 'login' && !this.authState.isAuthenticated) {
+                this.rememberPostLoginRedirectFromCurrentRoute();
+            }
             this.navigate(targetPage, 'push');
         });
 
         window.addEventListener('popstate', (event) => {
-            const page = event.state?.page || (this.normalizeRouteId(window.location.hash) || 'home');
-            this.navigate(page, 'none');
+            const target = event.state?.target
+                || event.state?.page
+                || (this.normalizeRouteTarget(window.location.hash) || 'home');
+            this.navigate(target, 'none');
         });
 
         // Hash-only navigation (e.g. user types a URL with #prompt-explained).
         // Without this, the SPA won't react until a full refresh because `hashchange` does not fire `popstate`.
         window.addEventListener('hashchange', () => {
-            const page = this.normalizeRouteId(window.location.hash) || 'home';
+            const target = this.normalizeRouteTarget(window.location.hash) || 'home';
+            const page = this.normalizeRouteId(target) || 'home';
             // Ensure back/forward has consistent state even for hash-only navigation.
-            history.replaceState({ page }, '', `#${page}`);
-            this.navigate(page, 'none');
+            history.replaceState({ page, target }, '', `#${target}`);
+            this.navigate(target, 'none');
         });
 
         this.bindAuthControls();
@@ -105,12 +165,16 @@ class SPARouter {
         this.updateAuthUI();
         this.applyNavVisibilityRules();
 
-        const initialPage = this.normalizeRouteId(window.location.hash) || 'home';
-        this.navigate(initialPage, 'none');
+        const initialTarget = this.pendingPostAuthNavigationTarget
+            || this.normalizeRouteTarget(window.location.hash)
+            || 'home';
+        this.pendingPostAuthNavigationTarget = null;
+        this.navigate(initialTarget, this.authCallbackHandled ? 'replace' : 'none');
     }
 
     async navigate(page, historyMode = 'push') {
-        const normalized = this.normalizeRouteId(page);
+        const requestedTarget = this.normalizeRouteTarget(page) || 'home';
+        const normalized = this.normalizeRouteId(requestedTarget);
         const requestedPage = normalized;
 
         page = normalized;
@@ -121,16 +185,28 @@ class SPARouter {
             }
         }
 
-        if (this.currentPage === page) {
+        const finalTarget = page === requestedPage ? requestedTarget : page;
+
+        if (this.currentPage === page && this.currentRouteTarget === finalTarget) {
             this.closeMobileNav();
             return;
         }
 
         try {
             const guard = this.guardRoute(page);
+            if (guard?.waitForAuth) {
+                this.showAuthInitializing(page);
+                await this.waitForAuthReady();
+                return this.navigate(requestedTarget, historyMode);
+            }
+            if (guard?.waitForPrivileges) {
+                this.showAuthInitializing(page);
+                await this.waitForPrivilegesReady();
+                return this.navigate(requestedTarget, historyMode);
+            }
             if (guard?.redirectTo && guard.redirectTo !== page) {
                 if (guard.storeRedirectFrom) {
-                    sessionStorage.setItem('post_login_redirect', requestedPage);
+                    sessionStorage.setItem('post_login_redirect', this.buildRedirectTarget(requestedTarget, page));
                 }
                 if (guard.reason) {
                     sessionStorage.setItem('auth_denied_reason', guard.reason);
@@ -142,15 +218,16 @@ class SPARouter {
             }
 
             if (historyMode === 'push') {
-                history.pushState({ page }, '', `#${page}`);
+                history.pushState({ page, target: finalTarget }, '', `#${finalTarget}`);
             } else if (historyMode === 'replace') {
-                history.replaceState({ page }, '', `#${page}`);
+                history.replaceState({ page, target: finalTarget }, '', `#${finalTarget}`);
             }
 
             this.setPageChrome(page);
             this.setActiveLink(page);
             await this.loadContent(page);
             this.currentPage = page;
+            this.currentRouteTarget = finalTarget;
             this.updatePageTitle(page);
             window.scrollTo({ top: 0, behavior: 'smooth' });
             this.closeMobileNav();
@@ -281,6 +358,25 @@ class SPARouter {
         this.initializePageScripts(page);
     }
 
+    showAuthInitializing(page) {
+        this.setPageChrome(page);
+        this.setActiveLink(page);
+        this.contentArea.innerHTML = `
+            <section class="py-4">
+              <div class="card shadow-sm">
+                <div class="card-body p-4">
+                  <h1 class="h4 mb-2">Restoring your session</h1>
+                  <p class="text-body-secondary mb-3">Checking your signed-in state before loading this page...</p>
+                  <div class="d-flex align-items-center gap-2" role="status" aria-live="polite">
+                    <span class="spinner-border spinner-border-sm text-primary" aria-hidden="true"></span>
+                    <span>Working...</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+        `;
+    }
+
     async loadProtectedPagesConfig() {
         const fallback = {
             version: 1,
@@ -409,16 +505,16 @@ class SPARouter {
     }
 
     async initSupabaseAuth() {
-        this.authState.initialized = true;
-
         if (!this.authConfig) {
             this.setAuthSession(null);
+            this.markAuthInitialized();
             return;
         }
 
         if (!this.isAuthConfigured()) {
             console.warn('[auth] Supabase config placeholders detected. Auth UI will show a configuration warning.');
             this.setAuthSession(null);
+            this.markAuthInitialized();
             return;
         }
 
@@ -426,6 +522,7 @@ class SPARouter {
         if (typeof createClient !== 'function') {
             console.warn('[auth] Supabase library not available on window.supabase. Auth disabled.');
             this.setAuthSession(null);
+            this.markAuthInitialized();
             return;
         }
 
@@ -435,74 +532,176 @@ class SPARouter {
                     flowType: 'pkce',
                     persistSession: true,
                     autoRefreshToken: true,
-                    detectSessionInUrl: true
+                    detectSessionInUrl: false
                 }
             });
+
+            this.supabase.auth.onAuthStateChange((event, session) => {
+                this.handleAuthStateChange(event, session).catch(error => {
+                    console.warn('[auth] auth state change handling failed', error);
+                });
+            });
+
+            await this.handleAuthRedirectCallback();
 
             const { data, error } = await this.supabase.auth.getSession();
             if (error) {
-                console.warn('[auth] getSession() failed.', error);
+                console.warn('[auth] unable to restore existing session', error);
                 this.setAuthSession(null);
             } else {
                 this.setAuthSession(data?.session || null);
-                if (data?.session?.user) {
-                    await this.ensureProfileRow();
+            }
+
+            if (this.authState.isAuthenticated) {
+                this.refreshProfileAccess();
+                if (this.authCallbackHandled && !this.pendingPostAuthNavigationTarget) {
+                    this.pendingPostAuthNavigationTarget = this.consumePostLoginRedirectTarget() || 'home';
                 }
             }
 
-            this.supabase.auth.onAuthStateChange(async (event, session) => {
-                this.setAuthSession(session || null);
-
-                if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && this.authState.isAuthenticated) {
-                    try {
-                        await this.ensureProfileRow();
-                    } catch (error) {
-                        console.warn('[profile] ensureProfileRow failed', error);
-                    }
-                }
-
-                this.updateProtectedAccessReason();
-                this.updateAuthUI();
-                this.applyNavVisibilityRules();
-
-                // If the user is currently on the login page, refresh its UI (hide SSO, update dot, etc.).
-                if (this.currentPage === 'login') {
-                    this.setupLoginPage();
-                }
-
-                if (this.currentPage === 'profile') {
-                    this.setupProfilePage();
-                }
-
-                if (event === 'PASSWORD_RECOVERY') {
-                    // User came from a recovery email link; prompt them to set a new password.
-                    sessionStorage.setItem('password_recovery', '1');
-                    if ((this.currentPage || '') !== 'login') {
-                        this.navigate('login', 'replace');
-                    } else {
-                        this.setupLoginPage();
-                    }
-                    return;
-                }
-
-                if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-                    this.maybeRedirectAfterLogin();
-                }
-
-                if (event === 'SIGNED_OUT') {
-                    sessionStorage.removeItem('post_login_redirect');
-                    sessionStorage.removeItem('auth_denied_reason');
-
-                    // On sign out, always return to the login route (and avoid leaving the UI on a protected screen).
-                    if ((this.currentPage || '') !== 'login') {
-                        this.navigate('login', 'replace');
-                    }
-                }
-            });
+            this.markAuthInitialized();
+            this.updateProtectedAccessReason();
+            this.updateAuthUI();
+            this.applyNavVisibilityRules();
         } catch (error) {
             console.warn('[auth] Supabase initialization failed. Auth disabled.', error);
             this.setAuthSession(null);
+            this.markAuthInitialized();
         }
+    }
+
+    async handleAuthRedirectCallback() {
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get('code');
+        const error = params.get('error') || params.get('error_code');
+        const errorDescription = params.get('error_description') || params.get('error');
+        const type = String(params.get('type') || '').toLowerCase();
+
+        if (!code && !error) return;
+
+        this.authCallbackHandled = true;
+
+        try {
+            if (error) {
+                throw new Error(errorDescription || 'The authentication provider rejected the sign-in request.');
+            }
+
+            const result = await this.supabase.auth.exchangeCodeForSession(code);
+            if (result.error) throw result.error;
+
+            this.setAuthSession(result.data?.session || null);
+            sessionStorage.removeItem('auth_denied_reason');
+            sessionStorage.removeItem('post_auth_force_profile');
+
+            if (type === 'recovery') {
+                sessionStorage.setItem('password_recovery', '1');
+                this.pendingPostAuthNavigationTarget = 'login';
+            } else {
+                this.pendingPostAuthNavigationTarget = this.consumePostLoginRedirectTarget() || 'home';
+            }
+        } catch (callbackError) {
+            console.warn('[auth] failed to complete auth callback', callbackError);
+            this.setAuthSession(null);
+            sessionStorage.setItem('auth_denied_reason', 'Unable to complete sign-in. Please try again.');
+            this.pendingPostAuthNavigationTarget = 'login';
+        } finally {
+            this.removeAuthCallbackParamsFromUrl();
+        }
+    }
+
+    removeAuthCallbackParamsFromUrl() {
+        const url = new URL(window.location.href);
+        ['code', 'error', 'error_code', 'error_description', 'type'].forEach(key => {
+            url.searchParams.delete(key);
+        });
+
+        const nextUrl = `${url.pathname}${url.search}${url.hash}`;
+        history.replaceState(history.state || {}, '', nextUrl || window.location.pathname);
+    }
+
+    consumePostLoginRedirectTarget() {
+        const requested = sessionStorage.getItem('post_login_redirect');
+        sessionStorage.removeItem('post_login_redirect');
+        sessionStorage.removeItem('auth_denied_reason');
+
+        if (!requested) return null;
+        if (requested.startsWith('?')) return requested;
+
+        const requestedRoute = this.normalizeRouteId(requested);
+        return this.routes[requestedRoute] ? requested : 'home';
+    }
+
+    rememberPostLoginRedirectFromCurrentRoute() {
+        const currentTarget = this.currentRouteTarget || this.normalizeRouteTarget(window.location.hash);
+        const currentPage = this.currentPage || this.normalizeRouteId(currentTarget);
+
+        if (!currentTarget || !currentPage || currentPage === 'login') return;
+        if (!this.routes[currentPage]) return;
+
+        sessionStorage.setItem('post_login_redirect', this.buildRedirectTarget(currentTarget, currentPage));
+        sessionStorage.removeItem('auth_denied_reason');
+    }
+
+    async handleAuthStateChange(event, session) {
+        this.setAuthSession(session || null);
+
+        if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && this.authState.isAuthenticated) {
+            this.refreshProfileAccess();
+        }
+
+        this.updateProtectedAccessReason();
+        this.updateAuthUI();
+        this.applyNavVisibilityRules();
+        this.updatePrivilegedFeatureAccess();
+
+        // If the user is currently on the login page, refresh its UI (hide SSO, update dot, etc.).
+        if (this.currentPage === 'login') {
+            this.setupLoginPage();
+        }
+
+        if (this.currentPage === 'profile') {
+            this.setupProfilePage();
+        }
+
+        if (event === 'PASSWORD_RECOVERY') {
+            // User came from a recovery email link; prompt them to set a new password.
+            sessionStorage.setItem('password_recovery', '1');
+            if ((this.currentPage || '') !== 'login') {
+                this.navigate('login', 'replace');
+            } else {
+                this.setupLoginPage();
+            }
+            return;
+        }
+
+        if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && this.authState.initialized) {
+            this.maybeRedirectAfterLogin();
+        }
+
+        if (event === 'SIGNED_OUT') {
+            sessionStorage.removeItem('post_login_redirect');
+            sessionStorage.removeItem('auth_denied_reason');
+            sessionStorage.removeItem('post_auth_force_profile');
+
+            // On sign out, always return to the login route (and avoid leaving the UI on a protected screen).
+            if ((this.currentPage || '') !== 'login') {
+                this.navigate('login', 'replace');
+            }
+        }
+    }
+
+    refreshProfileAccess() {
+        if (!this.authState.isAuthenticated) return;
+
+        this.ensureProfileRow().catch(error => {
+            console.warn('[profile] ensureProfileRow failed', error);
+            this.authState.privilegesLoaded = true;
+            this.markPrivilegesReady();
+            this.updateProtectedAccessReason();
+            this.updateAuthUI();
+            this.applyNavVisibilityRules();
+            this.updatePrivilegedFeatureAccess();
+        });
     }
 
     setAuthSession(session) {
@@ -511,18 +710,40 @@ class SPARouter {
         const avatarUrl = meta.avatar_url || meta.picture || meta.avatarUrl || null;
         const fullName = meta.full_name || meta.fullName || meta.name || null;
         const provider = session?.user?.app_metadata?.provider || meta.provider || null;
+        const userId = session?.user?.id || null;
         const isAuthenticated = Boolean(session?.user);
+        const sameIdentity = Boolean(isAuthenticated && userId && this.authState.userId === userId);
+        const previousAccess = {
+            hasPrivileges: this.authState.hasPrivileges,
+            isAdmin: this.authState.isAdmin,
+            privilegesLoaded: this.authState.privilegesLoaded,
+            avatarOverrideUrl: this.authState.avatarOverrideUrl
+        };
 
         this.authState.isAuthenticated = isAuthenticated;
-        this.authState.hasPrivileges = false;
-        this.authState.isAdmin = false;
-        this.authState.privilegesLoaded = !isAuthenticated;
         this.authState.email = email;
         this.authState.fullName = fullName;
         this.authState.provider = provider;
+        this.authState.userId = userId;
         this.authState.avatarUrl = avatarUrl;
         if (!isAuthenticated) {
+            this.authState.hasPrivileges = false;
+            this.authState.isAdmin = false;
+            this.authState.privilegesLoaded = true;
             this.authState.avatarOverrideUrl = null;
+            this.markPrivilegesReady();
+        } else if (sameIdentity && previousAccess.privilegesLoaded) {
+            this.authState.hasPrivileges = previousAccess.hasPrivileges;
+            this.authState.isAdmin = previousAccess.isAdmin;
+            this.authState.privilegesLoaded = true;
+            this.authState.avatarOverrideUrl = previousAccess.avatarOverrideUrl;
+            this.markPrivilegesReady();
+        } else {
+            this.authState.hasPrivileges = false;
+            this.authState.isAdmin = false;
+            this.authState.privilegesLoaded = false;
+            this.authState.avatarOverrideUrl = null;
+            this.resetPrivilegesReady();
         }
 
         this.updateProtectedAccessReason();
@@ -532,11 +753,96 @@ class SPARouter {
         return this.authState.isAuthenticated && this.authState.privilegesLoaded && this.authState.hasPrivileges;
     }
 
+    async getCurrentAccessToken() {
+        if (!this.supabase || !this.authState.isAuthenticated) return null;
+        const { data, error } = await this.supabase.auth.getSession();
+        if (error) {
+            console.warn('[auth] unable to read current access token', error);
+            return null;
+        }
+        const session = data?.session;
+        const expiresAtMs = Number(session?.expires_at || 0) * 1000;
+        const shouldRefresh = Boolean(session?.refresh_token && expiresAtMs && expiresAtMs - Date.now() < 60000);
+        if (shouldRefresh) {
+            const refreshed = await this.supabase.auth.refreshSession(session);
+            if (refreshed.error) {
+                console.warn('[auth] unable to refresh access token', refreshed.error);
+                return session?.access_token || null;
+            }
+            return refreshed.data?.session?.access_token || session?.access_token || null;
+        }
+        return session?.access_token || null;
+    }
+
+    getPrivilegedFeatureAccess(options = {}) {
+        const isAuthenticated = this.authState.isAuthenticated;
+        const canUseFeature = this.isAuthedForProtectedPages();
+        let lockedMessage = options.loginMessage || 'Log In to Unlock this Feature';
+        let lockedDetail = options.loginDetail || 'This AI feature requires an approved account.';
+
+        if (isAuthenticated && !this.authState.privilegesLoaded) {
+            lockedMessage = options.loadingMessage || 'Feature access is loading';
+            lockedDetail = 'Your account is signed in while access permissions are being resolved.';
+        } else if (isAuthenticated && !this.authState.hasPrivileges) {
+            lockedMessage = options.deniedMessage || 'Feature access is not enabled';
+            lockedDetail = options.deniedDetail || 'Your account is signed in, but it is not approved for this AI feature yet.';
+        }
+
+        return {
+            canUseFeature,
+            canUseAssistant: canUseFeature,
+            isAuthenticated,
+            lockedMessage,
+            lockedDetail,
+            getAccessToken: () => this.getCurrentAccessToken()
+        };
+    }
+
+    getRelationshipGraphAssistantAccess() {
+        return this.getPrivilegedFeatureAccess({
+            loginDetail: 'The graph remains available, but the AI assistant requires an approved account.',
+            loadingMessage: 'Assistant access is loading',
+            deniedMessage: 'Assistant access is not enabled'
+        });
+    }
+
+    getUserStoryAnalyzerAccess() {
+        return this.getPrivilegedFeatureAccess({
+            loginDetail: 'The analyzer remains visible, but AI analysis requires an approved account.',
+            loadingMessage: 'Analyzer access is loading',
+            deniedMessage: 'Analyzer access is not enabled'
+        });
+    }
+
+    updateRelationshipGraphAssistantAccess() {
+        if (this.currentPage !== 'relationship-graph') return;
+        window.RelationshipGraphFeature?.setAssistantAccess?.(this.getRelationshipGraphAssistantAccess());
+    }
+
+    updateUserStoryAnalyzerAccess() {
+        if (this.currentPage !== 'user-story-analyzer') return;
+        this.applyUserStoryAnalyzerAccess(this.getUserStoryAnalyzerAccess());
+    }
+
+    updatePrivilegedFeatureAccess() {
+        this.updateRelationshipGraphAssistantAccess();
+        this.updateUserStoryAnalyzerAccess();
+    }
+
+    routeRequiresPrivileges(entry, page) {
+        if (page === 'profile') return false;
+        return entry?.requirePrivileges !== false;
+    }
+
     guardRoute(page) {
         const entry = this.protectedPagesIndex.get(page);
         if (!entry || !entry.requireAuth) return null;
 
         if (page === (this.protectedPagesConfig.defaults?.redirectRoute || 'login')) return null;
+
+        if (!this.authState.initialized) {
+            return { waitForAuth: true };
+        }
 
         // "requireAuth" means: signed in is required. Protected content is granted by `profiles.has_privileges`.
         // Profile is available to any authenticated user so they can complete their details, even if not privileged.
@@ -552,6 +858,14 @@ class SPARouter {
             return null;
         }
 
+        if (!this.routeRequiresPrivileges(entry, page)) {
+            return null;
+        }
+
+        if (!this.authState.privilegesLoaded) {
+            return { waitForPrivileges: true };
+        }
+
         if (!this.isAuthedForProtectedPages()) {
             return {
                 redirectTo: this.protectedPagesConfig.defaults?.redirectRoute || 'login',
@@ -564,9 +878,10 @@ class SPARouter {
     }
 
     maybeRedirectAfterLogin() {
+        if (!this.authState.isAuthenticated) return;
+
         const forceProfile = sessionStorage.getItem('post_auth_force_profile');
-        // Always allow redirecting to profile for any authenticated user, even if they lack protected-content privileges.
-        if ((forceProfile === '1' || this.currentPage === 'login') && this.authState.isAuthenticated) {
+        if (forceProfile === '1') {
             sessionStorage.removeItem('post_auth_force_profile');
             sessionStorage.removeItem('post_login_redirect');
             sessionStorage.removeItem('auth_denied_reason');
@@ -576,16 +891,25 @@ class SPARouter {
             return;
         }
 
-        if (!this.isAuthedForProtectedPages()) return;
+        const requested = this.consumePostLoginRedirectTarget();
+        if (requested) {
+            if (requested.startsWith('?')) {
+                window.location.replace(requested);
+                return;
+            }
 
-        const requested = sessionStorage.getItem('post_login_redirect');
-        if (!requested) return;
-        sessionStorage.removeItem('post_login_redirect');
-        sessionStorage.removeItem('auth_denied_reason');
+            if (this.currentRouteTarget !== requested) {
+                this.navigate(requested, 'replace');
+            }
+            return;
+        }
 
-        const target = this.routes[requested] ? requested : 'home';
-        if (this.currentPage === target) return;
-        this.navigate(target, 'replace');
+        // Fallback for users who arrive at the login route already authenticated
+        // without an explicit protected-page redirect waiting.
+        if (this.currentPage === 'login' && this.authState.isAuthenticated) {
+            sessionStorage.removeItem('auth_denied_reason');
+            this.navigate('home', 'replace');
+        }
     }
 
     getAvatarPublicUrl(path) {
@@ -645,10 +969,13 @@ class SPARouter {
         this.authState.hasPrivileges = Boolean(row?.has_privileges);
         this.authState.isAdmin = Boolean(row?.is_admin);
         this.authState.privilegesLoaded = true;
+        this.markPrivilegesReady();
         const overrideUrl = row?.avatar_storage_path ? this.getAvatarPublicUrl(row.avatar_storage_path) : null;
         this.authState.avatarOverrideUrl = overrideUrl;
         this.updateProtectedAccessReason();
         this.updateAuthUI();
+        this.applyNavVisibilityRules();
+        this.updatePrivilegedFeatureAccess();
     }
 
     getCurrentIdentity() {
@@ -726,15 +1053,17 @@ class SPARouter {
         const loginAvatar = this.authControls.loginAvatar;
         const userAvatar = this.authControls.userAvatar;
 
-        const showLoggedIn = this.authState.isAuthenticated;
+        const authReady = this.authState.initialized;
+        const showLoggedIn = authReady && this.authState.isAuthenticated;
+        const showLoggedOut = authReady && !this.authState.isAuthenticated;
         const fallbackAvatar = 'assets/user-default.svg';
 
         if (loginLink) {
-            loginLink.classList.toggle('d-none', showLoggedIn);
+            loginLink.classList.toggle('d-none', !showLoggedOut);
             // Also set the `hidden` attribute to avoid any utility class ordering issues.
-            loginLink.hidden = showLoggedIn;
-            loginLink.setAttribute('aria-hidden', String(showLoggedIn));
-            if (showLoggedIn) {
+            loginLink.hidden = !showLoggedOut;
+            loginLink.setAttribute('aria-hidden', String(!showLoggedOut));
+            if (!showLoggedOut) {
                 loginLink.setAttribute('tabindex', '-1');
             } else {
                 loginLink.removeAttribute('tabindex');
@@ -865,6 +1194,7 @@ class SPARouter {
             'home': "Douglas D'Avila | QA Automation Engineer & SDET",
             'about': "About Douglas D'Avila | QA Automation Engineer & SDET",
             'relationship-graph': 'Operational Context Graph | Douglas D\'Avila',
+            'relationship-entity': 'Operational Context Record | Douglas D\'Avila',
             'prompt-explained': 'Automation Prompt Analysis | Douglas D\'Avila',
             'user-story-analyzer': 'User Story Quality Analyzer | Douglas D\'Avila',
             'qa-ai-training-program': 'QA AI Training Program | Douglas D\'Avila',
@@ -878,6 +1208,9 @@ class SPARouter {
     cleanupPageScripts() {
         if (window.RelationshipGraphFeature?.unmount) {
             window.RelationshipGraphFeature.unmount();
+        }
+        if (window.RelationshipEntityPageFeature?.unmount) {
+            window.RelationshipEntityPageFeature.unmount();
         }
     }
 
@@ -896,7 +1229,11 @@ class SPARouter {
         }
 
         if (page === 'relationship-graph') {
-            window.RelationshipGraphFeature?.mount?.();
+            window.RelationshipGraphFeature?.mount?.(this.getRelationshipGraphAssistantAccess());
+        }
+
+        if (page === 'relationship-entity') {
+            window.RelationshipEntityPageFeature?.mount?.();
         }
 
         if (page === 'user-story-analyzer') {
@@ -996,9 +1333,6 @@ class SPARouter {
                         statusBox.textContent = `Redirecting to ${provider}...`;
                         statusBox.classList.remove('d-none');
                     }
-
-                    // After successful sign in (OAuth), route to profile per requirement.
-                    sessionStorage.setItem('post_auth_force_profile', '1');
 
                     const redirectTo = `${window.location.origin}${window.location.pathname}`;
                     await this.supabase.auth.signInWithOAuth({
@@ -1167,10 +1501,9 @@ class SPARouter {
 
                     try {
                         setStatus('Signing in...');
-                        sessionStorage.setItem('post_auth_force_profile', '1');
                         const { error } = await this.supabase.auth.signInWithPassword({ email, password });
                         if (error) throw error;
-                        setStatus('Signed in. Redirecting to profile...');
+                        setStatus('Signed in. Redirecting...');
                     } catch (error) {
                         console.error('[auth] signInWithPassword failed', error);
                         setStatus(null);
@@ -2116,6 +2449,8 @@ class SPARouter {
     }
 
     setupUserStoryAnalyzer() {
+        this.applyUserStoryAnalyzerAccess(this.getUserStoryAnalyzerAccess());
+
         const form = document.getElementById('story-analyzer-form');
         const analyzeBtn = document.getElementById('analyze-btn');
         const clearBtn = document.getElementById('clear-btn');
@@ -2130,6 +2465,12 @@ class SPARouter {
         // Handle form submission
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            if (!this.isAuthedForProtectedPages()) {
+                this.showAnalyzerError('Log in with an approved account to unlock the analyzer.');
+                this.applyUserStoryAnalyzerAccess(this.getUserStoryAnalyzerAccess());
+                return;
+            }
             
             const story = storyContent.value.trim();
             if (!story) {
@@ -2144,20 +2485,7 @@ class SPARouter {
             resultsContainer.classList.add('d-none');
 
             try {
-                // Make API request
-                const response = await fetch('https://douglasdavila.duckdns.org/webhook/analyze_user_story', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ story_content: story })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`API request failed with status ${response.status}`);
-                }
-
-                const data = await response.json();
+                const data = await this.requestUserStoryAnalysis(story);
                 
                 // Render results
                 this.renderAnalysisResults(data);
@@ -2175,7 +2503,7 @@ class SPARouter {
                 console.error('Analysis error:', error);
                 this.showAnalyzerError('Failed to analyze the user story. Please check your connection and try again.');
             } finally {
-                analyzeBtn.disabled = false;
+                analyzeBtn.disabled = !this.isAuthedForProtectedPages();
                 loadingSpinner.classList.add('d-none');
             }
         });
@@ -2187,6 +2515,62 @@ class SPARouter {
             errorMessage.classList.add('d-none');
             storyContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
+    }
+
+    applyUserStoryAnalyzerAccess(access) {
+        const featureEl = document.getElementById('user-story-analyzer-feature');
+        if (!featureEl) return;
+
+        const normalized = access || this.getUserStoryAnalyzerAccess();
+        const isLocked = !normalized.canUseFeature;
+        featureEl.classList.toggle('is-locked', isLocked);
+        featureEl.setAttribute('aria-disabled', String(isLocked));
+
+        const controls = featureEl.querySelectorAll('textarea, input, button, select');
+        controls.forEach(control => {
+            control.disabled = isLocked;
+            control.setAttribute('aria-disabled', String(isLocked));
+            control.tabIndex = isLocked ? -1 : 0;
+        });
+
+        const lockEl = document.getElementById('user-story-analyzer-lock-message');
+        if (!lockEl) return;
+
+        const titleEl = lockEl.querySelector('strong');
+        const detailEl = lockEl.querySelector('span');
+        const actionEl = lockEl.querySelector('a[data-route="login"]');
+        if (titleEl) titleEl.textContent = normalized.lockedMessage;
+        if (detailEl) detailEl.textContent = normalized.lockedDetail;
+        if (actionEl) actionEl.classList.toggle('d-none', Boolean(normalized.isAuthenticated));
+    }
+
+    async requestUserStoryAnalysis(story) {
+        const supabaseUrl = this.authConfig?.supabase?.url || '';
+        const anonKey = this.authConfig?.supabase?.anonKey || '';
+        const accessToken = await this.getCurrentAccessToken();
+
+        if (!supabaseUrl || !anonKey || !accessToken) {
+            throw new Error('Log in with an approved account to unlock the analyzer.');
+        }
+
+        const response = await fetch(`${supabaseUrl}/functions/v1/user-story-analyzer`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`,
+                'apikey': anonKey
+            },
+            body: JSON.stringify({ story_content: story })
+        });
+
+        const contentType = response.headers.get('content-type') || '';
+        const data = contentType.includes('application/json') ? await response.json() : { error: await response.text() };
+
+        if (!response.ok) {
+            throw new Error(data?.error || `Analyzer request failed with status ${response.status}.`);
+        }
+
+        return data;
     }
 
     async setupQaAiTrainingPage() {

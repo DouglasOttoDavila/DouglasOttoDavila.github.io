@@ -11,12 +11,22 @@ type AssistantRequestPayload = {
   graphContext?: Record<string, unknown>;
 };
 
+type SupabaseAuthUser = {
+  id?: string;
+  email?: string;
+};
+
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
+    const access = await requirePrivilegedUser(request);
+    if (!access.ok) {
+      return jsonResponse({ error: access.error }, access.status);
+    }
+
     const apiKey = Deno.env.get('GEMINI_API_KEY');
     const model = Deno.env.get('GEMINI_MODEL') || DEFAULT_GEMINI_MODEL;
 
@@ -85,9 +95,66 @@ Deno.serve(async (request) => {
 
     return jsonResponse(normalized, 200);
   } catch (error) {
-    return jsonResponse({ error: String(error?.message || 'Unexpected assistant error.') }, 500);
+    const message = error instanceof Error ? error.message : 'Unexpected assistant error.';
+    return jsonResponse({ error: message }, 500);
   }
 });
+
+async function requirePrivilegedUser(request: Request): Promise<{ ok: true; user: SupabaseAuthUser } | { ok: false; status: number; error: string }> {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+  const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return { ok: false, status: 500, error: 'Assistant authorization is not configured.' };
+  }
+
+  const authHeader = request.headers.get('Authorization') || '';
+  const match = authHeader.match(/^Bearer\s+(.+)$/i);
+  const token = match?.[1]?.trim();
+  if (!token) {
+    return { ok: false, status: 401, error: 'Log in to unlock the graph AI assistant.' };
+  }
+
+  const userResponse = await fetch(`${supabaseUrl}/auth/v1/user`, {
+    headers: {
+      apikey: supabaseAnonKey,
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  if (!userResponse.ok) {
+    return { ok: false, status: 401, error: 'Log in to unlock the graph AI assistant.' };
+  }
+
+  const user = await userResponse.json() as SupabaseAuthUser;
+  if (!user?.id) {
+    return { ok: false, status: 401, error: 'Log in to unlock the graph AI assistant.' };
+  }
+
+  const profileUrl = new URL('/rest/v1/profiles', supabaseUrl);
+  profileUrl.searchParams.set('select', 'has_privileges');
+  profileUrl.searchParams.set('user_id', `eq.${user.id}`);
+  profileUrl.searchParams.set('limit', '1');
+
+  const profileResponse = await fetch(profileUrl, {
+    headers: {
+      apikey: supabaseServiceRoleKey || supabaseAnonKey,
+      Authorization: `Bearer ${supabaseServiceRoleKey || token}`,
+      Accept: 'application/json'
+    }
+  });
+
+  if (!profileResponse.ok) {
+    return { ok: false, status: 403, error: 'Your account is not approved for this AI feature.' };
+  }
+
+  const profiles = await profileResponse.json() as Array<{ has_privileges?: boolean }>;
+  if (!profiles.some(profile => profile?.has_privileges === true)) {
+    return { ok: false, status: 403, error: 'Your account is not approved for this AI feature.' };
+  }
+
+  return { ok: true, user };
+}
 
 function jsonResponse(body: Record<string, unknown>, status: number) {
   return new Response(JSON.stringify(body), {

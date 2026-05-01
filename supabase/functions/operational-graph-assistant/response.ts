@@ -73,14 +73,14 @@ export function parseGeminiJsonResponse(payload: any) {
 }
 
 export function normalizeAssistantResponse(raw: any, graphContext: any) {
-  const nodeIds = new Set(
+  const nodeIds = new Set<string>(
     Array.isArray(graphContext?.nodes)
       ? graphContext.nodes
           .map((node: any) => node?.id)
           .filter((nodeId: unknown): nodeId is string => typeof nodeId === 'string')
       : []
   );
-  const nodeTypes = new Set(
+  const nodeTypes = new Set<string>(
     Array.isArray(graphContext?.schema?.nodeTypes)
       ? graphContext.schema.nodeTypes.filter((nodeType: unknown): nodeType is string => typeof nodeType === 'string')
       : []
@@ -89,7 +89,7 @@ export function normalizeAssistantResponse(raw: any, graphContext: any) {
   const referencedNodeIds = asStringArray(raw?.referencedNodeIds).filter((nodeId) => nodeIds.has(nodeId));
   const actions = Array.isArray(raw?.actions)
     ? raw.actions
-        .map((action) => normalizeAction(action, nodeIds, nodeTypes))
+        .map((action: unknown) => normalizeAction(action, nodeIds, nodeTypes))
         .filter(Boolean)
     : [];
 
@@ -102,45 +102,53 @@ export function normalizeAssistantResponse(raw: any, graphContext: any) {
   };
 }
 
-function normalizeAction(action: any, nodeIds: Set<string>, nodeTypes: Set<string>) {
-  if (!action || typeof action?.type !== 'string' || !SUPPORTED_ACTION_TYPES.has(action.type)) {
+function normalizeAction(action: unknown, nodeIds: Set<string>, nodeTypes: Set<string>) {
+  if (!action || typeof action !== 'object') {
     return null;
   }
 
-  switch (action.type) {
+  const candidate = action as Record<string, unknown>;
+  if (typeof candidate.type !== 'string' || !SUPPORTED_ACTION_TYPES.has(candidate.type)) {
+    return null;
+  }
+
+  switch (candidate.type) {
     case 'resetGraphState':
       return { type: 'resetGraphState' };
 
     case 'selectNode':
     case 'focusNode':
     case 'highlightNode':
-      return nodeIds.has(action.nodeId)
-        ? { type: action.type, nodeId: action.nodeId }
+      return typeof candidate.nodeId === 'string' && nodeIds.has(candidate.nodeId)
+        ? { type: candidate.type, nodeId: candidate.nodeId }
         : null;
 
     case 'highlightNeighbors':
     case 'highlightNeighborhood':
-      return nodeIds.has(action.nodeId)
-        ? { type: action.type, nodeId: action.nodeId, depth: clampDepth(action.depth) }
+      return typeof candidate.nodeId === 'string' && nodeIds.has(candidate.nodeId)
+        ? { type: candidate.type, nodeId: candidate.nodeId, depth: clampDepth(candidate.depth) }
         : null;
 
     case 'filterNodeTypes': {
-      const validNodeTypes = asStringArray(action.nodeTypes).filter((nodeType) => nodeTypes.has(nodeType));
+      const validNodeTypes = asStringArray(candidate.nodeTypes).filter((nodeType) => nodeTypes.has(nodeType));
       return validNodeTypes.length > 0
         ? { type: 'filterNodeTypes', nodeTypes: validNodeTypes }
         : null;
     }
 
     case 'fitSelectionIntoView': {
-      const validNodeIds = asStringArray(action.nodeIds).filter((nodeId) => nodeIds.has(nodeId));
+      const validNodeIds = asStringArray(candidate.nodeIds).filter((nodeId) => nodeIds.has(nodeId));
       return validNodeIds.length > 0
         ? { type: 'fitSelectionIntoView', nodeIds: validNodeIds }
         : { type: 'fitSelectionIntoView' };
     }
 
     case 'highlightShortestPath':
-      return nodeIds.has(action.fromNodeId) && nodeIds.has(action.toNodeId)
-        ? { type: 'highlightShortestPath', fromNodeId: action.fromNodeId, toNodeId: action.toNodeId }
+      return typeof candidate.fromNodeId === 'string'
+        && typeof candidate.toNodeId === 'string'
+        && nodeIds.has(candidate.fromNodeId)
+        && nodeIds.has(candidate.toNodeId)
+        ? { type: 'highlightShortestPath', fromNodeId: candidate.fromNodeId, toNodeId: candidate.toNodeId }
         : null;
 
     default:

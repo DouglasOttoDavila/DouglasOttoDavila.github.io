@@ -32,6 +32,13 @@
         return escapeHtml(value);
     }
 
+    function buildEntityHref(nodeId) {
+        const baseUrl = new URL(window.location.pathname, window.location.origin);
+        baseUrl.searchParams.set('entity', nodeId);
+        baseUrl.hash = 'relationship-entity';
+        return baseUrl.toString();
+    }
+
     function getEndpointId(endpoint) {
         return endpoint?.id || endpoint;
     }
@@ -107,7 +114,14 @@
             .filter(node => ['AICapability', 'Requirement', 'Defect', 'Product'].includes(node.type))
             .sort((left, right) => right.connectionCount - left.connectionCount)
             .slice(0, 4)
-            .map(node => `<li>${escapeHtml(node.label)} <span>${escapeHtml(node.displayType)}</span></li>`)
+            .map(node => `
+                <li>
+                    <a class="relationship-graph-panel__inline-link" href="${escapeHtml(buildEntityHref(node.id))}" target="_blank" rel="noopener noreferrer">
+                        ${escapeHtml(node.label)}
+                    </a>
+                    <span>${escapeHtml(node.displayType)}</span>
+                </li>
+            `)
             .join('');
 
         return `
@@ -142,7 +156,11 @@
                     <ul class="relationship-graph-panel__group-list">
                         ${group.items.map(item => `
                             <li>
-                                <strong>${escapeHtml(item.label)}</strong>
+                                <strong>
+                                    <a class="relationship-graph-panel__inline-link" href="${escapeHtml(buildEntityHref(item.id))}" target="_blank" rel="noopener noreferrer">
+                                        ${escapeHtml(item.label)}
+                                    </a>
+                                </strong>
                                 <span>${escapeHtml(item.displayType)}</span>
                             </li>
                         `).join('')}
@@ -155,9 +173,14 @@
             <div class="relationship-graph-panel__inner">
                 <div class="relationship-graph-panel__badge-row">
                     <span class="relationship-graph-panel__badge relationship-graph-panel__badge--type">${escapeHtml(node.displayType)}</span>
-                    <button class="relationship-graph-inline-reset" type="button" data-inline-reset>Clear selection</button>
                 </div>
                 <h2 class="relationship-graph-panel__title">${escapeHtml(node.label)}</h2>
+                <div class="relationship-graph-panel__badge-actions">
+                    <a class="relationship-graph-panel__open-link" href="${escapeHtml(buildEntityHref(node.id))}" target="_blank" rel="noopener noreferrer">
+                        Open full page
+                    </a>
+                    <button class="relationship-graph-inline-reset" type="button" data-inline-reset>Clear selection</button>
+                </div>
                 <p class="relationship-graph-panel__subtitle">${escapeHtml(node.type)}</p>
                 <p class="relationship-graph-panel__text">${escapeHtml(summary)}</p>
                 <div class="relationship-graph-panel__metrics">
