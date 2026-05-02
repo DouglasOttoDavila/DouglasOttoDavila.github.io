@@ -8,11 +8,7 @@ class SPARouter {
             'about': 'content/about.html',
             'relationship-graph': 'content/relationship-graph.html',
             'relationship-entity': 'content/relationship-entity.html',
-            // These routes are backed by Supabase Storage (see `content/protected-pages.json`).
-            // Keep a non-sensitive placeholder fragment so the deployed site never ships the real content as static files.
-            'prompt-explained': 'content/protected-loading.html',
             'user-story-analyzer': 'content/user-story-analyzer.html',
-            'qa-ai-training-program': 'content/qa-ai-training-program.html',
             'login': 'content/login.html',
             'privacy': 'content/privacy.html',
             'profile': 'content/profile.html'
@@ -20,7 +16,6 @@ class SPARouter {
         this.currentPage = '';
         this.currentRouteTarget = '';
         this.navContainer = document.getElementById('primaryNav');
-        this.promptEscapeHandler = null;
 
         this.protectedPagesConfigUrl = 'content/protected-pages.json';
         this.authConfigUrl = 'content/auth.config.json';
@@ -145,7 +140,7 @@ class SPARouter {
             this.navigate(target, 'none');
         });
 
-        // Hash-only navigation (e.g. user types a URL with #prompt-explained).
+        // Hash-only navigation for direct deep links.
         // Without this, the SPA won't react until a full refresh because `hashchange` does not fire `popstate`.
         window.addEventListener('hashchange', () => {
             const target = this.normalizeRouteTarget(window.location.hash) || 'home';
@@ -255,36 +250,6 @@ class SPARouter {
         return this.getSupabaseStorageSpec(entry?.content?.html);
     }
 
-    getProtectedDownloadSpec(routeId, elementId) {
-        const entry = this.protectedPagesIndex.get(routeId);
-        const downloads = Array.isArray(entry?.content?.downloads) ? entry.content.downloads : [];
-        const match = downloads.find(d => d && d.elementId === elementId);
-        if (!match) return null;
-
-        const storage = this.getSupabaseStorageSpec(match);
-        if (!storage) return null;
-
-        return {
-            ...storage,
-            filename: String(match.filename || '').trim() || null,
-            contentType: String(match.contentType || '').trim() || null
-        };
-    }
-
-    getProtectedIframeSpec(routeId) {
-        const entry = this.protectedPagesIndex.get(routeId);
-        const storage = this.getSupabaseStorageSpec(entry?.content?.iframe);
-        if (!storage) return null;
-
-        const rawExpiry = Number(entry?.content?.iframe?.expiresInSeconds);
-        const expiresInSeconds = Number.isFinite(rawExpiry) && rawExpiry > 0 ? Math.floor(rawExpiry) : 600;
-
-        return {
-            ...storage,
-            expiresInSeconds
-        };
-    }
-
     async downloadFromSupabaseStorage(bucket, path) {
         if (!this.supabase) {
             throw new Error('Supabase client is not available.');
@@ -320,7 +285,6 @@ class SPARouter {
 
     async loadContent(page) {
         this.cleanupPageScripts();
-        this.resetPromptEscapeHandler();
 
         const protectedHtmlSpec = this.getProtectedContentHtmlSpec(page);
         if (protectedHtmlSpec) {
@@ -1230,9 +1194,7 @@ class SPARouter {
             'about': "About Douglas D'Avila | QA Automation Engineer & SDET",
             'relationship-graph': 'Operational Context Graph | Douglas D\'Avila',
             'relationship-entity': 'Operational Context Record | Douglas D\'Avila',
-            'prompt-explained': 'Automation Prompt Analysis | Douglas D\'Avila',
             'user-story-analyzer': 'User Story Quality Analyzer | Douglas D\'Avila',
-            'qa-ai-training-program': 'QA AI Training Program | Douglas D\'Avila',
             'login': 'Sign in | Douglas D\'Avila',
             'privacy': 'Privacy | Douglas D\'Avila',
             'profile': 'Profile | Douglas D\'Avila'
@@ -1250,15 +1212,6 @@ class SPARouter {
     }
 
     initializePageScripts(page) {
-        if (page === 'prompt-explained') {
-            setTimeout(() => {
-                if (window.hljs?.highlightAll) {
-                    window.hljs.highlightAll();
-                }
-            }, 10);
-            this.setupPromptInteractions(page);
-        }
-
         if (page === 'home') {
             this.setupHomeCarousel();
         }
@@ -1273,10 +1226,6 @@ class SPARouter {
 
         if (page === 'user-story-analyzer') {
             this.setupUserStoryAnalyzer();
-        }
-
-        if (page === 'qa-ai-training-program') {
-            this.setupQaAiTrainingPage();
         }
 
         if (page === 'login') {
@@ -1834,6 +1783,19 @@ class SPARouter {
         const providerEl = document.getElementById('profile-provider');
         const privilegesEl = document.getElementById('profile-privileges');
         const adminEl = document.getElementById('profile-admin-status');
+        const profileSummaryNameEl = document.getElementById('profile-summary-name');
+        const profileSummaryEmailEl = document.getElementById('profile-summary-email');
+        const profileSummaryProviderEl = document.getElementById('profile-summary-provider');
+        const profileSummaryAccessEl = document.getElementById('profile-summary-access');
+        const profileSummaryAdminEl = document.getElementById('profile-summary-admin-status');
+        const protectedBadgeEl = document.getElementById('profile-summary-protected');
+        const adminBadgeEl = document.getElementById('profile-summary-admin');
+        const currentContextEl = document.getElementById('profile-current-context');
+        const overviewUserCountEl = document.getElementById('profile-overview-user-count');
+        const overviewPromptCountEl = document.getElementById('profile-overview-prompt-count');
+        const sectionButtons = Array.from(document.querySelectorAll('[data-profile-view]'));
+        const workspacePanels = Array.from(document.querySelectorAll('[data-profile-panel]'));
+        const adminOnlyEls = Array.from(document.querySelectorAll('.profile-admin-only'));
         const adminPanelEl = document.getElementById('profile-admin-panel');
         const adminDirectoryStatusEl = document.getElementById('profile-admin-directory-status');
         const adminCountEl = document.getElementById('profile-admin-count');
@@ -1880,6 +1842,23 @@ class SPARouter {
         const companyUrlEl = document.getElementById('profile-company-url');
         const formEl = document.getElementById('profile-form');
 
+        const setElementValue = (element, value, fallback = '—') => {
+            if (!element) return;
+            const resolved = value == null || value === '' ? fallback : value;
+            if ('value' in element) {
+                element.value = resolved;
+                return;
+            }
+            element.textContent = resolved;
+        };
+
+        const escapeHtml = (value) => String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+
         const setStatus = (message) => {
             if (!statusEl) return;
             statusEl.textContent = message || '';
@@ -1905,6 +1884,79 @@ class SPARouter {
             adminPromptSaveStatusEl.textContent = message || '';
         };
 
+        const getContextLabel = (view) => {
+            switch (view) {
+                case 'profile':
+                    return 'My profile';
+                case 'users':
+                    return 'Registered users';
+                case 'prompts':
+                    return 'AI prompts';
+                default:
+                    return 'Overview';
+            }
+        };
+
+        const refreshAccessPresentation = () => {
+            const protectedText = this.authState.hasPrivileges ? 'Enabled' : 'Disabled';
+            const adminText = this.authState.isAdmin ? 'Enabled' : 'Disabled';
+
+            setElementValue(privilegesEl, protectedText, 'Disabled');
+            setElementValue(adminEl, this.authState.isAdmin ? 'Admin access enabled' : 'Admin access disabled', 'Admin access disabled');
+            setElementValue(profileSummaryAccessEl, protectedText, 'Disabled');
+            setElementValue(profileSummaryAdminEl, adminText, 'Disabled');
+
+            if (protectedBadgeEl) {
+                protectedBadgeEl.textContent = this.authState.hasPrivileges ? 'Protected content enabled' : 'Protected content disabled';
+            }
+            if (adminBadgeEl) {
+                adminBadgeEl.textContent = this.authState.isAdmin ? 'Admin access enabled' : 'Admin access disabled';
+            }
+        };
+
+        let activeWorkspaceView = 'overview';
+        const setWorkspaceView = (requestedView) => {
+            const availableViews = this.authState.isAdmin
+                ? new Set(['overview', 'profile', 'users', 'prompts'])
+                : new Set(['overview', 'profile']);
+            const nextView = availableViews.has(requestedView) ? requestedView : (availableViews.has(activeWorkspaceView) ? activeWorkspaceView : 'overview');
+            activeWorkspaceView = nextView;
+
+            workspacePanels.forEach(panel => {
+                const panelView = panel.getAttribute('data-profile-panel');
+                panel.hidden = panelView !== nextView;
+            });
+
+            sectionButtons.forEach(button => {
+                const isActive = button.getAttribute('data-profile-view') === nextView;
+                button.classList.toggle('is-active', isActive);
+                button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+            });
+
+            if (currentContextEl) {
+                currentContextEl.textContent = getContextLabel(nextView);
+            }
+        };
+
+        const applyAdminVisibility = () => {
+            const isAdmin = Boolean(this.authState.isAdmin);
+            if (adminPanelEl) adminPanelEl.classList.toggle('d-none', !isAdmin);
+            adminOnlyEls.forEach(element => element.classList.toggle('d-none', !isAdmin));
+            if (!isAdmin && (activeWorkspaceView === 'users' || activeWorkspaceView === 'prompts')) {
+                setWorkspaceView('profile');
+            }
+        };
+
+        if (sectionButtons.length) {
+            sectionButtons.forEach(button => {
+                if (button.dataset.boundProfileView) return;
+                button.addEventListener('click', () => {
+                    setWorkspaceView(button.getAttribute('data-profile-view') || 'overview');
+                });
+                button.dataset.boundProfileView = 'true';
+            });
+        }
+
         if (!this.authState.isAuthenticated || !this.supabase) {
             if (badgeEl) badgeEl.textContent = 'Not signed in';
             setStatus('Please sign in to view your profile.');
@@ -1914,14 +1966,17 @@ class SPARouter {
 
         const fallbackAvatar = 'assets/user-default.svg';
         const identity = this.getCurrentIdentity();
-        if (nameEl) nameEl.value = identity.fullName || '';
-        if (emailEl) emailEl.value = identity.email || '';
-        if (providerEl) providerEl.value = identity.provider || '';
-        if (privilegesEl) privilegesEl.value = this.authState.hasPrivileges ? 'Enabled' : 'Disabled';
-        if (adminEl) adminEl.value = this.authState.isAdmin ? 'Enabled' : 'Disabled';
-        if (adminPanelEl) adminPanelEl.classList.toggle('d-none', !this.authState.isAdmin);
+        setElementValue(nameEl, identity.fullName || '', '—');
+        setElementValue(emailEl, identity.email || '', '—');
+        setElementValue(providerEl, identity.provider || '', '—');
+        setElementValue(profileSummaryNameEl, identity.fullName || '', '—');
+        setElementValue(profileSummaryEmailEl, identity.email || '', '—');
+        setElementValue(profileSummaryProviderEl, identity.provider || '', '—');
         if (badgeEl) badgeEl.textContent = 'Signed in';
         if (avatarEl) avatarEl.src = identity.avatarUrl || fallbackAvatar;
+        refreshAccessPresentation();
+        applyAdminVisibility();
+        setWorkspaceView('overview');
 
         const countries = [
             { iso2: 'US', name: 'United States', dial: '+1' },
@@ -2047,7 +2102,8 @@ class SPARouter {
             this.authState.fullName = row.full_name || this.authState.fullName;
             this.authState.hasPrivileges = Boolean(row.has_privileges);
             this.authState.isAdmin = Boolean(row.is_admin);
-            if (nameEl) nameEl.value = row.full_name || identity.fullName || '';
+            setElementValue(nameEl, row.full_name || identity.fullName || '', '—');
+            setElementValue(profileSummaryNameEl, row.full_name || identity.fullName || '', '—');
             if (roleEl) roleEl.value = row.role || '';
             if (companyUrlEl) companyUrlEl.value = row.company_website_url || '';
             if (phoneEl) phoneEl.value = row.phone_number || '';
@@ -2066,9 +2122,8 @@ class SPARouter {
             const overrideUrl = row.avatar_storage_path ? this.getAvatarPublicUrl(row.avatar_storage_path) : null;
             const effectiveAvatar = overrideUrl || identity.avatarUrl || row.oauth_avatar_url || fallbackAvatar;
             if (avatarEl) avatarEl.src = effectiveAvatar;
-            if (privilegesEl) privilegesEl.value = row.has_privileges ? 'Enabled' : 'Disabled';
-            if (adminEl) adminEl.value = row.is_admin ? 'Enabled' : 'Disabled';
-            if (adminPanelEl) adminPanelEl.classList.toggle('d-none', !row.is_admin);
+            refreshAccessPresentation();
+            applyAdminVisibility();
             this.updateProtectedAccessReason();
         };
 
@@ -2293,50 +2348,40 @@ class SPARouter {
             if (adminPromptsCountEl) {
                 adminPromptsCountEl.textContent = `${rows.length} prompt${rows.length === 1 ? '' : 's'}`;
             }
+            if (overviewPromptCountEl) {
+                overviewPromptCountEl.textContent = `${rows.length} prompt${rows.length === 1 ? '' : 's'}`;
+            }
 
             if (adminPromptsEmptyEl) {
                 adminPromptsEmptyEl.classList.toggle('d-none', rows.length > 0);
             }
 
             rows.forEach(prompt => {
-                const tr = document.createElement('tr');
+                const card = document.createElement('button');
                 const isActive = String(prompt.id || '') === String(selectedAdminPromptId || '');
-                if (isActive) {
-                    tr.classList.add('table-active');
-                }
-
-                const toolTd = document.createElement('td');
-                toolTd.className = 'profile-admin-prompt-tool';
-                toolTd.textContent = prompt.tool_key || '—';
-
-                const keyTd = document.createElement('td');
-                keyTd.className = 'profile-admin-prompt-key';
-                keyTd.textContent = prompt.prompt_key || '—';
-
-                const activeTd = document.createElement('td');
-                activeTd.textContent = prompt.is_active ? 'Yes' : 'No';
-
-                const updatedTd = document.createElement('td');
-                updatedTd.textContent = prompt.updated_at
+                const updatedText = prompt.updated_at
                     ? new Date(prompt.updated_at).toLocaleString()
-                    : '—';
+                    : 'Recently updated date unavailable';
 
-                const actionTd = document.createElement('td');
-                actionTd.className = 'text-end';
+                card.type = 'button';
+                card.className = `profile-record-card${isActive ? ' is-selected' : ''}`;
+                card.dataset.promptId = prompt.id || '';
+                card.innerHTML = `
+                    <div class="profile-record-top">
+                        <div class="profile-record-copy">
+                            <strong class="profile-record-title">${escapeHtml(prompt.prompt_key || 'Untitled prompt')}</strong>
+                            <span class="profile-record-support profile-record-mono">${escapeHtml(prompt.tool_key || 'Unknown tool')}</span>
+                        </div>
+                        <span class="profile-badge${prompt.is_active ? '' : ' profile-badge--soft'}">${prompt.is_active ? 'Active' : 'Inactive'}</span>
+                    </div>
+                    <div class="profile-record-support">${escapeHtml(prompt.description || 'No description provided.')}</div>
+                    <div class="profile-record-meta">
+                        <span class="profile-hint">${escapeHtml(updatedText)}</span>
+                        <span class="profile-inline-link">Edit</span>
+                    </div>
+                `;
 
-                const editBtn = document.createElement('button');
-                editBtn.type = 'button';
-                editBtn.className = 'btn btn-outline-primary btn-sm profile-admin-edit-btn';
-                editBtn.dataset.promptId = prompt.id || '';
-                editBtn.textContent = 'Edit';
-
-                actionTd.appendChild(editBtn);
-                tr.appendChild(toolTd);
-                tr.appendChild(keyTd);
-                tr.appendChild(activeTd);
-                tr.appendChild(updatedTd);
-                tr.appendChild(actionTd);
-                adminPromptsBodyEl.appendChild(tr);
+                adminPromptsBodyEl.appendChild(card);
             });
         };
 
@@ -2418,45 +2463,44 @@ class SPARouter {
             if (adminCountEl) {
                 adminCountEl.textContent = `${adminUsers.length} user${adminUsers.length === 1 ? '' : 's'}`;
             }
+            if (overviewUserCountEl) {
+                overviewUserCountEl.textContent = `${adminUsers.length} user${adminUsers.length === 1 ? '' : 's'}`;
+            }
 
             if (adminEmptyEl) {
                 adminEmptyEl.classList.toggle('d-none', adminUsers.length > 0);
             }
 
             adminUsers.forEach(user => {
-                const tr = document.createElement('tr');
+                const card = document.createElement('button');
                 const isActive = String(user.user_id || '') === String(selectedAdminUserId || '');
-                if (isActive) {
-                    tr.classList.add('table-active');
+                card.type = 'button';
+                card.className = `profile-record-card${isActive ? ' is-selected' : ''}`;
+                card.dataset.userId = user.user_id || '';
+
+                const badges = [];
+                if (user.is_admin) {
+                    badges.push('<span class="profile-badge">Admin</span>');
+                }
+                if (user.has_privileges) {
+                    badges.push('<span class="profile-badge profile-badge--soft">Protected</span>');
                 }
 
-                const idTd = document.createElement('td');
-                idTd.className = 'profile-admin-user-id';
-                idTd.textContent = user.user_id || '';
+                card.innerHTML = `
+                    <div class="profile-record-top">
+                        <div class="profile-record-copy">
+                            <strong class="profile-record-title">${escapeHtml(user.full_name || 'Unnamed user')}</strong>
+                            <span class="profile-record-support">${escapeHtml(user.email || 'No email available')}</span>
+                        </div>
+                        <span class="profile-inline-link">Edit</span>
+                    </div>
+                    <div class="profile-record-meta">
+                        <code class="profile-record-code">${escapeHtml(user.user_id || '')}</code>
+                        <div class="profile-record-support">${badges.join(' ') || '<span class="profile-hint">Standard account</span>'}</div>
+                    </div>
+                `;
 
-                const nameTd = document.createElement('td');
-                nameTd.className = 'profile-admin-user-name';
-                nameTd.textContent = user.full_name || '—';
-
-                const emailTd = document.createElement('td');
-                emailTd.className = 'profile-admin-user-email';
-                emailTd.textContent = user.email || '—';
-
-                const actionTd = document.createElement('td');
-                actionTd.className = 'text-end';
-
-                const editBtn = document.createElement('button');
-                editBtn.type = 'button';
-                editBtn.className = 'btn btn-outline-primary btn-sm profile-admin-edit-btn';
-                editBtn.dataset.userId = user.user_id || '';
-                editBtn.textContent = 'Edit';
-
-                actionTd.appendChild(editBtn);
-                tr.appendChild(idTd);
-                tr.appendChild(nameTd);
-                tr.appendChild(emailTd);
-                tr.appendChild(actionTd);
-                adminUsersBodyEl.appendChild(tr);
+                adminUsersBodyEl.appendChild(card);
             });
         };
 
@@ -2539,35 +2583,19 @@ class SPARouter {
                 phone_number: phoneNumber || null
             };
 
-            if (avatarPath) {
-                payload.avatar_storage_path = avatarPath;
-            }
-
             const { data, error } = await this.supabase
                 .from('profiles')
                 .upsert(payload, { onConflict: 'email' })
                 .select('avatar_storage_path')
                 .maybeSingle();
-            if (error) throw error;
+            adminEditorCloseEl.dataset.bound = 'true';
+        }
 
-            const overrideUrl = data?.avatar_storage_path ? this.getAvatarPublicUrl(data.avatar_storage_path) : null;
-            this.authState.avatarOverrideUrl = overrideUrl;
-            this.updateAuthUI();
-
-            pendingAvatarFile = null;
-            if (avatarFileEl) avatarFileEl.value = '';
-            setStatus('Saved.');
-        };
-
-        if (formEl && !formEl.dataset.bound) {
-            formEl.addEventListener('submit', (event) => {
-                event.preventDefault();
-                save().catch(err => {
-                    console.error('[profile] save failed', err);
-                    setStatus('Unable to save right now.');
-                });
+        if (adminCancelEl && !adminCancelEl.dataset.bound) {
+            adminCancelEl.addEventListener('click', () => {
+                populateAdminEditor(findAdminUser(selectedAdminUserId));
             });
-            formEl.dataset.bound = 'true';
+            adminCancelEl.dataset.bound = 'true';
         }
 
         if (adminUsersBodyEl && !adminUsersBodyEl.dataset.bound) {
@@ -2579,21 +2607,6 @@ class SPARouter {
                 renderAdminUsers();
             });
             adminUsersBodyEl.dataset.bound = 'true';
-        }
-
-        if (adminEditorCloseEl && !adminEditorCloseEl.dataset.bound) {
-            adminEditorCloseEl.addEventListener('click', () => {
-                resetAdminEditor();
-                renderAdminUsers();
-            });
-            adminEditorCloseEl.dataset.bound = 'true';
-        }
-
-        if (adminCancelEl && !adminCancelEl.dataset.bound) {
-            adminCancelEl.addEventListener('click', () => {
-                populateAdminEditor(findAdminUser(selectedAdminUserId));
-            });
-            adminCancelEl.dataset.bound = 'true';
         }
 
         if (adminFormEl && !adminFormEl.dataset.bound) {
@@ -2623,10 +2636,10 @@ class SPARouter {
                         this.authState.fullName = row.full_name || this.authState.fullName;
                         this.authState.hasPrivileges = Boolean(row.has_privileges);
                         this.authState.isAdmin = Boolean(row.is_admin);
-                        if (nameEl) nameEl.value = this.authState.fullName || '';
-                        if (privilegesEl) privilegesEl.value = this.authState.hasPrivileges ? 'Enabled' : 'Disabled';
-                        if (adminEl) adminEl.value = this.authState.isAdmin ? 'Enabled' : 'Disabled';
-                        if (adminPanelEl) adminPanelEl.classList.toggle('d-none', !this.authState.isAdmin);
+                        setElementValue(nameEl, this.authState.fullName || '', '—');
+                        setElementValue(profileSummaryNameEl, this.authState.fullName || '', '—');
+                        refreshAccessPresentation();
+                        applyAdminVisibility();
                         this.updateProtectedAccessReason();
                     }
                     renderAdminUsers();
@@ -2762,135 +2775,6 @@ class SPARouter {
             setAdminDirectoryStatus('');
             setAdminPromptsStatus('');
         }
-    }
-
-    setupPromptInteractions(routeId) {
-        this.setupModals();
-        this.setupDownloadButton(routeId);
-    }
-
-    setupModals() {
-        const highlightPairs = [
-            ['qa-role', 'modal-qa-role'],
-            ['task-objective', 'modal-task-objective'],
-            ['test-environment', 'modal-test-environment'],
-            ['workflow', 'modal-workflow'],
-            ['selector-priorities', 'modal-selector-priorities'],
-            ['file-location', 'modal-file-location'],
-            ['code-structure', 'modal-code-structure'],
-            ['test-structure', 'modal-test-structure'],
-            ['common-patterns', 'modal-common-patterns'],
-            ['locale-iteration', 'modal-locale-iteration'],
-            ['file-organization', 'modal-file-organization'],
-            ['required-format', 'modal-required-format'],
-            ['do-not', 'modal-do-not'],
-            ['goal', 'modal-goal']
-        ];
-
-        const modals = [];
-
-        highlightPairs.forEach(([triggerId, modalId]) => {
-            const trigger = document.getElementById(triggerId);
-            const modal = document.getElementById(modalId);
-            if (!trigger || !modal) return;
-
-            trigger.setAttribute('role', 'button');
-            trigger.setAttribute('tabindex', '0');
-
-            modal.setAttribute('role', 'dialog');
-            modal.setAttribute('aria-modal', 'true');
-            modal.setAttribute('aria-hidden', 'true');
-            modal.setAttribute('tabindex', '-1');
-
-            const modalContent = modal.querySelector('.modal-content');
-            if (modalContent && !modal.querySelector('.modal-close')) {
-                const closeBtn = document.createElement('button');
-                closeBtn.type = 'button';
-                closeBtn.className = 'btn btn-sm btn-outline-secondary mt-3 modal-close';
-                closeBtn.textContent = 'Close';
-                modalContent.appendChild(closeBtn);
-            }
-
-            const openModal = () => {
-                modal.classList.add('show');
-                modal.setAttribute('aria-hidden', 'false');
-                modal.focus({ preventScroll: true });
-            };
-
-            const closeModal = () => {
-                modal.classList.remove('show');
-                modal.setAttribute('aria-hidden', 'true');
-                trigger.focus({ preventScroll: true });
-            };
-
-            const closeButton = modal.querySelector('.modal-close');
-            if (closeButton && !closeButton.dataset.bound) {
-                closeButton.addEventListener('click', closeModal);
-                closeButton.dataset.bound = 'true';
-            }
-
-            trigger.addEventListener('click', openModal);
-            trigger.addEventListener('keydown', (event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    openModal();
-                }
-            });
-
-            modal.addEventListener('click', (event) => {
-                if (event.target === modal) {
-                    closeModal();
-                }
-            });
-
-            modals.push({ modal, closeModal });
-        });
-
-        this.resetPromptEscapeHandler();
-        this.promptEscapeHandler = (event) => {
-            if (event.key !== 'Escape') return;
-            modals.forEach(({ modal, closeModal }) => {
-                if (modal.classList.contains('show')) {
-                    closeModal();
-                }
-            });
-        };
-        document.addEventListener('keydown', this.promptEscapeHandler);
-    }
-
-    setupDownloadButton(routeId) {
-        const downloadBtn = document.getElementById('download-md');
-        if (!downloadBtn) return;
-
-        downloadBtn.innerHTML = '<i class="fa-solid fa-file-arrow-down"></i> Download Markdown';
-        downloadBtn.setAttribute('title', 'Download prompt as Markdown');
-
-        downloadBtn.addEventListener('click', async () => {
-            try {
-                const page = String(routeId || 'prompt-explained');
-                const spec = this.getProtectedDownloadSpec(page, 'download-md');
-                if (!spec) {
-                    throw new Error('No protected download is configured for this page.');
-                }
-
-                const raw = await this.downloadFromSupabaseStorage(spec.bucket, spec.path);
-                let blob = raw;
-                if (spec.contentType && raw.type !== spec.contentType) {
-                    blob = new Blob([await raw.arrayBuffer()], { type: spec.contentType });
-                }
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = spec.filename || 'download.md';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-            } catch (error) {
-                console.error('Download error:', error);
-                alert('Unable to download the markdown file right now. Please try again later.');
-            }
-        });
     }
 
     setupHomeCarousel() {
@@ -3033,46 +2917,6 @@ class SPARouter {
         return data;
     }
 
-    async setupQaAiTrainingPage() {
-        const iframe = document.getElementById('qa-training-frame');
-        const status = document.getElementById('qa-training-status');
-        if (!iframe) return;
-
-        try {
-            if (!this.isAuthedForProtectedPages()) {
-                throw new Error('You are not authorized to access this protected training content.');
-            }
-
-            const spec = this.getProtectedIframeSpec('qa-ai-training-program');
-            if (!spec) {
-                throw new Error('Training iframe source is not configured in protected-pages.json.');
-            }
-
-            if (status) {
-                status.className = 'alert alert-info mb-3';
-                status.textContent = 'Loading protected training content...';
-            }
-
-            const blob = await this.downloadFromSupabaseStorage(spec.bucket, spec.path);
-            const html = await blob.text();
-            iframe.removeAttribute('src');
-            iframe.srcdoc = html;
-            iframe.addEventListener('load', () => {
-                if (status) {
-                    status.className = 'alert alert-success mb-3';
-                    status.textContent = 'Training content loaded.';
-                }
-            }, { once: true });
-        } catch (error) {
-            console.error('[training] failed to load protected iframe', error);
-            iframe.removeAttribute('src');
-            if (status) {
-                status.className = 'alert alert-danger mb-3';
-                status.textContent = 'Unable to load the training content right now.';
-            }
-        }
-    }
-
     showAnalyzerError(message) {
         const errorMessage = document.getElementById('error-message');
         const errorText = document.getElementById('error-text');
@@ -3175,13 +3019,6 @@ class SPARouter {
 
         const instance = window.bootstrap.Collapse.getInstance(this.navContainer) || new window.bootstrap.Collapse(this.navContainer, { toggle: false });
         instance.hide();
-    }
-
-    resetPromptEscapeHandler() {
-        if (this.promptEscapeHandler) {
-            document.removeEventListener('keydown', this.promptEscapeHandler);
-            this.promptEscapeHandler = null;
-        }
     }
 
     showError(message) {

@@ -1,66 +1,139 @@
 <section class="profile-shell" aria-labelledby="profile-title">
-  <header class="profile-header">
-    <h1 class="profile-title" id="profile-title">Profile</h1>
-    <p class="profile-subtitle">
-      Review your identity and store a few preferences. OAuth-provided fields are read-only.
-    </p>
-  </header>
-
-  <div class="profile-grid">
-    <section class="glass-card profile-card" aria-label="Identity">
-      <div class="profile-card-header">
-        <h2 class="profile-card-title">Identity</h2>
-        <span id="profile-auth-badge" class="profile-badge" aria-live="polite">Signed in</span>
-      </div>
-
-      <div class="profile-identity">
-        <div class="profile-avatar-block">
-          <img id="profile-avatar" class="profile-avatar" src="assets/user-default.svg" alt="Profile picture"
-            width="72" height="72" loading="lazy" decoding="async">
-          <div class="profile-avatar-actions">
-            <label class="profile-upload-btn" for="profile-avatar-file">
-              Replace photo
-            </label>
+  <header class="glass-card profile-hero" aria-labelledby="profile-title">
+    <div class="profile-hero-main">
+      <div class="profile-avatar-block profile-avatar-block--hero">
+        <img id="profile-avatar" class="profile-avatar" src="assets/user-default.svg" alt="Profile picture"
+          width="72" height="72" loading="lazy" decoding="async">
+        <div class="profile-avatar-actions">
+          <p class="profile-eyebrow">Private workspace</p>
+          <h1 class="profile-title" id="profile-title">Profile</h1>
+          <p class="profile-subtitle">Manage your account, access, and operational tools without leaving the portfolio.</p>
+          <div class="profile-avatar-inline-actions">
+            <label class="profile-upload-btn" for="profile-avatar-file">Replace photo</label>
             <input id="profile-avatar-file" class="profile-avatar-input" type="file"
               accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" />
-            <p class="profile-hint">JPG, PNG, or WebP. Max 2 MB.</p>
+            <span class="profile-hint">JPG, PNG, or WebP. Max 2 MB.</span>
           </div>
         </div>
+      </div>
 
-        <div class="profile-fieldset" role="group" aria-label="Account details">
-          <div class="profile-field">
-            <label class="profile-label" for="profile-name">Name</label>
-            <input id="profile-name" class="profile-input" type="text" readonly aria-readonly="true">
-          </div>
+      <div class="profile-hero-badges" aria-label="Workspace status">
+        <span id="profile-auth-badge" class="profile-badge" aria-live="polite">Signed in</span>
+        <span id="profile-summary-protected" class="profile-badge profile-badge--soft">Protected content disabled</span>
+        <span id="profile-summary-admin" class="profile-badge profile-badge--soft">Admin access disabled</span>
+      </div>
+    </div>
 
-          <div class="profile-field">
-            <label class="profile-label" for="profile-email">Email</label>
-            <input id="profile-email" class="profile-input" type="email" readonly aria-readonly="true">
-          </div>
+    <div class="profile-hero-meta">
+      <article class="profile-meta-card">
+        <span class="profile-meta-label">Identity</span>
+        <strong id="profile-name" class="profile-meta-value">&mdash;</strong>
+        <span id="profile-email" class="profile-meta-support">&mdash;</span>
+      </article>
+      <article class="profile-meta-card">
+        <span class="profile-meta-label">Provider</span>
+        <strong id="profile-provider" class="profile-meta-value">&mdash;</strong>
+        <span class="profile-meta-support">Connected sign-in method</span>
+      </article>
+      <article class="profile-meta-card">
+        <span class="profile-meta-label">Current focus</span>
+        <strong id="profile-current-context" class="profile-meta-value">Overview</strong>
+        <span class="profile-meta-support">Switch workspace modes without losing context</span>
+      </article>
+      <article class="profile-meta-card">
+        <span class="profile-meta-label">Privileges</span>
+        <strong id="profile-privileges" class="profile-meta-value">Disabled</strong>
+        <span id="profile-admin-status" class="profile-meta-support">Admin access disabled</span>
+      </article>
+    </div>
 
-          <div class="profile-field">
-            <label class="profile-label" for="profile-provider">Provider</label>
-            <input id="profile-provider" class="profile-input" type="text" readonly aria-readonly="true">
-          </div>
+    <nav class="profile-section-switcher" aria-label="Profile workspace sections">
+      <button class="profile-section-chip is-active" type="button" data-profile-view="overview" aria-pressed="true">Overview</button>
+      <button class="profile-section-chip" type="button" data-profile-view="profile" aria-pressed="false">My profile</button>
+      <button class="profile-section-chip profile-admin-only" type="button" data-profile-view="users" aria-pressed="false">Users</button>
+      <button class="profile-section-chip profile-admin-only" type="button" data-profile-view="prompts" aria-pressed="false">AI prompts</button>
+    </nav>
+  </header>
 
-          <div class="profile-field">
-            <label class="profile-label" for="profile-privileges">Protected content access</label>
-            <input id="profile-privileges" class="profile-input" type="text" readonly aria-readonly="true">
-            <p class="profile-hint">Controlled by your backend access settings.</p>
-          </div>
+  <section class="glass-card profile-card profile-panel" data-profile-panel="overview" aria-labelledby="profile-overview-title">
+    <div class="profile-card-header">
+      <div>
+        <p class="profile-panel-kicker">Overview</p>
+        <h2 id="profile-overview-title" class="profile-card-title">Workspace snapshot</h2>
+      </div>
+    </div>
 
-          <div class="profile-field">
-            <label class="profile-label" for="profile-admin-status">Admin access</label>
-            <input id="profile-admin-status" class="profile-input" type="text" readonly aria-readonly="true">
-            <p class="profile-hint">Controlled by your backend admin settings.</p>
-          </div>
+    <div class="profile-overview-grid">
+      <article class="profile-overview-card">
+        <span class="profile-overview-label">My profile</span>
+        <h3 class="profile-overview-title">Keep your public-facing details current.</h3>
+        <p class="profile-overview-text">Review identity, update professional details, and confirm how your account appears inside the workspace.</p>
+        <button class="profile-inline-action" type="button" data-profile-view="profile">Open profile</button>
+      </article>
+
+      <article class="profile-overview-card profile-admin-only">
+        <span class="profile-overview-label">Users</span>
+        <h3 class="profile-overview-title"><span id="profile-overview-user-count">0 users</span> in the directory.</h3>
+        <p class="profile-overview-text">Scan registered users, review privileges, and open a focused editor without losing list context.</p>
+        <button class="profile-inline-action" type="button" data-profile-view="users">Open users</button>
+      </article>
+
+      <article class="profile-overview-card profile-admin-only">
+        <span class="profile-overview-label">AI prompts</span>
+        <h3 class="profile-overview-title"><span id="profile-overview-prompt-count">0 prompts</span> available.</h3>
+        <p class="profile-overview-text">Manage prompt text, filter by tool or status, and edit long-form content in a stable workspace.</p>
+        <button class="profile-inline-action" type="button" data-profile-view="prompts">Open prompts</button>
+      </article>
+
+      <article class="profile-overview-card">
+        <span class="profile-overview-label">What matters here</span>
+        <h3 class="profile-overview-title">Orient first, then act.</h3>
+        <p class="profile-overview-text">This workspace is designed so you always know who you are, what you can change, and what happens next.</p>
+      </article>
+    </div>
+  </section>
+
+  <div class="profile-grid profile-panel" data-profile-panel="profile" hidden>
+    <section class="glass-card profile-card" aria-label="Identity summary">
+      <div class="profile-card-header">
+        <div>
+          <p class="profile-panel-kicker">Profile</p>
+          <h2 class="profile-card-title">Identity summary</h2>
         </div>
+      </div>
+
+      <div class="profile-summary-list" role="group" aria-label="Account details">
+        <article class="profile-summary-item">
+          <span class="profile-label">Display name</span>
+          <strong id="profile-summary-name" class="profile-summary-value">&mdash;</strong>
+        </article>
+        <article class="profile-summary-item">
+          <span class="profile-label">Email</span>
+          <strong id="profile-summary-email" class="profile-summary-value">&mdash;</strong>
+        </article>
+        <article class="profile-summary-item">
+          <span class="profile-label">Provider</span>
+          <strong id="profile-summary-provider" class="profile-summary-value">&mdash;</strong>
+        </article>
+        <article class="profile-summary-item">
+          <span class="profile-label">Protected content access</span>
+          <strong id="profile-summary-access" class="profile-summary-value">Disabled</strong>
+          <span class="profile-hint">Controlled by your backend access settings.</span>
+        </article>
+        <article class="profile-summary-item">
+          <span class="profile-label">Admin access</span>
+          <strong id="profile-summary-admin-status" class="profile-summary-value">Disabled</strong>
+          <span class="profile-hint">Controlled by your backend admin settings.</span>
+        </article>
       </div>
     </section>
 
     <section class="glass-card profile-card" aria-label="Professional details">
       <div class="profile-card-header">
-        <h2 class="profile-card-title">Professional details</h2>
+        <div>
+          <p class="profile-panel-kicker">Editable</p>
+          <h2 class="profile-card-title">Professional details</h2>
+        </div>
       </div>
 
       <form id="profile-form" class="profile-form" novalidate>
@@ -73,7 +146,7 @@
             <input id="profile-phone" class="profile-input" type="tel" autocomplete="tel"
               placeholder="(555) 123-4567">
           </div>
-          <p class="profile-hint" id="profile-phone-hint">Stored as dial code + number. (E.164 normalization optional.)</p>
+          <p class="profile-hint" id="profile-phone-hint">Stored as dial code + number. E.164 normalization remains optional.</p>
         </div>
 
         <div class="profile-field">
@@ -90,59 +163,42 @@
 
         <div class="profile-actions">
           <div id="profile-save-status" class="profile-save-status" role="status" aria-live="polite"></div>
-          <button id="profile-save" class="btn btn-primary profile-save-btn" type="submit">
-            Save changes
-          </button>
+          <button id="profile-save" class="btn btn-primary profile-save-btn" type="submit">Save changes</button>
         </div>
       </form>
     </section>
+  </div>
 
-    <section id="profile-admin-panel" class="glass-card profile-card d-none" aria-label="Admin controls">
+  <div id="profile-admin-panel" class="profile-admin-shell d-none">
+    <section class="glass-card profile-card profile-panel" data-profile-panel="users" hidden aria-labelledby="profile-admin-directory-title">
       <div class="profile-card-header">
-        <h2 class="profile-card-title">Admin controls</h2>
+        <div>
+          <p class="profile-panel-kicker">Admin</p>
+          <h2 id="profile-admin-directory-title" class="profile-card-title">Registered users</h2>
+        </div>
+        <span id="profile-admin-count" class="profile-badge" aria-live="polite">0 users</span>
       </div>
 
-      <p class="profile-hint profile-admin-intro">
-        This area is available only for accounts with admin access. Use it to review registered users and manage
-        protected-content privileges without exposing backend credentials in the public site.
-      </p>
-
+      <p class="profile-hint profile-admin-intro">Review registered users and manage protected-content privileges without exposing backend credentials in the public site.</p>
       <div id="profile-admin-directory-status" class="profile-save-status" role="status" aria-live="polite"></div>
 
       <div class="profile-admin-layout">
-        <section class="profile-admin-directory" aria-labelledby="profile-admin-directory-title">
-          <div class="profile-card-header profile-admin-subheader">
-            <h3 id="profile-admin-directory-title" class="profile-card-title">Registered users</h3>
-            <span id="profile-admin-count" class="profile-badge" aria-live="polite">0 users</span>
-          </div>
-
-          <div class="table-responsive profile-admin-table-wrap">
-            <table class="table table-sm align-middle profile-admin-table mb-0">
-              <thead>
-                <tr>
-                  <th scope="col">ID</th>
-                  <th scope="col">Full name</th>
-                  <th scope="col">Email</th>
-                  <th scope="col" class="text-end">Action</th>
-                </tr>
-              </thead>
-              <tbody id="profile-admin-users-body"></tbody>
-            </table>
-          </div>
-
+        <section class="profile-admin-directory" aria-label="Registered users list">
+          <div id="profile-admin-users-body" class="profile-record-list" role="list"></div>
           <p id="profile-admin-empty" class="profile-hint d-none">No registered users were found.</p>
         </section>
 
         <section class="profile-admin-editor-shell" aria-labelledby="profile-admin-editor-title">
           <div class="profile-card-header profile-admin-subheader">
             <h3 id="profile-admin-editor-title" class="profile-card-title">Edit user</h3>
-            <button id="profile-admin-editor-close" class="btn btn-outline-secondary btn-sm d-none" type="button">
-              Close
-            </button>
+            <button id="profile-admin-editor-close" class="btn btn-outline-secondary btn-sm d-none" type="button">Close</button>
           </div>
 
           <div id="profile-admin-placeholder" class="profile-admin-placeholder">
-            Select a user from the list to open the editor.
+            <div>
+              <strong>Select a user</strong>
+              <p class="profile-hint">Choose a row from the list to open the editor and manage account details or privileges.</p>
+            </div>
           </div>
 
           <form id="profile-admin-form" class="profile-form d-none" novalidate>
@@ -190,139 +246,118 @@
             <div class="profile-actions">
               <div id="profile-admin-save-status" class="profile-save-status" role="status" aria-live="polite"></div>
               <div class="d-flex gap-2">
-                <button id="profile-admin-cancel" class="btn btn-outline-secondary profile-save-btn" type="button">
-                  Cancel
-                </button>
-                <button id="profile-admin-save" class="btn btn-primary profile-save-btn" type="submit">
-                  Save user
-                </button>
+                <button id="profile-admin-cancel" class="btn btn-outline-secondary profile-save-btn" type="button">Cancel</button>
+                <button id="profile-admin-save" class="btn btn-primary profile-save-btn" type="submit">Save user</button>
               </div>
             </div>
           </form>
         </section>
       </div>
+    </section>
 
-      <section class="profile-admin-prompts" aria-labelledby="profile-admin-prompts-title">
-        <div class="profile-card-header profile-admin-subheader">
-          <h3 id="profile-admin-prompts-title" class="profile-card-title">AI prompt catalog</h3>
-          <span id="profile-admin-prompts-count" class="profile-badge" aria-live="polite">0 prompts</span>
+    <section class="glass-card profile-card profile-panel" data-profile-panel="prompts" hidden aria-labelledby="profile-admin-prompts-title">
+      <div class="profile-card-header">
+        <div>
+          <p class="profile-panel-kicker">Admin</p>
+          <h2 id="profile-admin-prompts-title" class="profile-card-title">AI prompt catalog</h2>
         </div>
+        <span id="profile-admin-prompts-count" class="profile-badge" aria-live="polite">0 prompts</span>
+      </div>
 
-        <p class="profile-hint profile-admin-prompts-intro">
-          Manage prompt text used by AI-driven tools. Changes take effect without code commits.
-        </p>
+      <p class="profile-hint profile-admin-prompts-intro">Manage prompt text used by AI-driven tools. Changes take effect without code commits.</p>
+      <div id="profile-admin-prompts-status" class="profile-save-status" role="status" aria-live="polite"></div>
 
-        <div id="profile-admin-prompts-status" class="profile-save-status" role="status" aria-live="polite"></div>
+      <div class="profile-admin-prompts-actions">
+        <button id="profile-admin-prompts-seed" class="btn btn-outline-secondary profile-save-btn" type="button">Seed Missing Required Keys</button>
+      </div>
 
-        <div class="profile-admin-prompts-actions">
-          <button id="profile-admin-prompts-seed" class="btn btn-outline-secondary profile-save-btn" type="button">
-            Seed Missing Required Keys
-          </button>
-        </div>
+      <div class="profile-admin-layout profile-admin-layout--prompts">
+        <section class="profile-admin-directory" aria-labelledby="profile-admin-prompts-directory-title">
+          <div class="profile-card-header profile-admin-subheader">
+            <h3 id="profile-admin-prompts-directory-title" class="profile-card-title">Registered prompts</h3>
+          </div>
 
-        <div class="profile-admin-layout profile-admin-layout--prompts">
-          <section class="profile-admin-directory" aria-labelledby="profile-admin-prompts-directory-title">
-            <div class="profile-card-header profile-admin-subheader">
-              <h4 id="profile-admin-prompts-directory-title" class="profile-card-title">Registered prompts</h4>
+          <div class="profile-admin-prompts-filters" role="group" aria-label="Prompt list filters">
+            <div class="profile-field profile-admin-prompts-filter-card profile-admin-prompts-filter-card--search mb-0">
+              <label class="profile-label" for="profile-admin-prompts-filter-search">Search</label>
+              <input id="profile-admin-prompts-filter-search" class="profile-input" type="search" placeholder="Tool, prompt key, or description">
             </div>
 
-            <div class="profile-admin-prompts-filters" role="group" aria-label="Prompt table filters">
-              <div class="profile-field mb-0">
-                <label class="profile-label" for="profile-admin-prompts-filter-search">Search</label>
-                <input id="profile-admin-prompts-filter-search" class="profile-input" type="search"
-                  placeholder="Tool, prompt key, or description">
-              </div>
-
-              <div class="profile-field mb-0">
-                <label class="profile-label" for="profile-admin-prompts-filter-tool">Tool</label>
-                <select id="profile-admin-prompts-filter-tool" class="profile-select">
-                  <option value="">All tools</option>
-                </select>
-              </div>
-
-              <div class="profile-field mb-0">
-                <label class="profile-label" for="profile-admin-prompts-filter-active">Active</label>
-                <select id="profile-admin-prompts-filter-active" class="profile-select">
-                  <option value="">All</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-              </div>
-
-              <div class="profile-field mb-0">
-                <label class="profile-label" for="profile-admin-prompts-sort">Order by</label>
-                <select id="profile-admin-prompts-sort" class="profile-select">
-                  <option value="tool_asc">Tool + key (A-Z)</option>
-                  <option value="tool_desc">Tool + key (Z-A)</option>
-                  <option value="updated_desc">Recently updated</option>
-                  <option value="updated_asc">Least recently updated</option>
-                </select>
-              </div>
+            <div class="profile-field profile-admin-prompts-filter-card profile-admin-prompts-filter-card--compact mb-0">
+              <label class="profile-label" for="profile-admin-prompts-filter-tool">Tool</label>
+              <select id="profile-admin-prompts-filter-tool" class="profile-select">
+                <option value="">All tools</option>
+              </select>
             </div>
 
-            <div class="table-responsive profile-admin-table-wrap">
-              <table class="table table-sm align-middle profile-admin-table mb-0">
-                <thead>
-                  <tr>
-                    <th scope="col">Tool</th>
-                    <th scope="col">Prompt key</th>
-                    <th scope="col">Active</th>
-                    <th scope="col">Updated</th>
-                    <th scope="col" class="text-end">Action</th>
-                  </tr>
-                </thead>
-                <tbody id="profile-admin-prompts-body"></tbody>
-              </table>
+            <div class="profile-field profile-admin-prompts-filter-card profile-admin-prompts-filter-card--compact mb-0">
+              <label class="profile-label" for="profile-admin-prompts-filter-active">Active</label>
+              <select id="profile-admin-prompts-filter-active" class="profile-select">
+                <option value="">All</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
             </div>
 
-            <p id="profile-admin-prompts-empty" class="profile-hint d-none">No prompt entries were found yet.</p>
-          </section>
+            <div class="profile-field profile-admin-prompts-filter-card profile-admin-prompts-filter-card--compact mb-0">
+              <label class="profile-label" for="profile-admin-prompts-sort">Order by</label>
+              <select id="profile-admin-prompts-sort" class="profile-select">
+                <option value="tool_asc">Tool + key (A-Z)</option>
+                <option value="tool_desc">Tool + key (Z-A)</option>
+                <option value="updated_desc">Recently updated</option>
+                <option value="updated_asc">Least recently updated</option>
+              </select>
+            </div>
+          </div>
 
-          <section class="profile-admin-editor-shell" aria-labelledby="profile-admin-prompt-editor-title">
-            <div class="profile-card-header profile-admin-subheader">
-              <h4 id="profile-admin-prompt-editor-title" class="profile-card-title">Edit prompt</h4>
+          <div id="profile-admin-prompts-body" class="profile-record-list profile-record-list--prompts" role="list"></div>
+          <p id="profile-admin-prompts-empty" class="profile-hint d-none">No prompt entries were found yet.</p>
+        </section>
+
+        <section class="profile-admin-editor-shell" aria-labelledby="profile-admin-prompt-editor-title">
+          <div class="profile-card-header profile-admin-subheader">
+            <h3 id="profile-admin-prompt-editor-title" class="profile-card-title">Edit prompt</h3>
+          </div>
+
+          <form id="profile-admin-prompt-form" class="profile-form" novalidate>
+            <input id="profile-admin-prompt-id" type="hidden">
+
+            <div class="profile-field">
+              <label class="profile-label" for="profile-admin-prompt-tool">Tool key</label>
+              <input id="profile-admin-prompt-tool" class="profile-input" type="text" placeholder="operational-graph-assistant" required>
             </div>
 
-            <form id="profile-admin-prompt-form" class="profile-form" novalidate>
-              <input id="profile-admin-prompt-id" type="hidden">
+            <div class="profile-field">
+              <label class="profile-label" for="profile-admin-prompt-key">Prompt key</label>
+              <input id="profile-admin-prompt-key" class="profile-input" type="text" placeholder="system" required>
+            </div>
 
-              <div class="profile-field">
-                <label class="profile-label" for="profile-admin-prompt-tool">Tool key</label>
-                <input id="profile-admin-prompt-tool" class="profile-input" type="text" placeholder="operational-graph-assistant" required>
-              </div>
+            <div class="profile-field">
+              <label class="profile-label" for="profile-admin-prompt-description">Description</label>
+              <input id="profile-admin-prompt-description" class="profile-input" type="text" placeholder="Short purpose note (optional)">
+            </div>
 
-              <div class="profile-field">
-                <label class="profile-label" for="profile-admin-prompt-key">Prompt key</label>
-                <input id="profile-admin-prompt-key" class="profile-input" type="text" placeholder="system" required>
-              </div>
+            <div class="profile-field">
+              <label class="profile-label" for="profile-admin-prompt-content">Prompt content</label>
+              <textarea id="profile-admin-prompt-content" class="profile-input profile-input--multiline" rows="9" required></textarea>
+            </div>
 
-              <div class="profile-field">
-                <label class="profile-label" for="profile-admin-prompt-description">Description</label>
-                <input id="profile-admin-prompt-description" class="profile-input" type="text" placeholder="Short purpose note (optional)">
-              </div>
+            <div class="form-check form-switch profile-admin-toggle">
+              <input id="profile-admin-prompt-active" class="form-check-input" type="checkbox" role="switch" checked>
+              <label class="form-check-label" for="profile-admin-prompt-active">Active</label>
+            </div>
 
-              <div class="profile-field">
-                <label class="profile-label" for="profile-admin-prompt-content">Prompt content</label>
-                <textarea id="profile-admin-prompt-content" class="profile-input profile-input--multiline" rows="9" required></textarea>
+            <div class="profile-actions">
+              <div id="profile-admin-prompt-save-status" class="profile-save-status" role="status" aria-live="polite"></div>
+              <div class="d-flex gap-2">
+                <button id="profile-admin-prompt-new" class="btn btn-outline-secondary profile-save-btn" type="button">New</button>
+                <button id="profile-admin-prompt-delete" class="btn btn-outline-danger profile-save-btn" type="button">Delete</button>
+                <button id="profile-admin-prompt-save" class="btn btn-primary profile-save-btn" type="submit">Save prompt</button>
               </div>
-
-              <div class="form-check form-switch profile-admin-toggle">
-                <input id="profile-admin-prompt-active" class="form-check-input" type="checkbox" role="switch" checked>
-                <label class="form-check-label" for="profile-admin-prompt-active">Active</label>
-              </div>
-
-              <div class="profile-actions">
-                <div id="profile-admin-prompt-save-status" class="profile-save-status" role="status" aria-live="polite"></div>
-                <div class="d-flex gap-2">
-                  <button id="profile-admin-prompt-new" class="btn btn-outline-secondary profile-save-btn" type="button">New</button>
-                  <button id="profile-admin-prompt-delete" class="btn btn-outline-danger profile-save-btn" type="button">Delete</button>
-                  <button id="profile-admin-prompt-save" class="btn btn-primary profile-save-btn" type="submit">Save prompt</button>
-                </div>
-              </div>
-            </form>
-          </section>
-        </div>
-      </section>
+            </div>
+          </form>
+        </section>
+      </div>
     </section>
   </div>
 </section>

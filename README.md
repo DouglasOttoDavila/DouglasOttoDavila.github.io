@@ -94,10 +94,7 @@ Protected pages are stored as **private objects** in Supabase Storage (not in th
 
 - Bucket (private): `protected-pages`
 - Objects (bucket root):
-  - `prompt-explained.html`
   - `user-story-analyzer.html`
-  - `qa-ai-training-program.html`
-  - `prompt_explained.md` (used by the Download button on the Prompt Explained page)
 
 These are referenced by `content/protected-pages.json` and downloaded via `supabase.storage.from(bucket).download(path)` in `js/main.js`.
 
@@ -182,13 +179,18 @@ The workflow validates that both secrets target the Supabase project pinned in `
 
 - `index.html`: shell layout + navbar + script includes
 - `content/`: page fragments, auth configs, protected page config
-- `content/protected-loading.html`: non-sensitive placeholder used for Storage-backed routes
 - `js/main.js`: SPA router, auth integration, gated navigation, page bootstrapping
 - `css/style.css`: custom theme, responsive layout, “space” login styling, components
 - `assets/`: images and static media used by the portfolio
 - `.github/instructions/`: instruction files used by Copilot/Codex workflows
 - `.github/prompts/`: RPI prompt files (task-agnostic + task-specific examples)
 - `scripts/`: local automation scripts (PowerShell)
+
+## Manual Verification
+
+- Load the site and confirm there is no `Private` dropdown in the main navbar.
+- Sign in and confirm the user menu only exposes `Profile` plus sign-out actions.
+- Visit `#prompt-explained` and `#qa-ai-training-program` directly and confirm the removed pages do not load and the home page content renders instead.
 
 ## Engineering Notes / Quality Bar
 
