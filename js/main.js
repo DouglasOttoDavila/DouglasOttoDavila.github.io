@@ -237,6 +237,344 @@ class SPARouter {
         document.body.classList.toggle('page-home', page === 'home');
     }
 
+    escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    getHomeRoadmapData() {
+        return window.HomeRoadmapData || null;
+    }
+
+    renderExternalLinkAttributes(external) {
+        return external ? ' target="_blank" rel="noopener"' : '';
+    }
+
+    renderRoadmapChipRow(items, options = {}) {
+        const itemList = Array.isArray(items) ? items : [];
+        const buttonMode = Boolean(options.buttonMode);
+        const activeKey = options.activeKey || '';
+
+        return itemList.map((item) => {
+            const value = typeof item === 'string' ? item : item?.label || item?.value || '';
+            const buttonKey = typeof item === 'string' ? options.buttonKey : item?.buttonKey || item?.id || '';
+
+            if (!buttonMode) {
+                return `<span class="roadmap-chip">${this.escapeHtml(value)}</span>`;
+            }
+
+            const isActive = buttonKey === activeKey;
+            return `<button class="roadmap-chip roadmap-chip-button${isActive ? ' is-active' : ''}" type="button" data-skill-key="${this.escapeHtml(buttonKey)}">${this.escapeHtml(value)}</button>`;
+        }).join('');
+    }
+
+    renderHomeRoadmap(root) {
+        const data = this.getHomeRoadmapData();
+        const shell = root?.querySelector?.('[data-roadmap-shell]');
+        if (!data || !shell) return;
+
+        shell.innerHTML = [
+            this.renderRoadmapRoleSection(data),
+            this.renderRoadmapValueAvailabilitySection(data),
+            this.renderRoadmapTimelineSection(data),
+            this.renderRoadmapKnowledgeSection(data),
+            this.renderRoadmapSkillsSection(data),
+            this.renderRoadmapCtaSection(data)
+        ].join('');
+    }
+
+    renderRoadmapRoleSection(data) {
+        const defaultRole = data.defaultRole || 'recruiter';
+        const activeRole = data.roleLenses.find((item) => item.id === defaultRole) || data.roleLenses[0];
+        const roleButtons = data.roleLenses.map((lens) => {
+            const isActive = lens.id === activeRole.id;
+            return `<button class="roadmap-pill${isActive ? ' is-active' : ''}" type="button" role="tab" aria-selected="${isActive}" data-role-lens="${this.escapeHtml(lens.id)}">${this.escapeHtml(lens.label)}</button>`;
+        }).join('');
+
+        const roleActions = (data.roleActions || []).map((action) => (
+            `<a class="btn btn-sm btn-outline-primary" href="${this.escapeHtml(action.href)}"${this.renderExternalLinkAttributes(action.external)}>${this.escapeHtml(action.label)}</a>`
+        )).join('');
+
+        const metrics = (data.impactMetrics || []).map((metric) => {
+            const toneClass = metric.tone && metric.tone !== 'blue' ? ` tone-${this.escapeHtml(metric.tone)}` : '';
+            const roleFocus = Array.isArray(metric.roleFocus) ? metric.roleFocus.join(' ') : '';
+            return `<button class="roadmap-metric-card${metric.active ? ' is-active' : ''}" type="button" data-metric-target="${this.escapeHtml(metric.metricTarget)}" data-role-focus="${this.escapeHtml(roleFocus)}">
+                <span class="roadmap-metric-icon${toneClass}"><i class="${this.escapeHtml(metric.icon)}"></i></span>
+                <span class="roadmap-metric-value" data-count-to="${this.escapeHtml(metric.countTo)}" data-count-suffix="${this.escapeHtml(metric.countSuffix)}">${this.escapeHtml(metric.value)}</span>
+                <span class="roadmap-metric-label">${this.escapeHtml(metric.label)}</span>
+                <span class="roadmap-metric-detail">${this.escapeHtml(metric.detail)}</span>
+            </button>`;
+        }).join('');
+
+        return `<section class="card shadow-sm roadmap-role-card" aria-labelledby="role-lens-title">
+            <div class="card-body p-4 p-xl-4">
+                <div class="roadmap-role-topbar">
+                    <div>
+                        <p class="roadmap-eyebrow mb-1">Role Lens</p>
+                        <h2 id="role-lens-title" class="h4 mb-0">Choose the viewpoint that matters first.</h2>
+                    </div>
+                    <button class="btn btn-link roadmap-inline-link" type="button" data-metric-help aria-label="Learn why these metrics matter">
+                        <i class="fa-solid fa-circle-info me-2"></i>Why these metrics?
+                    </button>
+                </div>
+                <div class="roadmap-role-tabs" role="tablist" aria-label="Role lens switcher">${roleButtons}</div>
+                <div class="roadmap-role-summary">
+                    <div>
+                        <p class="roadmap-eyebrow mb-1">Active Perspective</p>
+                        <h3 class="h5 mb-2" data-role-headline>${this.escapeHtml(activeRole.headline)}</h3>
+                        <p class="mb-0 text-body-secondary" data-role-description>${this.escapeHtml(activeRole.description)}</p>
+                    </div>
+                    <div class="roadmap-role-actions" data-role-focus="recruiter qa-lead engineering-manager cto">${roleActions}</div>
+                </div>
+                <div class="roadmap-metrics-grid" aria-label="Impact metrics">${metrics}</div>
+            </div>
+        </section>`;
+    }
+
+    renderRoadmapValueAvailabilitySection(data) {
+        const valueCards = (data.valueEngine?.cards || []).map((card) => {
+            const chips = this.renderRoadmapChipRow(card.chips || []);
+            const roleFocus = Array.isArray(card.roleFocus) ? card.roleFocus.join(' ') : '';
+            return `<article class="value-card tone-${this.escapeHtml(card.tone || 'blue')}" data-role-focus="${this.escapeHtml(roleFocus)}" data-skill-group="${this.escapeHtml(card.skillGroup || '')}">
+                <div class="value-card-icon"><i class="${this.escapeHtml(card.icon)}"></i></div>
+                <div class="value-card-copy">
+                    <h3 class="h5 mb-2">${this.escapeHtml(card.title)}</h3>
+                    <p class="text-body-secondary mb-3">${this.escapeHtml(card.summary)}</p>
+                    <div class="roadmap-chip-row">${chips}</div>
+                </div>
+                <p class="value-card-detail mb-0">${this.escapeHtml(card.detail)}</p>
+            </article>`;
+        }).join('');
+
+        const defaultView = data.defaultAvailabilityView || 'recruiter';
+        const availabilityButtons = (data.availability?.views || []).map((view) => {
+            const isActive = view.id === defaultView;
+            return `<button class="roadmap-pill${isActive ? ' is-active' : ''}" type="button" aria-pressed="${isActive}" data-availability-view="${this.escapeHtml(view.id)}">${this.escapeHtml(view.label)}</button>`;
+        }).join('');
+        const availabilityPanels = (data.availability?.views || []).map((view) => {
+            const isActive = view.id === defaultView;
+            const rows = (view.rows || []).map((row) => `<li><span>${this.escapeHtml(row.label)}</span><strong>${this.escapeHtml(row.value)}</strong></li>`).join('');
+            return `<div class="availability-panel${isActive ? ' is-active' : ''}" data-availability-panel="${this.escapeHtml(view.id)}"${isActive ? '' : ' hidden'}>
+                <ul class="availability-list">${rows}</ul>
+                <p class="text-body-secondary mb-0">${this.escapeHtml(view.description)}</p>
+            </div>`;
+        }).join('');
+        const availabilityCtas = (data.availability?.ctas || []).map((cta) => (
+            `<a class="btn ${this.escapeHtml(cta.variant)} flex-fill" href="${this.escapeHtml(cta.href)}"${this.renderExternalLinkAttributes(cta.external)}><i class="${this.escapeHtml(cta.icon)} me-2"></i>${this.escapeHtml(cta.label)}</a>`
+        )).join('');
+
+        return `<section class="roadmap-duo-grid">
+            <section class="card shadow-sm roadmap-panel" aria-labelledby="value-engine-title">
+                <div class="card-body p-4">
+                    <div class="roadmap-panel-header">
+                        <div>
+                            <p class="roadmap-eyebrow mb-1">Value Engine</p>
+                            <h2 id="value-engine-title" class="h4 mb-1">${this.escapeHtml(data.valueEngine?.title || '')}</h2>
+                        </div>
+                        <span class="roadmap-panel-link">${this.escapeHtml(data.valueEngine?.linkLabel || '')}</span>
+                    </div>
+                    <div class="value-engine-grid">${valueCards}<div class="value-engine-node" aria-hidden="true"></div></div>
+                </div>
+            </section>
+            <section class="card shadow-sm roadmap-panel" aria-labelledby="availability-title">
+                <div class="card-body p-4 h-100 d-flex flex-column">
+                    <div class="roadmap-panel-header align-items-start">
+                        <div>
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <p class="roadmap-eyebrow mb-0">Work Mode &amp; Availability</p>
+                                <span class="roadmap-live-pill"><span class="roadmap-live-dot"></span>Live</span>
+                            </div>
+                            <h2 id="availability-title" class="h4 mb-1">${this.escapeHtml(data.availability?.title || '')}</h2>
+                        </div>
+                    </div>
+                    <div class="availability-views" role="group" aria-label="Availability perspective switcher">${availabilityButtons}</div>
+                    <div class="availability-map" aria-hidden="true">
+                        <span class="availability-map-pulse pulse-a"></span>
+                        <span class="availability-map-pulse pulse-b"></span>
+                        <span class="availability-map-grid"></span>
+                    </div>
+                    <div class="availability-content mt-3">${availabilityPanels}</div>
+                    <div class="d-flex flex-column flex-sm-row gap-2 mt-auto pt-4">${availabilityCtas}</div>
+                </div>
+            </section>
+        </section>`;
+    }
+
+    renderRoadmapTimelineSection(data) {
+        const filters = (data.timeline?.filters || []).map((filter) => (
+            `<button class="roadmap-pill${filter.active ? ' is-active' : ''}" type="button" aria-pressed="${Boolean(filter.active)}" data-timeline-filter="${this.escapeHtml(filter.id)}">${this.escapeHtml(filter.label)}</button>`
+        )).join('');
+
+        const missions = (data.timeline?.missions || []).map((mission) => {
+            const tags = this.renderRoadmapChipRow(mission.tags || []);
+            const bullets = (mission.bullets || []).map((bullet) => `<li>${this.escapeHtml(bullet)}</li>`).join('');
+            const detailRows = Object.entries(mission.details || {}).map(([label, value]) => `<div><span>${this.escapeHtml(label)}</span><strong>${this.escapeHtml(value)}</strong></div>`).join('');
+            const filtersAttr = Array.isArray(mission.filters) ? mission.filters.join(' ') : '';
+            const roleFocus = Array.isArray(mission.roleFocus) ? mission.roleFocus.join(' ') : '';
+            return `<article class="roadmap-mission${mission.expanded ? ' is-expanded' : ''}" id="${this.escapeHtml(mission.id)}" role="listitem" data-filters="${this.escapeHtml(filtersAttr)}" data-role-focus="${this.escapeHtml(roleFocus)}">
+                <div class="roadmap-mission-date"><span>${this.escapeHtml(mission.start)}</span><span>${this.escapeHtml(mission.end)}</span></div>
+                <div class="roadmap-mission-node tone-${this.escapeHtml(mission.tone || 'blue')}"></div>
+                <div class="roadmap-mission-card">
+                    <div class="roadmap-mission-header">
+                        <div>
+                            <h3 class="h5 mb-1">${this.escapeHtml(mission.title)}</h3>
+                            <p class="text-body-secondary mb-2">${this.escapeHtml(mission.location)}</p>
+                            <p class="mb-0">${this.escapeHtml(mission.summary)}</p>
+                        </div>
+                        <button class="roadmap-mission-toggle" type="button" aria-expanded="${Boolean(mission.expanded)}" aria-controls="${this.escapeHtml(mission.id)}-details">
+                            <span class="visually-hidden">Toggle mission details</span>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </button>
+                    </div>
+                    <div class="roadmap-chip-row roadmap-chip-row--mission mt-3">${tags}</div>
+                    <div class="roadmap-mission-details" id="${this.escapeHtml(mission.id)}-details"${mission.expanded ? '' : ' hidden'}>
+                        <ul class="list-check mt-3 mb-3">${bullets}</ul>
+                        <div class="roadmap-detail-grid">${detailRows}</div>
+                    </div>
+                </div>
+            </article>`;
+        }).join('');
+
+        return `<section class="card shadow-sm roadmap-panel roadmap-timeline-panel" aria-labelledby="mission-timeline-title">
+            <div class="card-body p-4">
+                <div class="roadmap-panel-header align-items-start">
+                    <div>
+                        <p class="roadmap-eyebrow mb-1">Mission Timeline</p>
+                        <h2 id="mission-timeline-title" class="h4 mb-1">${this.escapeHtml(data.timeline?.title || '')}</h2>
+                        <p class="text-body-secondary mb-0">${this.escapeHtml(data.timeline?.description || '')}</p>
+                    </div>
+                </div>
+                <div class="timeline-filter-row" role="group" aria-label="Mission timeline filters">${filters}</div>
+                <div class="roadmap-timeline" role="list">${missions}</div>
+            </div>
+        </section>`;
+    }
+
+    renderRoadmapKnowledgeSection(data) {
+        const layers = (data.knowledge?.layers || []).map((layer) => (
+            `<article class="knowledge-layer tone-${this.escapeHtml(layer.tone || 'blue')}"><div><p class="roadmap-layer-label">${this.escapeHtml(layer.label)}</p><div class="roadmap-chip-row">${this.renderRoadmapChipRow(layer.chips || [])}</div></div></article>`
+        )).join('');
+        const education = (data.knowledge?.education || []).map((item) => (
+            `<article class="knowledge-education-card"><h3 class="h6 mb-1">${this.escapeHtml(item.title)}</h3><p class="text-body-secondary mb-1">${this.escapeHtml(item.subtitle)}</p><p class="mb-0 text-body-secondary">${this.escapeHtml(item.description)}</p></article>`
+        )).join('');
+        const recognition = data.recognition || {};
+
+        return `<section class="roadmap-duo-grid roadmap-bottom-grid">
+            <section class="card shadow-sm roadmap-panel" aria-labelledby="knowledge-stack-title">
+                <div class="card-body p-4">
+                    <div class="roadmap-panel-header align-items-start">
+                        <div>
+                            <p class="roadmap-eyebrow mb-1">Knowledge Stack</p>
+                            <h2 id="knowledge-stack-title" class="h4 mb-1">Layered growth from foundations to emerging edge.</h2>
+                        </div>
+                    </div>
+                    <div class="knowledge-stack">${layers}</div>
+                    <div class="knowledge-education-grid mt-4">${education}</div>
+                </div>
+            </section>
+            <section class="card shadow-sm roadmap-panel recognition-panel" aria-labelledby="recognition-title">
+                <div class="card-body p-4 d-flex flex-column h-100">
+                    <div class="roadmap-panel-header align-items-start">
+                        <div>
+                            <p class="roadmap-eyebrow mb-1">Recognition Signal</p>
+                            <h2 id="recognition-title" class="h4 mb-1">Proof that the work scales through teams, not just tools.</h2>
+                        </div>
+                    </div>
+                    <div class="recognition-card mt-3 mt-xl-4">
+                        <div class="recognition-copy">
+                            <p class="roadmap-layer-label text-warning-emphasis mb-2">${this.escapeHtml(recognition.overline || '')}</p>
+                            <h3 class="h4 mb-1">${this.escapeHtml(recognition.title || '')}</h3>
+                            <p class="text-body-secondary mb-3">${this.escapeHtml(recognition.description || '')}</p>
+                            <p class="mb-0"><strong>Why it matters:</strong> ${this.escapeHtml(recognition.whyItMatters || '')}</p>
+                        </div>
+                        <div class="recognition-badge" aria-hidden="true"><i class="fa-solid fa-trophy"></i></div>
+                    </div>
+                </div>
+            </section>
+        </section>`;
+    }
+
+    renderRoadmapSkillsSection(data) {
+        const defaultSkill = data.defaultSkill || 'automation';
+        const clusters = (data.skills?.clusters || []).map((cluster) => {
+            return `<div class="skill-cluster cluster-${this.escapeHtml(cluster.id)}">
+                <p class="roadmap-layer-label">${this.escapeHtml(cluster.label)}</p>
+                <div class="roadmap-chip-row">${this.renderRoadmapChipRow((cluster.items || []).map((item) => ({ label: item, buttonKey: cluster.id })), { buttonMode: true, activeKey: cluster.active ? cluster.id : defaultSkill })}</div>
+            </div>`;
+        }).join('');
+        const activeReadout = data.skills?.readouts?.[defaultSkill] || { title: '', description: '' };
+        const tools = this.renderRoadmapChipRow(data.skills?.tools || []);
+
+        return `<section class="roadmap-duo-grid roadmap-tools-grid">
+            <section class="card shadow-sm roadmap-panel" aria-labelledby="skill-constellation-title">
+                <div class="card-body p-4">
+                    <div class="roadmap-panel-header align-items-start">
+                        <div>
+                            <p class="roadmap-eyebrow mb-1">Skill Constellation</p>
+                            <h2 id="skill-constellation-title" class="h4 mb-1">Connected expertise across the quality universe.</h2>
+                        </div>
+                    </div>
+                    <div class="skill-constellation-shell">
+                        ${clusters}
+                        <div class="constellation-map" aria-hidden="true">
+                            <span class="constellation-center">DD</span>
+                            <span class="constellation-ring ring-outer"></span>
+                            <span class="constellation-ring ring-inner"></span>
+                            <span class="constellation-node node-a"></span>
+                            <span class="constellation-node node-b"></span>
+                            <span class="constellation-node node-c"></span>
+                            <span class="constellation-node node-d"></span>
+                            <span class="constellation-path path-a"></span>
+                            <span class="constellation-path path-b"></span>
+                        </div>
+                    </div>
+                    <div class="skill-readout mt-3" aria-live="polite">
+                        <p class="roadmap-eyebrow mb-1">Active Cluster</p>
+                        <h3 class="h5 mb-1" data-skill-readout-title>${this.escapeHtml(activeReadout.title)}</h3>
+                        <p class="text-body-secondary mb-0" data-skill-readout-description>${this.escapeHtml(activeReadout.description)}</p>
+                    </div>
+                </div>
+            </section>
+            <section class="card shadow-sm roadmap-panel" aria-labelledby="tools-panel-title">
+                <div class="card-body p-4">
+                    <div class="roadmap-panel-header align-items-start">
+                        <div>
+                            <p class="roadmap-eyebrow mb-1">Tools &amp; Technologies</p>
+                            <h2 id="tools-panel-title" class="h4 mb-1">The stack behind the roadmap.</h2>
+                        </div>
+                    </div>
+                    <div class="roadmap-chip-row roadmap-chip-row--tools">${tools}</div>
+                    <p class="text-body-secondary mt-3 mb-0">${this.escapeHtml(data.skills?.toolsNote || '')}</p>
+                </div>
+            </section>
+        </section>`;
+    }
+
+    renderRoadmapCtaSection(data) {
+        const buttons = (data.cta?.buttons || []).map((button) => (
+            `<a class="btn btn-lg ${this.escapeHtml(button.variant)}" href="${this.escapeHtml(button.href)}"${this.renderExternalLinkAttributes(button.external)}><i class="${this.escapeHtml(button.icon)} me-2"></i>${this.escapeHtml(button.label)}</a>`
+        )).join('');
+
+        return `<section class="cta-section">
+            <div class="card border-0 shadow-lg glass-card cta-space rounded-4 overflow-hidden">
+                <div class="card-body p-5 position-relative">
+                    <div class="cta-accent"></div>
+                    <div class="row align-items-center g-4">
+                        <div class="col-lg-7">
+                            <h2 class="display-6 fw-bold">${this.escapeHtml(data.cta?.title || '')}</h2>
+                            <p class="lead text-body-secondary mb-0">${this.escapeHtml(data.cta?.subtitle || '')}</p>
+                        </div>
+                        <div class="col-lg-5 d-flex flex-column gap-3">${buttons}</div>
+                    </div>
+                </div>
+            </div>
+        </section>`;
+    }
+
     getSupabaseStorageSpec(spec) {
         if (!spec || spec.type !== 'supabase_storage') return null;
         const bucket = String(spec.bucket || '').trim();
@@ -1213,6 +1551,7 @@ class SPARouter {
 
     initializePageScripts(page) {
         if (page === 'home') {
+            this.setupHomeRoadmap();
             this.setupHomeCarousel();
         }
 
@@ -2790,6 +3129,245 @@ class SPARouter {
                 touch: true
             });
         }
+    }
+
+    setupHomeRoadmap() {
+        const root = this.contentArea?.querySelector?.('[data-roadmap-root]');
+        if (!root) return;
+
+        this.renderHomeRoadmap(root);
+
+        const data = this.getHomeRoadmapData();
+        if (!data) return;
+
+        const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
+        const roleHeadline = root.querySelector('[data-role-headline]');
+        const roleDescription = root.querySelector('[data-role-description]');
+        const roleButtons = Array.from(root.querySelectorAll('[data-role-lens]'));
+        const availabilityButtons = Array.from(root.querySelectorAll('[data-availability-view]'));
+        const availabilityPanels = Array.from(root.querySelectorAll('[data-availability-panel]'));
+        const filterButtons = Array.from(root.querySelectorAll('[data-timeline-filter]'));
+        const metricButtons = Array.from(root.querySelectorAll('[data-metric-target]'));
+        const missions = Array.from(root.querySelectorAll('.roadmap-mission'));
+        const skillButtons = Array.from(root.querySelectorAll('[data-skill-key]'));
+        const skillReadoutTitle = root.querySelector('[data-skill-readout-title]');
+        const skillReadoutDescription = root.querySelector('[data-skill-readout-description]');
+        const metricsHelpButton = root.querySelector('[data-metric-help]');
+
+        const roleLenses = Object.fromEntries((data.roleLenses || []).map((item) => [item.id, {
+            headline: item.headline,
+            description: item.description
+        }]));
+        const skillReadouts = data.skills?.readouts || {};
+
+        const setMissionExpanded = (mission, expanded) => {
+            const toggle = mission.querySelector('.roadmap-mission-toggle');
+            const details = mission.querySelector('.roadmap-mission-details');
+            if (!toggle || !details) return;
+
+            mission.classList.toggle('is-expanded', expanded);
+            toggle.setAttribute('aria-expanded', String(expanded));
+            details.hidden = !expanded;
+        };
+
+        let spotlightTimeout = null;
+        const spotlightMission = (mission) => {
+            missions.forEach(item => item.classList.remove('is-spotlit'));
+            mission.classList.add('is-spotlit');
+            window.clearTimeout(spotlightTimeout);
+            spotlightTimeout = window.setTimeout(() => {
+                mission.classList.remove('is-spotlit');
+            }, 1800);
+        };
+
+        const applyRoleLens = (lens) => {
+            const content = roleLenses[lens] || roleLenses.recruiter;
+            root.dataset.activeRole = lens;
+            roleButtons.forEach(button => {
+                const active = button.dataset.roleLens === lens;
+                button.classList.toggle('is-active', active);
+                button.setAttribute('aria-selected', String(active));
+                button.tabIndex = active ? 0 : -1;
+            });
+            if (roleHeadline) roleHeadline.textContent = content.headline;
+            if (roleDescription) roleDescription.textContent = content.description;
+        };
+
+        const applyAvailabilityView = (view) => {
+            root.dataset.activeAvailabilityView = view;
+            availabilityButtons.forEach(button => {
+                const active = button.dataset.availabilityView === view;
+                button.classList.toggle('is-active', active);
+                button.setAttribute('aria-pressed', String(active));
+            });
+            availabilityPanels.forEach(panel => {
+                const active = panel.dataset.availabilityPanel === view;
+                panel.classList.toggle('is-active', active);
+                panel.hidden = !active;
+            });
+        };
+
+        const applyFilter = (filter) => {
+            root.dataset.activeFilter = filter;
+            filterButtons.forEach(button => {
+                const active = button.dataset.timelineFilter === filter;
+                button.classList.toggle('is-active', active);
+                button.setAttribute('aria-pressed', String(active));
+            });
+
+            let hasExpandedVisibleMission = false;
+
+            missions.forEach(mission => {
+                const filters = (mission.dataset.filters || '').split(/\s+/).filter(Boolean);
+                const match = filter === 'all' || filters.includes(filter);
+                mission.classList.toggle('is-filtered-out', !match);
+                mission.setAttribute('aria-hidden', String(!match));
+                if (!match) {
+                    setMissionExpanded(mission, false);
+                    return;
+                }
+                if (mission.classList.contains('is-expanded')) {
+                    hasExpandedVisibleMission = true;
+                }
+            });
+
+            if (!hasExpandedVisibleMission) {
+                const firstVisible = missions.find(mission => !mission.classList.contains('is-filtered-out'));
+                if (firstVisible) {
+                    setMissionExpanded(firstVisible, true);
+                }
+            }
+        };
+
+        const applySkill = (skillKey) => {
+            const content = skillReadouts[skillKey] || skillReadouts.automation;
+            root.dataset.activeSkill = skillKey;
+            skillButtons.forEach(button => {
+                const active = button.dataset.skillKey === skillKey;
+                button.classList.toggle('is-active', active);
+                button.setAttribute('aria-pressed', String(active));
+            });
+            if (skillReadoutTitle) skillReadoutTitle.textContent = content.title;
+            if (skillReadoutDescription) skillReadoutDescription.textContent = content.description;
+        };
+
+        roleButtons.forEach((button, index) => {
+            button.addEventListener('click', () => applyRoleLens(button.dataset.roleLens || 'recruiter'));
+            button.addEventListener('keydown', (event) => {
+                if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+                event.preventDefault();
+                const nextIndex = event.key === 'ArrowRight'
+                    ? (index + 1) % roleButtons.length
+                    : (index - 1 + roleButtons.length) % roleButtons.length;
+                roleButtons[nextIndex].focus();
+                applyRoleLens(roleButtons[nextIndex].dataset.roleLens || 'recruiter');
+            });
+        });
+
+        availabilityButtons.forEach(button => {
+            button.addEventListener('click', () => applyAvailabilityView(button.dataset.availabilityView || 'recruiter'));
+        });
+
+        filterButtons.forEach(button => {
+            button.addEventListener('click', () => applyFilter(button.dataset.timelineFilter || 'all'));
+        });
+
+        missions.forEach(mission => {
+            const toggle = mission.querySelector('.roadmap-mission-toggle');
+            if (!toggle) return;
+            toggle.addEventListener('click', () => {
+                const expanded = toggle.getAttribute('aria-expanded') === 'true';
+                missions.forEach(otherMission => {
+                    if (otherMission !== mission) {
+                        setMissionExpanded(otherMission, false);
+                    }
+                });
+                setMissionExpanded(mission, !expanded);
+                if (!expanded && !reduceMotion) {
+                    mission.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            });
+        });
+
+        metricButtons.forEach(button => {
+            const activateMetric = () => {
+                metricButtons.forEach(item => item.classList.toggle('is-active', item === button));
+            };
+            button.addEventListener('mouseenter', activateMetric);
+            button.addEventListener('focus', activateMetric);
+            button.addEventListener('click', () => {
+                activateMetric();
+                applyFilter('all');
+                const targetId = button.dataset.metricTarget;
+                if (!targetId) return;
+                const mission = root.querySelector(`#${targetId}`);
+                if (!mission) return;
+                setMissionExpanded(mission, true);
+                spotlightMission(mission);
+                if (!reduceMotion) {
+                    mission.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            });
+        });
+
+        skillButtons.forEach(button => {
+            const skillKey = button.dataset.skillKey || 'automation';
+            button.setAttribute('aria-pressed', String(button.classList.contains('is-active')));
+            button.addEventListener('mouseenter', () => applySkill(skillKey));
+            button.addEventListener('focus', () => applySkill(skillKey));
+            button.addEventListener('click', () => applySkill(skillKey));
+        });
+
+        metricsHelpButton?.addEventListener('click', () => {
+            if (roleDescription) {
+                roleDescription.textContent = data.metricHelpText || '';
+            }
+        });
+
+        const countElements = Array.from(root.querySelectorAll('[data-count-to]'));
+        const animateCount = (element) => {
+            if (element.dataset.counted === 'true') return;
+            element.dataset.counted = 'true';
+
+            const targetValue = Number(element.dataset.countTo || 0);
+            const suffix = element.dataset.countSuffix || '';
+            if (reduceMotion) {
+                element.textContent = `${targetValue}${suffix}`;
+                return;
+            }
+
+            const duration = 900;
+            let startTime = null;
+            const step = (timestamp) => {
+                if (!startTime) startTime = timestamp;
+                const progress = Math.min((timestamp - startTime) / duration, 1);
+                const currentValue = Math.round(targetValue * progress);
+                element.textContent = `${currentValue}${suffix}`;
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+
+            window.requestAnimationFrame(step);
+        };
+
+        if ('IntersectionObserver' in window) {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    if (!entry.isIntersecting) return;
+                    animateCount(entry.target);
+                    observer.unobserve(entry.target);
+                });
+            }, { threshold: 0.4 });
+            countElements.forEach(element => observer.observe(element));
+        } else {
+            countElements.forEach(animateCount);
+        }
+
+        applyRoleLens(root.dataset.activeRole || data.defaultRole || 'recruiter');
+        applyAvailabilityView(root.dataset.activeAvailabilityView || data.defaultAvailabilityView || 'recruiter');
+        applyFilter(root.dataset.activeFilter || data.defaultFilter || 'all');
+        applySkill(root.dataset.activeSkill || data.defaultSkill || 'automation');
     }
 
     setupUserStoryAnalyzer() {
