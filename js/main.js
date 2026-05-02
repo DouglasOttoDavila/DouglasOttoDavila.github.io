@@ -21,6 +21,8 @@ class SPARouter {
         this.authConfigUrl = 'content/auth.config.json';
         this.authRuntimeUrl = 'content/auth.runtime.json';
 
+        this.homeConfig = null;
+
         this.protectedPagesConfig = {
             version: 1,
             defaults: { redirectRoute: 'login' },
@@ -156,6 +158,7 @@ class SPARouter {
         await this.loadAuthConfig();
         await this.loadAuthRuntimeConfig();
         await this.initSupabaseAuth();
+        await this.loadHomeConfig();
 
         this.updateAuthUI();
         this.applyNavVisibilityRules();
@@ -247,7 +250,11 @@ class SPARouter {
     }
 
     getHomeRoadmapData() {
-        return window.HomeRoadmapData || null;
+        const base = window.HomeRoadmapData || null;
+        if (!base) return null;
+        if (!this.homeConfig) return base;
+        // Shallow-merge top-level sections from homeConfig over the JS defaults.
+        return Object.assign({}, base, this.homeConfig);
     }
 
     renderExternalLinkAttributes(external) {
@@ -507,7 +514,18 @@ class SPARouter {
             </div>`;
         }).join('');
         const activeReadout = data.skills?.readouts?.[defaultSkill] || { title: '', description: '' };
-        const tools = this.renderRoadmapChipRow(data.skills?.tools || []);
+
+        let toolsHtml;
+        const toolCategories = data.skills?.toolCategories;
+        if (Array.isArray(toolCategories) && toolCategories.length > 0) {
+            toolsHtml = toolCategories.map((cat, idx) => {
+                const chips = this.renderRoadmapChipRow(cat.items || []);
+                const mb = idx < toolCategories.length - 1 ? ' mb-3' : '';
+                return `<p class="roadmap-eyebrow mb-2">${this.escapeHtml(cat.label)}</p><div class="roadmap-chip-row roadmap-chip-row--tools${mb}">${chips}</div>`;
+            }).join('');
+        } else {
+            toolsHtml = `<div class="roadmap-chip-row roadmap-chip-row--tools">${this.renderRoadmapChipRow(data.skills?.tools || [])}</div>`;
+        }
 
         return `<section class="roadmap-duo-grid roadmap-tools-grid">
             <section class="card shadow-sm roadmap-panel" aria-labelledby="skill-constellation-title">
@@ -547,7 +565,7 @@ class SPARouter {
                             <h2 id="tools-panel-title" class="h4 mb-1">The stack behind the roadmap.</h2>
                         </div>
                     </div>
-                    <div class="roadmap-chip-row roadmap-chip-row--tools">${tools}</div>
+                    ${toolsHtml}
                     <p class="text-body-secondary mt-3 mb-0">${this.escapeHtml(data.skills?.toolsNote || '')}</p>
                 </div>
             </section>
@@ -1286,6 +1304,42 @@ class SPARouter {
         const avatarUrl = this.authState.avatarOverrideUrl || this.authState.avatarUrl || null;
         const fullName = this.authState.fullName || null;
         return { email, provider, avatarUrl, fullName };
+    }
+
+    async loadHomeConfig() {
+        if (!this.supabase) return;
+        try {
+            const { data, error } = await this.supabase
+                .from('home_config')
+                .select('section, value');
+            if (error) {
+                console.warn('[home-config] Failed to load from Supabase, using defaults.', error);
+                return;
+            }
+            if (!Array.isArray(data) || data.length === 0) return;
+            const merged = {};
+            data.forEach(row => {
+                if (row.section && row.value !== undefined) {
+                    merged[row.section] = row.value;
+                }
+            });
+            this.homeConfig = merged;
+        } catch (err) {
+            console.warn('[home-config] Error loading home config, using defaults.', err);
+        }
+    }
+
+    async saveHomeConfigSection(section, value) {
+        if (!this.supabase) {
+            throw new Error('Supabase client is not available.');
+        }
+        const { error } = await this.supabase.rpc('admin_save_home_config_section', {
+            p_section: section,
+            p_value: value
+        });
+        if (error) throw error;
+        if (!this.homeConfig) this.homeConfig = {};
+        this.homeConfig[section] = value;
     }
 
     async listAdminProfiles() {
@@ -2256,7 +2310,7 @@ class SPARouter {
         let activeWorkspaceView = 'overview';
         const setWorkspaceView = (requestedView) => {
             const availableViews = this.authState.isAdmin
-                ? new Set(['overview', 'profile', 'users', 'prompts'])
+                ? new Set(['overview', 'profile', 'users', 'prompts', 'home'])
                 : new Set(['overview', 'profile']);
             const nextView = availableViews.has(requestedView) ? requestedView : (availableViews.has(activeWorkspaceView) ? activeWorkspaceView : 'overview');
             activeWorkspaceView = nextView;
@@ -2281,7 +2335,7 @@ class SPARouter {
             const isAdmin = Boolean(this.authState.isAdmin);
             if (adminPanelEl) adminPanelEl.classList.toggle('d-none', !isAdmin);
             adminOnlyEls.forEach(element => element.classList.toggle('d-none', !isAdmin));
-            if (!isAdmin && (activeWorkspaceView === 'users' || activeWorkspaceView === 'prompts')) {
+            if (!isAdmin && (activeWorkspaceView === 'users' || activeWorkspaceView === 'prompts' || activeWorkspaceView === 'home')) {
                 setWorkspaceView('profile');
             }
         };
@@ -3114,6 +3168,253 @@ class SPARouter {
             setAdminDirectoryStatus('');
             setAdminPromptsStatus('');
         }
+
+        // ── Home config admin panel ──────────────────────────────────────────
+        const homeConfigStatusEl = document.getElementById('home-config-status');
+        if (!homeConfigStatusEl) return; // panel not in DOM
+
+        const setHomeConfigStatus = (msg, isError) => {
+            if (!homeConfigStatusEl) return;
+            homeConfigStatusEl.textContent = msg;
+            homeConfigStatusEl.className = 'profile-hint mt-3' + (isError ? ' text-danger' : ' text-success');
+        };
+
+        // ── Generic chip-list editor ──────────────────────────────────────────
+        // Renders a list of string items as editable chips with a remove button.
+        const renderChipEditor = (containerEl, items) => {
+            if (!containerEl) return;
+            containerEl.innerHTML = '';
+            (items || []).forEach((item, idx) => {
+                const chip = document.createElement('span');
+                chip.className = 'home-config-chip-editor badge bg-secondary me-1 mb-1';
+                chip.dataset.idx = idx;
+                chip.innerHTML = `${this.escapeHtml(item)} <button type="button" class="btn-close btn-close-white btn-sm ms-1 home-config-chip-remove" aria-label="Remove ${this.escapeHtml(item)}" style="font-size:.6rem"></button>`;
+                chip.querySelector('.home-config-chip-remove').addEventListener('click', () => {
+                    items.splice(idx, 1);
+                    renderChipEditor(containerEl, items);
+                });
+                containerEl.appendChild(chip);
+            });
+            // "Add item" input
+            const addRow = document.createElement('div');
+            addRow.className = 'd-flex gap-2 mt-2';
+            addRow.innerHTML = `<input type="text" class="form-control form-control-sm home-config-chip-input" placeholder="Add item…"><button type="button" class="btn btn-sm btn-outline-primary home-config-chip-add-btn">Add</button>`;
+            const input = addRow.querySelector('.home-config-chip-input');
+            addRow.querySelector('.home-config-chip-add-btn').addEventListener('click', () => {
+                const val = input.value.trim();
+                if (!val) return;
+                items.push(val);
+                renderChipEditor(containerEl, items);
+            });
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); addRow.querySelector('.home-config-chip-add-btn').click(); }
+            });
+            containerEl.appendChild(addRow);
+        };
+
+        // ── Timeline ─────────────────────────────────────────────────────────
+        const timelineBodyEl = document.getElementById('home-config-timeline-body');
+        const timelineAddEl = document.getElementById('home-config-timeline-add');
+        // Working copy (deep clone)
+        let workTimeline = JSON.parse(JSON.stringify((this.getHomeRoadmapData()?.timeline?.missions) || []));
+
+        const renderTimelineEditor = () => {
+            if (!timelineBodyEl) return;
+            timelineBodyEl.innerHTML = '';
+            workTimeline.forEach((mission, idx) => {
+                const item = document.createElement('div');
+                item.className = 'home-config-timeline-item card p-3 mb-2';
+                item.innerHTML = `
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <strong class="small">${this.escapeHtml(mission.title || `Mission ${idx + 1}`)}</strong>
+                    <button type="button" class="btn btn-sm btn-outline-danger home-config-timeline-remove">Remove</button>
+                  </div>
+                  <div class="row g-2">
+                    <div class="col-6"><label class="form-label small">Title</label>
+                      <input type="text" class="form-control form-control-sm" value="${this.escapeHtml(mission.title || '')}" data-field="title"></div>
+                    <div class="col-3"><label class="form-label small">Start</label>
+                      <input type="text" class="form-control form-control-sm" value="${this.escapeHtml(mission.start || '')}" data-field="start"></div>
+                    <div class="col-3"><label class="form-label small">End</label>
+                      <input type="text" class="form-control form-control-sm" value="${this.escapeHtml(mission.end || '')}" data-field="end"></div>
+                    <div class="col-12"><label class="form-label small">Summary</label>
+                      <input type="text" class="form-control form-control-sm" value="${this.escapeHtml(mission.summary || '')}" data-field="summary"></div>
+                  </div>`;
+                item.querySelector('.home-config-timeline-remove').addEventListener('click', () => {
+                    workTimeline.splice(idx, 1);
+                    renderTimelineEditor();
+                });
+                item.querySelectorAll('[data-field]').forEach(input => {
+                    input.addEventListener('input', (e) => {
+                        workTimeline[idx][e.target.dataset.field] = e.target.value;
+                    });
+                });
+                timelineBodyEl.appendChild(item);
+            });
+        };
+
+        if (timelineAddEl && !timelineAddEl.dataset.bound) {
+            timelineAddEl.addEventListener('click', () => {
+                workTimeline.push({ id: `mission-${Date.now()}`, title: '', start: '', end: '', summary: '', tags: [], filters: [], roleFocus: '', tone: '', bullets: [], details: '' });
+                renderTimelineEditor();
+            });
+            timelineAddEl.dataset.bound = 'true';
+        }
+        renderTimelineEditor();
+
+        // ── Knowledge Stack ───────────────────────────────────────────────────
+        const knowledgeBodyEl = document.getElementById('home-config-knowledge-body');
+        let workKnowledge = JSON.parse(JSON.stringify((this.getHomeRoadmapData()?.knowledge?.layers) || []));
+
+        const renderKnowledgeEditor = () => {
+            if (!knowledgeBodyEl) return;
+            knowledgeBodyEl.innerHTML = '';
+            workKnowledge.forEach((layer, idx) => {
+                const item = document.createElement('div');
+                item.className = 'home-config-timeline-item card p-3 mb-2';
+                item.innerHTML = `
+                  <div class="mb-2"><strong class="small">${this.escapeHtml(layer.label || `Layer ${idx + 1}`)}</strong></div>
+                  <div class="mb-2">
+                    <label class="form-label small">Label</label>
+                    <input type="text" class="form-control form-control-sm" value="${this.escapeHtml(layer.label || '')}" data-field="label">
+                  </div>
+                  <label class="form-label small">Chips</label>
+                  <div class="home-config-chips-target"></div>`;
+                item.querySelector('[data-field="label"]').addEventListener('input', (e) => {
+                    workKnowledge[idx].label = e.target.value;
+                });
+                renderChipEditor(item.querySelector('.home-config-chips-target'), workKnowledge[idx].chips);
+                knowledgeBodyEl.appendChild(item);
+            });
+        };
+        renderKnowledgeEditor();
+
+        // ── Skills Clusters ───────────────────────────────────────────────────
+        const skillsBodyEl = document.getElementById('home-config-skills-body');
+        let workClusters = JSON.parse(JSON.stringify((this.getHomeRoadmapData()?.skills?.clusters) || []));
+
+        const renderClustersEditor = () => {
+            if (!skillsBodyEl) return;
+            skillsBodyEl.innerHTML = '';
+            workClusters.forEach((cluster, idx) => {
+                const item = document.createElement('div');
+                item.className = 'home-config-timeline-item card p-3 mb-2';
+                item.innerHTML = `
+                  <div class="mb-2"><strong class="small">${this.escapeHtml(cluster.label || `Cluster ${idx + 1}`)}</strong></div>
+                  <div class="mb-2">
+                    <label class="form-label small">Label</label>
+                    <input type="text" class="form-control form-control-sm" value="${this.escapeHtml(cluster.label || '')}" data-field="label">
+                  </div>
+                  <label class="form-label small">Items</label>
+                  <div class="home-config-chips-target"></div>`;
+                item.querySelector('[data-field="label"]').addEventListener('input', (e) => {
+                    workClusters[idx].label = e.target.value;
+                });
+                renderChipEditor(item.querySelector('.home-config-chips-target'), workClusters[idx].items);
+                skillsBodyEl.appendChild(item);
+            });
+        };
+        renderClustersEditor();
+
+        // ── Tool Categories ───────────────────────────────────────────────────
+        const toolsBodyEl = document.getElementById('home-config-tools-body');
+        let workToolCats = JSON.parse(JSON.stringify((this.getHomeRoadmapData()?.skills?.toolCategories) || []));
+
+        const renderToolCatsEditor = () => {
+            if (!toolsBodyEl) return;
+            toolsBodyEl.innerHTML = '';
+            workToolCats.forEach((cat, idx) => {
+                const item = document.createElement('div');
+                item.className = 'home-config-timeline-item card p-3 mb-2';
+                item.innerHTML = `
+                  <div class="mb-2"><strong class="small">${this.escapeHtml(cat.label || `Category ${idx + 1}`)}</strong></div>
+                  <div class="mb-2">
+                    <label class="form-label small">Label</label>
+                    <input type="text" class="form-control form-control-sm" value="${this.escapeHtml(cat.label || '')}" data-field="label">
+                  </div>
+                  <label class="form-label small">Items</label>
+                  <div class="home-config-chips-target"></div>`;
+                item.querySelector('[data-field="label"]').addEventListener('input', (e) => {
+                    workToolCats[idx].label = e.target.value;
+                });
+                renderChipEditor(item.querySelector('.home-config-chips-target'), workToolCats[idx].items);
+                toolsBodyEl.appendChild(item);
+            });
+        };
+        renderToolCatsEditor();
+
+        // ── Links ─────────────────────────────────────────────────────────────
+        const linkInputs = document.querySelectorAll('[data-home-config-link]');
+        const getNestedValue = (obj, path) => path.split('.').reduce((o, k) => (o && o[Number.isNaN(+k) ? k : +k] !== undefined ? o[Number.isNaN(+k) ? k : +k] : undefined), obj);
+        const setNestedValue = (obj, path, val) => {
+            const keys = path.split('.');
+            let cur = obj;
+            for (let i = 0; i < keys.length - 1; i++) {
+                const k = Number.isNaN(+keys[i]) ? keys[i] : +keys[i];
+                if (cur[k] === undefined) cur[k] = {};
+                cur = cur[k];
+            }
+            const last = Number.isNaN(+keys[keys.length - 1]) ? keys[keys.length - 1] : +keys[keys.length - 1];
+            cur[last] = val;
+        };
+        // Populate link fields from current data
+        const currentData = this.getHomeRoadmapData() || {};
+        linkInputs.forEach(input => {
+            const val = getNestedValue(currentData, input.dataset.homeConfigLink);
+            if (val !== undefined) input.value = val;
+        });
+        // Build working links snapshot
+        let workLinks = JSON.parse(JSON.stringify({
+            roleActions: currentData.roleActions,
+            availability: currentData.availability,
+            cta: currentData.cta
+        }));
+        linkInputs.forEach(input => {
+            if (!input.dataset.bound) {
+                input.addEventListener('input', (e) => {
+                    setNestedValue(workLinks, e.target.dataset.homeConfigLink, e.target.value);
+                });
+                input.dataset.bound = 'true';
+            }
+        });
+
+        // ── Save buttons ──────────────────────────────────────────────────────
+        const saveBtns = document.querySelectorAll('[data-home-config-save]');
+        saveBtns.forEach(btn => {
+            if (btn.dataset.bound) return;
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation(); // prevent <details> toggle
+                const key = btn.dataset.homeConfigSave;
+                let payload;
+                if (key === 'timeline') {
+                    payload = { timeline: { ...((this.getHomeRoadmapData()?.timeline) || {}), missions: workTimeline } };
+                } else if (key === 'knowledge') {
+                    payload = { knowledge: { ...((this.getHomeRoadmapData()?.knowledge) || {}), layers: workKnowledge } };
+                } else if (key === 'skills.clusters') {
+                    payload = { skills: { ...((this.getHomeRoadmapData()?.skills) || {}), clusters: workClusters } };
+                } else if (key === 'skills.toolCategories') {
+                    payload = { skills: { ...((this.getHomeRoadmapData()?.skills) || {}), toolCategories: workToolCats } };
+                } else if (key === 'links') {
+                    payload = workLinks;
+                }
+                if (!payload) return;
+                const originalText = btn.textContent;
+                btn.disabled = true;
+                btn.textContent = 'Saving…';
+                try {
+                    // Save each top-level section key in the payload separately
+                    for (const [section, value] of Object.entries(payload)) {
+                        await this.saveHomeConfigSection(section, value);
+                    }
+                    setHomeConfigStatus('Saved. Reload the home page to see changes.');
+                } catch (err) {
+                    setHomeConfigStatus('Save failed: ' + (err.message || err), true);
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                }
+            });
+            btn.dataset.bound = 'true';
+        });
     }
 
     setupHomeCarousel() {

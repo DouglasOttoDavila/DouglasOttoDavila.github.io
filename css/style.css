@@ -5383,3 +5383,64 @@ header .navbar-nav .nav-link.active {
     scroll-behavior: auto !important;
   }
 }
+
+/* ── Home config admin panel ─────────────────────────────────────── */
+.home-config-section {
+  border: 1px solid var(--bs-border-color, #dee2e6);
+  border-radius: .5rem;
+  margin-bottom: .75rem;
+  overflow: hidden;
+}
+
+.home-config-section-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .75rem 1rem;
+  background: var(--bs-tertiary-bg, #f8f9fa);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: .9rem;
+  list-style: none;
+  user-select: none;
+}
+
+.home-config-section-summary::-webkit-details-marker { display: none; }
+
+.home-config-section[open] .home-config-section-summary {
+  border-bottom: 1px solid var(--bs-border-color, #dee2e6);
+}
+
+.home-config-section > *:not(summary) {
+  padding: 1rem;
+}
+
+.home-config-chip-editor {
+  font-size: .8rem;
+  vertical-align: middle;
+}
+
+.home-config-timeline-item {
+  background: var(--bs-body-bg);
+  border: 1px solid var(--bs-border-color, #dee2e6);
+}
+
+.home-config-link-list {
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+}
+
+.home-config-link-row {
+  display: grid;
+  grid-template-columns: 14rem 1fr;
+  align-items: center;
+  gap: .5rem;
+}
+
+.home-config-link-label {
+  font-size: .85rem;
+  font-weight: 500;
+  margin: 0;
+  color: var(--bs-secondary-color, #6c757d);
+}

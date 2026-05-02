@@ -404,6 +404,12 @@ window.HomeRoadmapData = {
       }
     ],
     tools: ['TypeScript', 'JavaScript', 'Python', 'Postman', 'JMeter', 'MySQL', 'Allure', 'Grafana', 'Jira', 'Confluence', 'TestRail', 'Zephyr', 'Git', 'Docker', 'Kubernetes', 'AWS'],
+    toolCategories: [
+      { label: 'AI & Orchestration', items: ['GitHub Copilot', 'LangChain', 'Langfuse', 'n8n', 'Azure AI Foundry', 'Azure AI Search'] },
+      { label: 'Languages & Frameworks', items: ['TypeScript', 'JavaScript', 'Python', 'Playwright', 'Cypress', 'WebdriverIO', 'Postman', 'JMeter'] },
+      { label: 'Infrastructure & Delivery', items: ['GitHub Actions', 'GitLab CI', 'Docker', 'Kubernetes', 'AWS', 'Git'] },
+      { label: 'Observability & Reporting', items: ['Allure', 'Grafana', 'MySQL', 'Jira', 'TestRail', 'Zephyr', 'Confluence'] }
+    ],
     toolsNote: 'Also work with Oracle eCommerce (OCC/OIC), REST/SOAP, SQL, Linux, Bash, and enterprise tooling.'
   },
   cta: {

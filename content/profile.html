@@ -52,6 +52,7 @@
       <button class="profile-section-chip" type="button" data-profile-view="profile" aria-pressed="false">My profile</button>
       <button class="profile-section-chip profile-admin-only" type="button" data-profile-view="users" aria-pressed="false">Users</button>
       <button class="profile-section-chip profile-admin-only" type="button" data-profile-view="prompts" aria-pressed="false">AI prompts</button>
+      <button class="profile-section-chip profile-admin-only" type="button" data-profile-view="home" aria-pressed="false">Home</button>
     </nav>
   </header>
 
@@ -360,4 +361,89 @@
       </div>
     </section>
   </div>
+
+  <!-- Home config admin panel -->
+  <section class="glass-card profile-card profile-panel" data-profile-panel="home" hidden aria-labelledby="profile-admin-home-title">
+    <div class="profile-card-header">
+      <h2 id="profile-admin-home-title" class="profile-card-title">Home Page Config</h2>
+      <p class="profile-card-subtitle">Manage each home page section. Changes are saved per-section to Supabase and applied live.</p>
+    </div>
+
+    <!-- Timeline / Missions -->
+    <details class="home-config-section">
+      <summary class="home-config-section-summary">
+        <span>Timeline</span>
+        <button class="btn btn-sm btn-primary home-config-save-btn" type="button" data-home-config-save="timeline">Save</button>
+      </summary>
+      <div id="home-config-timeline-body" class="home-config-item-list" data-home-config-section="timeline"></div>
+      <button class="btn btn-sm btn-outline-secondary mt-2" type="button" id="home-config-timeline-add">+ Add Mission</button>
+    </details>
+
+    <!-- Knowledge Stack layers -->
+    <details class="home-config-section">
+      <summary class="home-config-section-summary">
+        <span>Knowledge Stack</span>
+        <button class="btn btn-sm btn-primary home-config-save-btn" type="button" data-home-config-save="knowledge">Save</button>
+      </summary>
+      <div id="home-config-knowledge-body" class="home-config-item-list" data-home-config-section="knowledge"></div>
+    </details>
+
+    <!-- Skill Constellation clusters -->
+    <details class="home-config-section">
+      <summary class="home-config-section-summary">
+        <span>Skill Constellation</span>
+        <button class="btn btn-sm btn-primary home-config-save-btn" type="button" data-home-config-save="skills.clusters">Save</button>
+      </summary>
+      <div id="home-config-skills-body" class="home-config-item-list" data-home-config-section="skills.clusters"></div>
+    </details>
+
+    <!-- Tools & Technologies -->
+    <details class="home-config-section">
+      <summary class="home-config-section-summary">
+        <span>Tools &amp; Technologies</span>
+        <button class="btn btn-sm btn-primary home-config-save-btn" type="button" data-home-config-save="skills.toolCategories">Save</button>
+      </summary>
+      <div id="home-config-tools-body" class="home-config-item-list" data-home-config-section="skills.toolCategories"></div>
+    </details>
+
+    <!-- Links & CTAs -->
+    <details class="home-config-section">
+      <summary class="home-config-section-summary">
+        <span>Links &amp; CTAs</span>
+        <button class="btn btn-sm btn-primary home-config-save-btn" type="button" data-home-config-save="links">Save</button>
+      </summary>
+      <div class="home-config-link-list">
+        <div class="home-config-link-row">
+          <label class="home-config-link-label">Resume URL</label>
+          <input type="url" class="form-control form-control-sm" id="home-config-link-resume" placeholder="https://…" data-home-config-link="roleActions.0.href">
+        </div>
+        <div class="home-config-link-row">
+          <label class="home-config-link-label">Contact Email</label>
+          <input type="text" class="form-control form-control-sm" id="home-config-link-contact" placeholder="mailto:…" data-home-config-link="roleActions.1.href">
+        </div>
+        <div class="home-config-link-row">
+          <label class="home-config-link-label">CTA 1: Book a Call URL</label>
+          <input type="url" class="form-control form-control-sm" id="home-config-link-cta1" placeholder="https://…" data-home-config-link="availability.ctas.0.href">
+        </div>
+        <div class="home-config-link-row">
+          <label class="home-config-link-label">CTA 2: Download Resume URL</label>
+          <input type="url" class="form-control form-control-sm" id="home-config-link-cta2" placeholder="https://…" data-home-config-link="availability.ctas.1.href">
+        </div>
+        <div class="home-config-link-row">
+          <label class="home-config-link-label">Footer Button 1: Email URL</label>
+          <input type="text" class="form-control form-control-sm" id="home-config-link-footer1" placeholder="mailto:…" data-home-config-link="cta.buttons.0.href">
+        </div>
+        <div class="home-config-link-row">
+          <label class="home-config-link-label">Footer Button 2: Schedule URL</label>
+          <input type="url" class="form-control form-control-sm" id="home-config-link-footer2" placeholder="https://…" data-home-config-link="cta.buttons.1.href">
+        </div>
+        <div class="home-config-link-row">
+          <label class="home-config-link-label">Footer Button 3: LinkedIn URL</label>
+          <input type="url" class="form-control form-control-sm" id="home-config-link-footer3" placeholder="https://…" data-home-config-link="cta.buttons.2.href">
+        </div>
+      </div>
+    </details>
+
+    <p id="home-config-status" class="profile-hint mt-3" aria-live="polite"></p>
+  </section>
 </section>
