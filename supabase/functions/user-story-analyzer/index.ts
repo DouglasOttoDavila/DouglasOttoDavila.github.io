@@ -13,6 +13,19 @@ type AnalyzerPromptCatalog = {
   [key: string]: string;
 };
 
+type PrivilegedAccess = {
+  ok: true;
+  token: string;
+  user: SupabaseAuthUser;
+};
+
+type AiInteractionReservation = {
+  log_id?: string;
+  daily_count?: number;
+  daily_limit?: number;
+  remaining?: number;
+};
+
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -34,16 +47,34 @@ Deno.serve(async (request) => {
       return jsonResponse({ error: 'User story content is required.' }, 400);
     }
     const promptCatalog = await loadAnalyzerPromptCatalog();
+    const interaction = await reserveAiInteraction(access.token, 'user-story-analyzer', {
+      storyContent,
+      promptKeys: Object.keys(promptCatalog).sort()
+    });
+
+    if (!interaction.ok) {
+      return jsonResponse({ error: interaction.error }, interaction.status);
+    }
+
     // Local deterministic analysis mode (no external webhook dependency).
     const localAnalysis = buildLocalAnalysis(storyContent, promptCatalog);
-    return jsonResponse(localAnalysis, 200);
+    await completeAiInteraction(access.token, interaction.reservation.log_id, localAnalysis, 'completed');
+
+    return jsonResponse({
+      ...localAnalysis,
+      aiUsage: {
+        dailyCount: interaction.reservation.daily_count,
+        dailyLimit: interaction.reservation.daily_limit,
+        remaining: interaction.reservation.remaining
+      }
+    }, 200);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unexpected analyzer error.';
     return jsonResponse({ error: message }, 500);
   }
 });
 
-async function requirePrivilegedUser(request: Request): Promise<{ ok: true; user: SupabaseAuthUser } | { ok: false; status: number; error: string }> {
+async function requirePrivilegedUser(request: Request): Promise<PrivilegedAccess | { ok: false; status: number; error: string }> {
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
   const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -96,7 +127,7 @@ async function requirePrivilegedUser(request: Request): Promise<{ ok: true; user
     return { ok: false, status: 403, error: 'Your account is not approved for this AI feature.' };
   }
 
-  return { ok: true, user };
+  return { ok: true, token, user };
 }
 
 function jsonResponse(body: Record<string, unknown>, status: number) {
@@ -326,4 +357,94 @@ async function loadToolPromptCatalog(toolKey: string): Promise<AnalyzerPromptCat
   });
 
   return catalog;
+}
+
+async function reserveAiInteraction(
+  userToken: string,
+  toolKey: string,
+  promptPayload: Record<string, unknown>
+): Promise<{ ok: true; reservation: AiInteractionReservation } | { ok: false; status: number; error: string }> {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
+
+  if (!supabaseUrl || !anonKey) {
+    return { ok: false, status: 500, error: 'AI interaction tracking is not configured.' };
+  }
+
+  const response = await fetch(`${supabaseUrl}/rest/v1/rpc/reserve_ai_interaction`, {
+    method: 'POST',
+    headers: {
+      apikey: anonKey,
+      Authorization: `Bearer ${userToken}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/json'
+    },
+    body: JSON.stringify({
+      p_tool_key: toolKey,
+      p_prompt_payload: promptPayload
+    })
+  });
+
+  const payload = await readJsonResponse(response);
+  if (!response.ok) {
+    const message = extractSupabaseError(payload, 'Unable to reserve an AI interaction.');
+    return {
+      ok: false,
+      status: message.toLowerCase().includes('limit reached') ? 429 : response.status,
+      error: message
+    };
+  }
+
+  const row = Array.isArray(payload) ? payload[0] : payload;
+  if (!row?.log_id) {
+    return { ok: false, status: 500, error: 'AI interaction reservation returned no log id.' };
+  }
+
+  return { ok: true, reservation: row };
+}
+
+async function completeAiInteraction(
+  userToken: string,
+  logId: string | undefined,
+  responsePayload: Record<string, unknown>,
+  status: 'completed' | 'error',
+  errorMessage = ''
+) {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL');
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
+
+  if (!supabaseUrl || !anonKey || !logId) return;
+
+  try {
+    await fetch(`${supabaseUrl}/rest/v1/rpc/complete_ai_interaction`, {
+      method: 'POST',
+      headers: {
+        apikey: anonKey,
+        Authorization: `Bearer ${userToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        p_log_id: logId,
+        p_response_payload: responsePayload,
+        p_status: status,
+        p_error_message: errorMessage
+      })
+    });
+  } catch (error) {
+    console.error('[ai-interactions] failed to complete interaction log', error);
+  }
+}
+
+async function readJsonResponse(response: Response): Promise<any> {
+  const text = await response.text();
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { message: text };
+  }
+}
+
+function extractSupabaseError(payload: any, fallback: string): string {
+  return String(payload?.message || payload?.error || payload?.hint || fallback);
 }

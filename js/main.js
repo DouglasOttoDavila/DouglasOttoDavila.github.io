@@ -1401,6 +1401,30 @@ class SPARouter {
         if (error) throw error;
     }
 
+    async listAdminAiInteractionLogs(userId) {
+        if (!this.supabase) {
+            throw new Error('Supabase client is not available.');
+        }
+
+        const { data, error } = await this.supabase.rpc('admin_list_ai_interaction_logs', {
+            p_user_id: userId
+        });
+        if (error) throw error;
+        return Array.isArray(data) ? data : [];
+    }
+
+    async resetAdminAiDailyInteractions(userId) {
+        if (!this.supabase) {
+            throw new Error('Supabase client is not available.');
+        }
+
+        const { data, error } = await this.supabase.rpc('admin_reset_ai_daily_interactions', {
+            p_user_id: userId
+        });
+        if (error) throw error;
+        return Array.isArray(data) && data.length ? data[0] : null;
+    }
+
     bindAuthControls() {
         const logoutBtn = this.authControls.logoutBtn;
         if (logoutBtn && !logoutBtn.dataset.bound) {
@@ -2208,6 +2232,13 @@ class SPARouter {
         const adminDialEl = document.getElementById('profile-admin-user-phone-dial');
         const adminPhoneEl = document.getElementById('profile-admin-user-phone');
         const adminPrivilegesToggleEl = document.getElementById('profile-admin-user-has-privileges');
+        const adminAiUsageSummaryEl = document.getElementById('profile-admin-ai-usage-summary');
+        const adminAiCountEl = document.getElementById('profile-admin-ai-count');
+        const adminAiRemainingEl = document.getElementById('profile-admin-ai-remaining');
+        const adminAiResetEl = document.getElementById('profile-admin-ai-reset');
+        const adminAiStatusEl = document.getElementById('profile-admin-ai-status');
+        const adminAiLogsEl = document.getElementById('profile-admin-ai-logs');
+        const adminAiEmptyEl = document.getElementById('profile-admin-ai-empty');
         const adminPromptsStatusEl = document.getElementById('profile-admin-prompts-status');
         const adminPromptsCountEl = document.getElementById('profile-admin-prompts-count');
         const adminPromptsBodyEl = document.getElementById('profile-admin-prompts-body');
@@ -2265,6 +2296,11 @@ class SPARouter {
         const setAdminSaveStatus = (message) => {
             if (!adminSaveStatusEl) return;
             adminSaveStatusEl.textContent = message || '';
+        };
+
+        const setAdminAiStatus = (message) => {
+            if (!adminAiStatusEl) return;
+            adminAiStatusEl.textContent = message || '';
         };
 
         const setAdminPromptsStatus = (message) => {
@@ -2448,6 +2484,7 @@ class SPARouter {
 
         let pendingAvatarFile = null;
         let adminUsers = [];
+        let adminAiLogs = [];
         let selectedAdminUserId = null;
         let adminPrompts = [];
         let selectedAdminPromptId = null;
@@ -2530,6 +2567,16 @@ class SPARouter {
         const normalizeOptionalText = (value) => {
             const raw = String(value || '').trim();
             return raw || null;
+        };
+
+        const compactJson = (value) => {
+            if (value == null) return '';
+            if (typeof value === 'string') return value;
+            try {
+                return JSON.stringify(value, null, 2);
+            } catch {
+                return String(value);
+            }
         };
 
         const normalizePromptKeyPart = (value) => String(value || '').trim().toLowerCase();
@@ -2802,8 +2849,79 @@ class SPARouter {
             }
         };
 
+        const renderAdminAiUsage = (row) => {
+            const count = Number(row?.ai_interactions_today || 0);
+            const limit = Number(row?.ai_interactions_limit || 10);
+            const remaining = Math.max(Number(row?.ai_interactions_remaining ?? (limit - count)), 0);
+            const lastAt = row?.ai_interactions_last_at
+                ? new Date(row.ai_interactions_last_at).toLocaleString()
+                : '';
+
+            if (adminAiCountEl) adminAiCountEl.textContent = `${count} / ${limit}`;
+            if (adminAiRemainingEl) adminAiRemainingEl.textContent = String(remaining);
+            if (adminAiUsageSummaryEl) {
+                adminAiUsageSummaryEl.textContent = lastAt
+                    ? `Last AI interaction: ${lastAt}.`
+                    : 'No AI interactions recorded today.';
+            }
+        };
+
+        const renderAdminAiLogs = () => {
+            if (!adminAiLogsEl) return;
+            adminAiLogsEl.innerHTML = '';
+
+            if (adminAiEmptyEl) {
+                adminAiEmptyEl.classList.toggle('d-none', adminAiLogs.length > 0);
+            }
+
+            adminAiLogs.forEach(log => {
+                const createdAt = log.created_at ? new Date(log.created_at).toLocaleString() : 'Time unavailable';
+                const promptText = compactJson(log.prompt_payload);
+                const responseText = compactJson(log.response_payload);
+                const card = document.createElement('article');
+                card.className = 'profile-admin-ai-log-card';
+                card.setAttribute('role', 'listitem');
+                card.innerHTML = `
+                    <div class="profile-record-top">
+                        <div class="profile-record-copy">
+                            <strong class="profile-record-title">${escapeHtml(log.tool_key || 'AI interaction')}</strong>
+                            <span class="profile-record-support">${escapeHtml(createdAt)}</span>
+                        </div>
+                        <span class="profile-badge${log.status === 'completed' ? '' : ' profile-badge--soft'}">${escapeHtml(log.status || 'reserved')}</span>
+                    </div>
+                    ${log.error_message ? `<p class="profile-admin-ai-error">${escapeHtml(log.error_message)}</p>` : ''}
+                    <details class="profile-admin-ai-log-detail">
+                        <summary>Prompt</summary>
+                        <pre>${escapeHtml(promptText || '{}')}</pre>
+                    </details>
+                    <details class="profile-admin-ai-log-detail">
+                        <summary>Response</summary>
+                        <pre>${escapeHtml(responseText || '{}')}</pre>
+                    </details>
+                `;
+                adminAiLogsEl.appendChild(card);
+            });
+        };
+
+        const loadAdminAiLogs = async (userId) => {
+            if (!this.authState.isAdmin || !userId) return;
+
+            setAdminAiStatus('Loading AI interaction logs...');
+            try {
+                adminAiLogs = await this.listAdminAiInteractionLogs(userId);
+                renderAdminAiLogs();
+                setAdminAiStatus('');
+            } catch (error) {
+                console.error('[profile-admin] AI logs failed', error);
+                adminAiLogs = [];
+                renderAdminAiLogs();
+                setAdminAiStatus('Unable to load AI interaction logs right now.');
+            }
+        };
+
         const resetAdminEditor = () => {
             selectedAdminUserId = null;
+            adminAiLogs = [];
             if (adminFormEl) adminFormEl.classList.add('d-none');
             if (adminPlaceholderEl) adminPlaceholderEl.classList.remove('d-none');
             if (adminEditorCloseEl) adminEditorCloseEl.classList.add('d-none');
@@ -2816,7 +2934,10 @@ class SPARouter {
             if (adminDialEl) adminDialEl.value = '';
             if (adminPhoneEl) adminPhoneEl.value = '';
             if (adminPrivilegesToggleEl) adminPrivilegesToggleEl.checked = false;
+            renderAdminAiUsage(null);
+            renderAdminAiLogs();
             syncDialInput(adminCountryEl, adminDialEl);
+            setAdminAiStatus('');
             setAdminSaveStatus('');
         };
 
@@ -2846,6 +2967,8 @@ class SPARouter {
             }
             syncDialInput(adminCountryEl, adminDialEl);
             if (adminPrivilegesToggleEl) adminPrivilegesToggleEl.checked = Boolean(row.has_privileges);
+            renderAdminAiUsage(row);
+            loadAdminAiLogs(row.user_id);
             setAdminSaveStatus('');
         };
 
@@ -2878,6 +3001,7 @@ class SPARouter {
                 if (user.has_privileges) {
                     badges.push('<span class="profile-badge profile-badge--soft">Protected</span>');
                 }
+                badges.push(`<span class="profile-badge profile-badge--soft">AI ${Number(user.ai_interactions_today || 0)} / ${Number(user.ai_interactions_limit || 10)}</span>`);
 
                 card.innerHTML = `
                     <div class="profile-record-top">
@@ -3044,6 +3168,41 @@ class SPARouter {
                 }
             });
             adminFormEl.dataset.bound = 'true';
+        }
+
+        if (adminAiResetEl && !adminAiResetEl.dataset.bound) {
+            adminAiResetEl.addEventListener('click', async () => {
+                if (!selectedAdminUserId) {
+                    setAdminAiStatus('Select a user first.');
+                    return;
+                }
+
+                setAdminAiStatus('Resetting daily AI limit...');
+                adminAiResetEl.disabled = true;
+                try {
+                    const resetRow = await this.resetAdminAiDailyInteractions(selectedAdminUserId);
+                    adminUsers = adminUsers.map(user => {
+                        if (String(user.user_id || '') !== String(selectedAdminUserId)) return user;
+                        return {
+                            ...user,
+                            ai_interactions_today: resetRow?.daily_count ?? 0,
+                            ai_interactions_limit: resetRow?.daily_limit ?? 10,
+                            ai_interactions_remaining: resetRow?.remaining ?? 10
+                        };
+                    });
+                    const selectedUser = findAdminUser(selectedAdminUserId);
+                    renderAdminUsers();
+                    renderAdminAiUsage(selectedUser);
+                    await loadAdminAiLogs(selectedAdminUserId);
+                    setAdminAiStatus('Daily AI limit reset.');
+                } catch (error) {
+                    console.error('[profile-admin] AI reset failed', error);
+                    setAdminAiStatus('Unable to reset this AI limit right now.');
+                } finally {
+                    adminAiResetEl.disabled = false;
+                }
+            });
+            adminAiResetEl.dataset.bound = 'true';
         }
 
         if (adminPromptsBodyEl && !adminPromptsBodyEl.dataset.bound) {

@@ -244,6 +244,31 @@
               <label class="form-check-label" for="profile-admin-user-has-privileges">Protected content access</label>
             </div>
 
+            <section class="profile-admin-ai-usage" aria-labelledby="profile-admin-ai-usage-title">
+              <div class="profile-card-header profile-admin-subheader">
+                <div>
+                  <h4 id="profile-admin-ai-usage-title" class="profile-card-title">AI usage</h4>
+                  <p id="profile-admin-ai-usage-summary" class="profile-hint mb-0">No AI interactions recorded today.</p>
+                </div>
+                <button id="profile-admin-ai-reset" class="btn btn-outline-secondary btn-sm" type="button">Reset daily limit</button>
+              </div>
+
+              <div class="profile-admin-ai-metrics" aria-label="AI interaction counters">
+                <article class="profile-admin-ai-metric">
+                  <span class="profile-meta-label">Today</span>
+                  <strong id="profile-admin-ai-count" class="profile-meta-value">0 / 10</strong>
+                </article>
+                <article class="profile-admin-ai-metric">
+                  <span class="profile-meta-label">Remaining</span>
+                  <strong id="profile-admin-ai-remaining" class="profile-meta-value">10</strong>
+                </article>
+              </div>
+
+              <div id="profile-admin-ai-status" class="profile-save-status" role="status" aria-live="polite"></div>
+              <div id="profile-admin-ai-logs" class="profile-admin-ai-log-list" role="list"></div>
+              <p id="profile-admin-ai-empty" class="profile-hint d-none">No AI interaction logs found for this user.</p>
+            </section>
+
             <div class="profile-actions">
               <div id="profile-admin-save-status" class="profile-save-status" role="status" aria-live="polite"></div>
               <div class="d-flex gap-2">

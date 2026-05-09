@@ -3125,6 +3125,81 @@ header .navbar-nav .nav-link.active {
   font-weight: 600;
 }
 
+.profile-admin-ai-usage {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+[data-bs-theme="light"] .profile-admin-ai-usage {
+  background: rgba(15, 23, 42, 0.03);
+}
+
+.profile-admin-ai-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.profile-admin-ai-metric {
+  min-width: 0;
+  padding: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+[data-bs-theme="light"] .profile-admin-ai-metric {
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.profile-admin-ai-log-list {
+  display: grid;
+  gap: 0.75rem;
+  max-height: 28rem;
+  overflow: auto;
+  padding-right: 0.25rem;
+}
+
+.profile-admin-ai-log-card {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+[data-bs-theme="light"] .profile-admin-ai-log-card {
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.profile-admin-ai-error {
+  margin: 0;
+  color: #fca5a5;
+  font-size: 0.85rem;
+}
+
+.profile-admin-ai-log-detail summary {
+  cursor: pointer;
+  color: var(--text);
+  font-weight: 700;
+  font-size: 0.86rem;
+}
+
+.profile-admin-ai-log-detail pre {
+  margin: 0.5rem 0 0;
+  max-height: 12rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
 .profile-admin-prompts-actions {
   display: flex;
   justify-content: flex-end;
