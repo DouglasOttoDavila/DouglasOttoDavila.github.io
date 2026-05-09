@@ -35,9 +35,12 @@
             this.submitEl = this.root.querySelector('#relationship-graph-chat-submit');
             this.clearEl = this.root.querySelector('#relationship-graph-chat-clear');
             this.statusEl = this.root.querySelector('#relationship-graph-chat-status');
+            this.availabilityEl = this.root.querySelector('#relationship-graph-assistant-availability');
 
             this.seedWelcomeMessage();
             this.bindUI();
+            this.setStatus('');
+            this.setAvailability('Ready', 'success');
             this.renderMessages();
         }
 
@@ -65,7 +68,7 @@
                 this.messages = [];
                 this.graphController.resetAssistantTransientState();
                 this.seedWelcomeMessage();
-                this.setStatus('Chat cleared. Assistant-applied highlights remain active until the page is refreshed.');
+                this.setStatus('Chat cleared. Assistant-applied highlights remain active until the page is refreshed.', 'info');
                 this.renderMessages();
             }, { signal });
 
@@ -75,7 +78,7 @@
                     this.graphController.selectNode(nodeButton.getAttribute('data-chat-node-id'), true, 'assistant');
                     this.graphController.highlightNodes([nodeButton.getAttribute('data-chat-node-id')]);
                     this.graphController.refreshVisualState();
-                    this.setStatus(`Focused on ${nodeButton.textContent.trim()}.`);
+                    this.setStatus(`Focused on ${nodeButton.textContent.trim()}.`, 'success');
                 }
             }, { signal });
         }
@@ -91,7 +94,7 @@
             this.messages.push(userMessage);
             this.renderMessages();
             this.setLoading(true);
-            this.setStatus('Thinking with graph context...');
+            this.setStatus('Thinking with graph context...', 'loading');
             if (this.inputEl) {
                 this.inputEl.value = '';
             }
@@ -121,7 +124,10 @@
 
                 this.messages.push(assistantMessage);
                 this.renderMessages();
-                this.setStatus(actionFeedback.applied.length > 0 ? actionFeedback.applied.join(' ') : 'Assistant responded without graph changes.');
+                this.setStatus(
+                    actionFeedback.applied.length > 0 ? actionFeedback.applied.join(' ') : 'Assistant responded without graph changes.',
+                    actionFeedback.applied.length > 0 ? 'success' : 'warning'
+                );
             } catch (error) {
                 this.messages.push({
                     id: createId(),
@@ -131,7 +137,7 @@
                     isError: true
                 });
                 this.renderMessages();
-                this.setStatus('Assistant request failed.');
+                this.setStatus('Assistant request failed. Check the message above and try again.', 'error');
             } finally {
                 this.setLoading(false);
             }
@@ -179,10 +185,18 @@
             this.messagesEl.scrollTop = this.messagesEl.scrollHeight;
         }
 
-        setStatus(message) {
-            if (this.statusEl) {
-                this.statusEl.textContent = message;
-            }
+        setStatus(message, tone = 'info') {
+            if (!this.statusEl) return;
+            const normalizedMessage = String(message || '').trim();
+            this.statusEl.textContent = normalizedMessage;
+            this.statusEl.dataset.statusTone = tone;
+            this.statusEl.classList.toggle('is-hidden', !normalizedMessage);
+        }
+
+        setAvailability(message, tone = 'success') {
+            if (!this.availabilityEl) return;
+            this.availabilityEl.textContent = message;
+            this.availabilityEl.dataset.statusTone = tone;
         }
 
         setLoading(isLoading) {
@@ -192,6 +206,7 @@
             if (this.inputEl) {
                 this.inputEl.disabled = isLoading;
             }
+            this.setAvailability(isLoading ? 'Thinking' : 'Ready', isLoading ? 'loading' : 'success');
         }
 
         destroy() {

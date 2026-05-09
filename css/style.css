@@ -4742,7 +4742,7 @@ header .navbar-nav .nav-link.active {
 .relationship-graph-assistant {
   position: relative;
   display: grid;
-  grid-template-rows: auto auto minmax(240px, 1fr) auto;
+  grid-template-rows: auto minmax(240px, 1fr) auto;
   min-height: 520px;
   overflow: hidden;
 }
@@ -4830,6 +4830,7 @@ header .navbar-nav .nav-link.active {
   justify-content: space-between;
   gap: 1rem;
   align-items: start;
+  border-bottom: 1px solid var(--graph-panel-stroke);
 }
 
 .relationship-graph-assistant__title {
@@ -4843,24 +4844,159 @@ header .navbar-nav .nav-link.active {
   border-radius: 999px;
 }
 
+.relationship-graph-assistant__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.relationship-graph-assistant__availability {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 32px;
+  padding: 0 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(83, 163, 255, 0.22);
+  color: var(--graph-label);
+  background: rgba(83, 163, 255, 0.08);
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.relationship-graph-assistant__availability::before {
+  content: "";
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.relationship-graph-assistant__availability[data-status-tone="success"] {
+  border-color: rgba(76, 195, 138, 0.26);
+  color: #93e5bd;
+  background: rgba(76, 195, 138, 0.1);
+}
+
+.relationship-graph-assistant__availability[data-status-tone="loading"] {
+  border-color: rgba(83, 163, 255, 0.28);
+  color: var(--bs-primary);
+  background: rgba(83, 163, 255, 0.1);
+}
+
+.relationship-graph-assistant__availability[data-status-tone="error"] {
+  border-color: rgba(220, 53, 69, 0.28);
+  color: #f08f9b;
+  background: rgba(220, 53, 69, 0.1);
+}
+
 .relationship-graph-assistant__status {
-  margin: 0 1.05rem;
-  padding: 0.8rem 0.9rem;
-  border-radius: 1rem;
-  border: 1px solid var(--graph-panel-stroke);
-  background: rgba(255, 255, 255, 0.03);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.65rem;
+  align-items: start;
+  min-height: 42px;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(83, 163, 255, 0.24);
+  border-left: 3px solid var(--bs-primary);
+  background: rgba(83, 163, 255, 0.08);
   color: var(--graph-muted);
-  line-height: 1.55;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.relationship-graph-assistant__status::before {
+  content: "i";
+  display: inline-grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 0.05rem;
+  border-radius: 999px;
+  color: var(--graph-label);
+  background: rgba(83, 163, 255, 0.18);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.relationship-graph-assistant__status.is-hidden {
+  display: none;
+}
+
+.relationship-graph-assistant__status[data-status-tone="success"] {
+  border-color: rgba(76, 195, 138, 0.26);
+  border-left-color: #4cc38a;
+  background: rgba(76, 195, 138, 0.09);
+}
+
+.relationship-graph-assistant__status[data-status-tone="success"]::before {
+  content: "\2713";
+  background: rgba(76, 195, 138, 0.18);
+}
+
+.relationship-graph-assistant__status[data-status-tone="warning"] {
+  border-color: rgba(255, 193, 7, 0.28);
+  border-left-color: var(--bs-warning);
+  background: rgba(255, 193, 7, 0.1);
+}
+
+.relationship-graph-assistant__status[data-status-tone="warning"]::before {
+  content: "!";
+  background: rgba(255, 193, 7, 0.18);
+}
+
+.relationship-graph-assistant__status[data-status-tone="error"] {
+  border-color: rgba(220, 53, 69, 0.28);
+  border-left-color: var(--bs-danger);
+  background: rgba(220, 53, 69, 0.1);
+}
+
+.relationship-graph-assistant__status[data-status-tone="error"]::before {
+  content: "!";
+  background: rgba(220, 53, 69, 0.18);
+}
+
+.relationship-graph-assistant__status[data-status-tone="loading"]::before {
+  content: "";
+  border: 2px solid rgba(83, 163, 255, 0.28);
+  border-top-color: var(--bs-primary);
+  background: transparent;
+  animation: relationship-graph-spin 0.9s linear infinite;
 }
 
 [data-bs-theme="light"] .relationship-graph-assistant__status {
   background: rgba(13, 110, 253, 0.04);
 }
 
+[data-bs-theme="light"] .relationship-graph-assistant__status[data-status-tone="success"] {
+  background: rgba(25, 135, 84, 0.08);
+}
+
+[data-bs-theme="light"] .relationship-graph-assistant__status[data-status-tone="warning"] {
+  background: rgba(255, 193, 7, 0.12);
+}
+
+[data-bs-theme="light"] .relationship-graph-assistant__status[data-status-tone="error"] {
+  background: rgba(220, 53, 69, 0.08);
+}
+
+[data-bs-theme="light"] .relationship-graph-assistant__availability[data-status-tone="success"] {
+  color: #13784a;
+}
+
+@keyframes relationship-graph-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .relationship-graph-assistant__messages {
   display: grid;
   gap: 0.8rem;
-  padding: 0.2rem 1.05rem 0;
+  padding: 1rem 1.05rem 0;
   overflow: auto;
   min-height: 240px;
   max-height: 540px;
@@ -5395,6 +5531,15 @@ header .navbar-nav .nav-link.active {
 
   .relationship-graph-node__label {
     font-size: 0.84rem;
+  }
+
+  .relationship-graph-assistant__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .relationship-graph-assistant__header-actions {
+    justify-content: flex-start;
   }
 
   .relationship-graph-assistant__actions {

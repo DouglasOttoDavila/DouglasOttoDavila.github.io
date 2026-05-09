@@ -111,15 +111,18 @@
               <p class="relationship-graph-kicker">AI Assistant</p>
               <h2 class="relationship-graph-assistant__title">Graph-aware Gemini copilot</h2>
             </div>
-            <button class="btn btn-sm btn-outline-secondary relationship-graph-assistant__clear" id="relationship-graph-chat-clear" type="button">
-              Clear chat
-            </button>
-          </div>
-          <div class="relationship-graph-assistant__status" id="relationship-graph-chat-status" aria-live="polite">
-            Ask about nodes, clusters, defects, deployments, or AI capabilities. The assistant can respond and safely drive the graph UI.
+            <div class="relationship-graph-assistant__header-actions">
+              <span class="relationship-graph-assistant__availability" id="relationship-graph-assistant-availability" data-status-tone="success" role="status" aria-live="polite">
+                Ready
+              </span>
+              <button class="btn btn-sm btn-outline-secondary relationship-graph-assistant__clear" id="relationship-graph-chat-clear" type="button">
+                Clear chat
+              </button>
+            </div>
           </div>
           <div class="relationship-graph-assistant__messages" id="relationship-graph-chat-messages" aria-live="polite"></div>
           <form class="relationship-graph-assistant__composer" id="relationship-graph-chat-form">
+            <div class="relationship-graph-assistant__status is-hidden" id="relationship-graph-chat-status" role="status" aria-live="polite"></div>
             <label class="visually-hidden" for="relationship-graph-chat-input">Ask the graph assistant</label>
             <textarea
               id="relationship-graph-chat-input"
