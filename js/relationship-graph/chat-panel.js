@@ -64,6 +64,12 @@
                 this.handleSubmit(value);
             }, { signal });
 
+            this.inputEl?.addEventListener('keydown', event => {
+                if (event.key !== 'Enter' || event.shiftKey || event.isComposing) return;
+                event.preventDefault();
+                this.formEl?.requestSubmit();
+            }, { signal });
+
             this.clearEl?.addEventListener('click', () => {
                 this.messages = [];
                 this.graphController.resetAssistantTransientState();
