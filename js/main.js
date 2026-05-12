@@ -317,27 +317,28 @@ class SPARouter {
             </button>`;
         }).join('');
 
-        return `<section class="card shadow-sm roadmap-role-card" aria-labelledby="role-lens-title">
+        return `<section class="card shadow-sm roadmap-role-card roadmap-proof-card" aria-labelledby="role-lens-title">
             <div class="card-body p-4 p-xl-4">
                 <div class="roadmap-role-topbar">
                     <div>
-                        <p class="roadmap-eyebrow mb-1">Role Lens</p>
-                        <h2 id="role-lens-title" class="h4 mb-0">Choose the viewpoint that matters first.</h2>
+                        <p class="roadmap-eyebrow mb-1">Proof Points</p>
+                        <h2 id="role-lens-title" class="h4 mb-1">Measured outcomes recruiters and engineering leaders can verify quickly.</h2>
+                        <p class="text-body-secondary mb-0">Impact from automation strategy, AI-assisted QA workflows, regression optimization, and release-readiness discipline.</p>
                     </div>
                     <button class="btn btn-link roadmap-inline-link" type="button" data-metric-help aria-label="Learn why these metrics matter">
                         <i class="fa-solid fa-circle-info me-2"></i>Why these metrics?
                     </button>
                 </div>
-                <div class="roadmap-role-tabs" role="tablist" aria-label="Role lens switcher">${roleButtons}</div>
+                <div class="roadmap-metrics-grid" aria-label="Impact metrics">${metrics}</div>
                 <div class="roadmap-role-summary">
                     <div>
-                        <p class="roadmap-eyebrow mb-1">Active Perspective</p>
+                        <p class="roadmap-eyebrow mb-1">View Proof As</p>
                         <h3 class="h5 mb-2" data-role-headline>${this.escapeHtml(activeRole.headline)}</h3>
                         <p class="mb-0 text-body-secondary" data-role-description>${this.escapeHtml(activeRole.description)}</p>
                     </div>
                     <div class="roadmap-role-actions" data-role-focus="recruiter qa-lead engineering-manager cto">${roleActions}</div>
                 </div>
-                <div class="roadmap-metrics-grid" aria-label="Impact metrics">${metrics}</div>
+                <div class="roadmap-role-tabs" role="tablist" aria-label="Role lens switcher">${roleButtons}</div>
             </div>
         </section>`;
     }
@@ -374,20 +375,20 @@ class SPARouter {
             `<a class="btn ${this.escapeHtml(cta.variant)} flex-fill" href="${this.escapeHtml(cta.href)}"${this.renderExternalLinkAttributes(cta.external)}><i class="${this.escapeHtml(cta.icon)} me-2"></i>${this.escapeHtml(cta.label)}</a>`
         )).join('');
 
-        return `<section class="roadmap-duo-grid">
-            <section class="card shadow-sm roadmap-panel" aria-labelledby="value-engine-title">
+        return `<section class="roadmap-duo-grid roadmap-capability-grid">
+            <section class="card shadow-sm roadmap-panel roadmap-capabilities-panel" aria-labelledby="value-engine-title">
                 <div class="card-body p-4">
                     <div class="roadmap-panel-header">
                         <div>
-                            <p class="roadmap-eyebrow mb-1">Value Engine</p>
+                            <p class="roadmap-eyebrow mb-1">Capabilities</p>
                             <h2 id="value-engine-title" class="h4 mb-1">${this.escapeHtml(data.valueEngine?.title || '')}</h2>
+                            <p class="text-body-secondary mb-0">Four areas that explain the work without turning the homepage into a keyword wall.</p>
                         </div>
-                        <span class="roadmap-panel-link">${this.escapeHtml(data.valueEngine?.linkLabel || '')}</span>
                     </div>
-                    <div class="value-engine-grid">${valueCards}<div class="value-engine-node" aria-hidden="true"></div></div>
+                    <div class="value-engine-grid">${valueCards}</div>
                 </div>
             </section>
-            <section class="card shadow-sm roadmap-panel" aria-labelledby="availability-title">
+            <section class="card shadow-sm roadmap-panel roadmap-profile-panel" aria-labelledby="availability-title">
                 <div class="card-body p-4 h-100 d-flex flex-column">
                     <div class="roadmap-panel-header align-items-start">
                         <div>
@@ -399,11 +400,6 @@ class SPARouter {
                         </div>
                     </div>
                     <div class="availability-views" role="group" aria-label="Availability perspective switcher">${availabilityButtons}</div>
-                    <div class="availability-map" aria-hidden="true">
-                        <span class="availability-map-pulse pulse-a"></span>
-                        <span class="availability-map-pulse pulse-b"></span>
-                        <span class="availability-map-grid"></span>
-                    </div>
                     <div class="availability-content mt-3">${availabilityPanels}</div>
                     <div class="d-flex flex-column flex-sm-row gap-2 mt-auto pt-4">${availabilityCtas}</div>
                 </div>
@@ -450,7 +446,7 @@ class SPARouter {
             <div class="card-body p-4">
                 <div class="roadmap-panel-header align-items-start">
                     <div>
-                        <p class="roadmap-eyebrow mb-1">Mission Timeline</p>
+                        <p class="roadmap-eyebrow mb-1">Career Proof</p>
                         <h2 id="mission-timeline-title" class="h4 mb-1">${this.escapeHtml(data.timeline?.title || '')}</h2>
                         <p class="text-body-secondary mb-0">${this.escapeHtml(data.timeline?.description || '')}</p>
                     </div>
@@ -532,23 +528,12 @@ class SPARouter {
                 <div class="card-body p-4">
                     <div class="roadmap-panel-header align-items-start">
                         <div>
-                            <p class="roadmap-eyebrow mb-1">Skill Constellation</p>
-                            <h2 id="skill-constellation-title" class="h4 mb-1">Connected expertise across the quality universe.</h2>
+                            <p class="roadmap-eyebrow mb-1">Expertise</p>
+                            <h2 id="skill-constellation-title" class="h4 mb-1">Connected capabilities across automation, AI, delivery, and quality strategy.</h2>
                         </div>
                     </div>
                     <div class="skill-constellation-shell">
                         ${clusters}
-                        <div class="constellation-map" aria-hidden="true">
-                            <span class="constellation-center">DD</span>
-                            <span class="constellation-ring ring-outer"></span>
-                            <span class="constellation-ring ring-inner"></span>
-                            <span class="constellation-node node-a"></span>
-                            <span class="constellation-node node-b"></span>
-                            <span class="constellation-node node-c"></span>
-                            <span class="constellation-node node-d"></span>
-                            <span class="constellation-path path-a"></span>
-                            <span class="constellation-path path-b"></span>
-                        </div>
                     </div>
                     <div class="skill-readout mt-3" aria-live="polite">
                         <p class="roadmap-eyebrow mb-1">Active Cluster</p>

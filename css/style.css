@@ -2500,6 +2500,289 @@ header .navbar-nav .nav-link.active {
   }
 }
 
+/* Home executive portfolio refinement */
+.page-home #content-area {
+  max-width: 1180px;
+}
+
+.home-roadmap {
+  gap: clamp(1.25rem, 2vw, 1.75rem) !important;
+}
+
+.home-roadmap .hero-section {
+  padding: clamp(1.75rem, 4vw, 3.75rem) !important;
+  border-radius: 1.25rem !important;
+}
+
+.home-roadmap .hero-section .display-5 {
+  max-width: 13ch;
+  font-size: clamp(2.55rem, 5vw, 4.65rem);
+  line-height: 0.98;
+  letter-spacing: 0;
+}
+
+.home-roadmap .hero-section .lead {
+  max-width: 62ch;
+  font-size: clamp(1.05rem, 1.35vw, 1.22rem);
+  line-height: 1.65;
+}
+
+.home-roadmap .hero-section .btn {
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-roadmap .hero-section .card {
+  box-shadow: none !important;
+}
+
+.home-roadmap .hero-section .card-body {
+  padding: clamp(1.1rem, 2vw, 1.5rem) !important;
+}
+
+.home-roadmap .hero-section li p {
+  font-size: 0.98rem;
+  line-height: 1.55;
+}
+
+.roadmap-panel,
+.roadmap-role-card {
+  border-radius: 1rem;
+  box-shadow: 0 18px 42px rgba(2, 6, 23, 0.26);
+}
+
+.roadmap-panel::before,
+.roadmap-role-card::before,
+.page-space .card::after {
+  opacity: 0.35;
+}
+
+.roadmap-proof-card .roadmap-role-topbar {
+  align-items: flex-start;
+  margin-bottom: 1.25rem;
+}
+
+.roadmap-proof-card .roadmap-metrics-grid {
+  margin-top: 0;
+}
+
+.roadmap-proof-card .roadmap-role-summary {
+  margin: 1.25rem 0 0.9rem;
+}
+
+.roadmap-role-tabs,
+.availability-views,
+.timeline-filter-row {
+  gap: 0.5rem;
+}
+
+.roadmap-pill {
+  min-height: 44px;
+  padding: 0.55rem 0.95rem;
+}
+
+.roadmap-metric-card {
+  min-height: 11.25rem;
+  padding: 1.25rem;
+}
+
+.roadmap-metric-value {
+  font-size: clamp(2rem, 4vw, 3.1rem);
+}
+
+.roadmap-metric-label {
+  font-size: 1rem;
+  line-height: 1.3;
+}
+
+.roadmap-metric-detail,
+.value-card-detail,
+.home-roadmap .text-body-secondary {
+  line-height: 1.6;
+}
+
+.roadmap-capability-grid {
+  grid-template-columns: minmax(0, 1.42fr) minmax(300px, 0.72fr);
+}
+
+.roadmap-capabilities-panel .roadmap-panel-header {
+  align-items: flex-start;
+}
+
+.value-engine-grid {
+  gap: 0.85rem;
+}
+
+.value-card {
+  border-radius: 0.9rem;
+  padding: 1.15rem;
+}
+
+.value-card-icon,
+.roadmap-metric-icon {
+  border-radius: 0.75rem;
+}
+
+.availability-map,
+.value-engine-node,
+.constellation-map {
+  display: none !important;
+}
+
+.roadmap-profile-panel .availability-panel {
+  padding: 1.05rem;
+}
+
+.roadmap-profile-panel .availability-list {
+  gap: 0.7rem;
+}
+
+.roadmap-profile-panel .availability-list li {
+  display: grid;
+  grid-template-columns: minmax(6rem, auto) minmax(0, 1fr);
+}
+
+.roadmap-profile-panel .availability-list strong {
+  text-align: right;
+}
+
+.roadmap-timeline-panel .timeline-filter-row {
+  margin-top: 1rem;
+}
+
+.roadmap-mission-card {
+  border-radius: 0.95rem;
+}
+
+.roadmap-mission:not(.is-expanded) .roadmap-chip-row--mission {
+  opacity: 0.82;
+}
+
+.roadmap-detail-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.knowledge-layer,
+.knowledge-education-card,
+.recognition-card,
+.skill-readout,
+.availability-panel,
+.skill-cluster {
+  border-radius: 0.9rem;
+}
+
+.skill-constellation-shell {
+  min-height: auto;
+}
+
+.roadmap-tools-grid .skill-constellation-shell {
+  grid-template-columns: 1fr;
+}
+
+.roadmap-chip {
+  min-height: 32px;
+  line-height: 1.2;
+}
+
+.cta-section .card-body {
+  padding: clamp(1.5rem, 3vw, 3rem) !important;
+}
+
+.cta-section .btn {
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (min-width: 1200px) {
+  .roadmap-metrics-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .roadmap-tools-grid {
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  }
+}
+
+@media (max-width: 991.98px) {
+  .home-roadmap .hero-section .display-5 {
+    max-width: 15ch;
+  }
+
+  .roadmap-capability-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .roadmap-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .page-home #content-area {
+    padding-top: 1.25rem !important;
+  }
+
+  .home-roadmap .hero-section {
+    padding: 1.4rem !important;
+  }
+
+  .home-roadmap .hero-section .display-5 {
+    max-width: none;
+    font-size: clamp(2rem, 9.2vw, 2.25rem);
+    line-height: 1.04;
+    margin-top: 1rem !important;
+  }
+
+  .home-roadmap .hero-section .lead {
+    font-size: 1rem;
+    line-height: 1.52;
+    margin-bottom: 0;
+  }
+
+  .home-roadmap .hero-section .d-flex.flex-wrap.gap-3.mt-4 {
+    margin-top: 1rem !important;
+  }
+
+  .home-roadmap .hero-section .col-lg-5 {
+    display: none;
+  }
+
+  .home-roadmap .hero-section a[href*="linkedin.com"] {
+    display: none !important;
+  }
+
+  .home-roadmap .hero-section .btn,
+  .cta-section .btn {
+    width: 100%;
+  }
+
+  .roadmap-panel > .card-body,
+  .roadmap-role-card > .card-body {
+    padding: 1rem !important;
+  }
+
+  .roadmap-metric-card {
+    min-height: auto;
+  }
+
+  .roadmap-profile-panel .availability-list li,
+  .availability-list li,
+  .roadmap-detail-grid > div {
+    grid-template-columns: 1fr;
+    gap: 0.2rem;
+  }
+
+  .roadmap-profile-panel .availability-list strong,
+  .availability-list strong,
+  .roadmap-detail-grid strong {
+    text-align: left;
+  }
+}
+
 /* Profile page */
 .profile-shell {
   max-width: 1160px;

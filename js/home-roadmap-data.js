@@ -3,7 +3,7 @@ window.HomeRoadmapData = {
   defaultAvailabilityView: 'recruiter',
   defaultFilter: 'all',
   defaultSkill: 'automation',
-  metricHelpText: 'Each impact metric maps to a mission below, turning summary numbers into visible evidence recruiters, leads, and executives can verify quickly.',
+  metricHelpText: 'Each metric maps to career evidence below, so the homepage leads with measurable outcomes before asking visitors to parse the full timeline.',
   roleActions: [
     {
       label: 'Resume',
@@ -90,7 +90,7 @@ window.HomeRoadmapData = {
   ],
   valueEngine: {
     title: 'Core capabilities that drive measurable outcomes.',
-    linkLabel: 'Explore all',
+    linkLabel: '',
     cards: [
       {
         title: 'AI-Driven QA',
@@ -135,7 +135,7 @@ window.HomeRoadmapData = {
     ]
   },
   availability: {
-    title: 'Operating like a live mission panel, not a static location card.',
+    title: 'Remote-first QA automation leadership from Porto Alegre, Brazil.',
     views: [
       {
         id: 'recruiter',
@@ -189,8 +189,8 @@ window.HomeRoadmapData = {
     ]
   },
   timeline: {
-    title: 'A journey of impact, learning, and scaling quality.',
-    description: 'From support operations to AI-enhanced QA leadership, the path is organized like a delivery roadmap instead of a static resume.',
+    title: 'Current role first, deeper history on demand.',
+    description: 'The timeline keeps the strongest current proof expanded while older roles stay compact for quick scanning.',
     filters: [
       { id: 'all', label: 'All', active: true },
       { id: 'ai-llm', label: 'AI/LLM' },
@@ -413,8 +413,8 @@ window.HomeRoadmapData = {
     toolsNote: 'Also work with Oracle eCommerce (OCC/OIC), REST/SOAP, SQL, Linux, Bash, and enterprise tooling.'
   },
   cta: {
-    title: 'Ready to explore automation that scales?',
-    subtitle: "Let's connect and build a quality engine tailored to your roadmap.",
+    title: 'Need stronger release confidence?',
+    subtitle: "Let's connect and shape a quality strategy your engineering team can measure.",
     buttons: [
       {
         label: 'Email Douglas',
