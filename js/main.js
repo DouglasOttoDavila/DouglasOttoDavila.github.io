@@ -284,6 +284,8 @@ class SPARouter {
         const shell = root?.querySelector?.('[data-roadmap-shell]');
         if (!data || !shell) return;
 
+        this.renderHomeHeroActions(root, data);
+
         shell.innerHTML = [
             this.renderRoadmapRoleSection(data),
             this.renderRoadmapValueAvailabilitySection(data),
@@ -292,6 +294,29 @@ class SPARouter {
             this.renderRoadmapSkillsSection(data),
             this.renderRoadmapCtaSection(data)
         ].join('');
+    }
+
+    renderHomeHeroActions(root, data) {
+        const actions = {
+            resume: data.roleActions?.[0],
+            contact: data.roleActions?.[1],
+            linkedin: data.cta?.buttons?.[2]
+        };
+
+        Object.entries(actions).forEach(([key, action]) => {
+            const link = root?.querySelector?.(`[data-home-hero-action="${key}"]`);
+            const href = String(action?.href || '').trim();
+            if (!link || !href) return;
+
+            link.href = href;
+            if (action?.external) {
+                link.target = '_blank';
+                link.rel = 'noopener';
+            } else {
+                link.removeAttribute('target');
+                link.removeAttribute('rel');
+            }
+        });
     }
 
     renderRoadmapRoleSection(data) {
