@@ -248,6 +248,48 @@ header .navbar-nav .nav-link.active {
   box-shadow: 0 24px 48px rgba(15, 18, 28, 0.18);
 }
 
+.dropdown-menu-panel > li > .dropdown-item:not(.user-menu-item) {
+  position: relative;
+  padding-left: 1.6rem;
+  border-radius: 0.35rem;
+  background: transparent;
+  color: var(--bs-dropdown-link-color);
+}
+
+.dropdown-menu-panel > li > .dropdown-item:not(.user-menu-item)::before {
+  content: '';
+  position: absolute;
+  left: 0.55rem;
+  top: 50%;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: transparent;
+  transform: translateY(-50%);
+}
+
+.dropdown-menu-panel > li > .dropdown-item:not(.user-menu-item):hover,
+.dropdown-menu-panel > li > .dropdown-item:not(.user-menu-item):focus-visible {
+  background: transparent;
+  color: var(--bs-dropdown-link-hover-color);
+}
+
+.dropdown-menu-panel > li > .dropdown-item:not(.user-menu-item):hover::before,
+.dropdown-menu-panel > li > .dropdown-item:not(.user-menu-item):focus-visible::before {
+  background: var(--bs-secondary-color);
+}
+
+.dropdown-menu-panel > li > .dropdown-item:not(.user-menu-item).active,
+.dropdown-menu-panel > li > .dropdown-item:not(.user-menu-item):active {
+  background: transparent;
+  color: var(--bs-dropdown-link-color);
+}
+
+.dropdown-menu-panel > li > .dropdown-item:not(.user-menu-item).active::before,
+.dropdown-menu-panel > li > .dropdown-item:not(.user-menu-item):active::before {
+  background: var(--bs-primary);
+}
+
 .dropdown-submenu {
   display: block;
 }
@@ -5832,6 +5874,671 @@ header .navbar-nav .nav-link.active {
 
   .relationship-graph-assistant__submit {
     width: 100%;
+  }
+}
+
+/* Neural Test Signal Classifier */
+.neural-signal-page {
+  --neural-surface: rgba(18, 22, 38, 0.68);
+  --neural-surface-strong: rgba(14, 18, 31, 0.9);
+  --neural-border: rgba(255, 255, 255, 0.14);
+  --neural-muted: rgba(255, 255, 255, 0.72);
+  --neural-blue: #60a5fa;
+  --neural-cyan: #22d3ee;
+  --neural-green: #34d399;
+  --neural-yellow: #fbbf24;
+  display: grid;
+  gap: clamp(1.2rem, 2vw, 1.75rem);
+}
+
+[data-bs-theme="light"] .neural-signal-page {
+  --neural-surface: rgba(255, 255, 255, 0.78);
+  --neural-surface-strong: rgba(255, 255, 255, 0.96);
+  --neural-border: rgba(13, 110, 253, 0.16);
+  --neural-muted: rgba(15, 18, 28, 0.66);
+}
+
+.neural-signal-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  padding: clamp(1.4rem, 3vw, 2.4rem) 0 0;
+}
+
+@media (min-width: 900px) {
+  .neural-signal-hero {
+    grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+    align-items: end;
+  }
+}
+
+.neural-signal-title {
+  max-width: 920px;
+  margin: 0.9rem 0 0.8rem;
+  font-size: clamp(2.35rem, 6vw, 5rem);
+  font-weight: 760;
+  line-height: 0.98;
+  letter-spacing: 0;
+}
+
+.neural-signal-lede {
+  max-width: 760px;
+  margin: 0;
+  color: var(--neural-muted);
+  font-size: clamp(1rem, 1.6vw, 1.25rem);
+  line-height: 1.65;
+}
+
+.neural-signal-hero__facts {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.neural-signal-hero__facts span,
+.neural-signal-card,
+.neural-signal-demo,
+.neural-signal-inspector,
+.neural-signal-network,
+.neural-signal-section,
+.neural-signal-stack-list {
+  background: var(--neural-surface);
+  border: 1px solid var(--neural-border);
+  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(14px);
+}
+
+[data-bs-theme="light"] .neural-signal-hero__facts span,
+[data-bs-theme="light"] .neural-signal-card,
+[data-bs-theme="light"] .neural-signal-demo,
+[data-bs-theme="light"] .neural-signal-inspector,
+[data-bs-theme="light"] .neural-signal-network,
+[data-bs-theme="light"] .neural-signal-section,
+[data-bs-theme="light"] .neural-signal-stack-list {
+  box-shadow: 0 20px 42px rgba(15, 18, 28, 0.12);
+}
+
+.neural-signal-hero__facts span {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 0.85rem;
+  color: var(--neural-muted);
+}
+
+.neural-signal-hero__facts strong {
+  color: var(--bs-body-color);
+}
+
+.neural-signal-demo,
+.neural-signal-section {
+  border-radius: 1rem;
+  padding: clamp(1rem, 2vw, 1.4rem);
+}
+
+.neural-signal-demo__header,
+.neural-signal-section--split {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 900px) {
+  .neural-signal-demo__header,
+  .neural-signal-section--split {
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 0.72fr);
+    align-items: start;
+  }
+}
+
+.neural-signal-demo__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  justify-content: flex-start;
+}
+
+@media (min-width: 900px) {
+  .neural-signal-demo__actions {
+    justify-content: flex-end;
+  }
+}
+
+.neural-signal-input-panel {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.2rem;
+  padding: 1rem;
+  border-radius: 0.9rem;
+  background: var(--neural-surface-strong);
+  border: 1px solid var(--neural-border);
+}
+
+.neural-signal-input-panel__header {
+  display: grid;
+  gap: 0.8rem;
+}
+
+@media (min-width: 820px) {
+  .neural-signal-input-panel__header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+  }
+}
+
+.neural-signal-input-panel__header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.neural-signal-input-grid {
+  display: grid;
+  gap: 0.9rem;
+}
+
+@media (min-width: 760px) {
+  .neural-signal-input-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.neural-signal-field {
+  position: relative;
+  display: grid;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.neural-signal-field > span:not(.neural-signal-tooltip-card) {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: var(--neural-muted);
+  font-size: 0.88rem;
+  font-weight: 650;
+}
+
+.neural-signal-field strong {
+  color: var(--neural-cyan);
+  font-family: 'Fira Code', monospace;
+  font-size: 0.82rem;
+}
+
+.neural-signal-field--tooltip > span:not(.neural-signal-tooltip-card) {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.25rem;
+  cursor: help;
+}
+
+.neural-signal-field .form-control,
+.neural-signal-field .form-select {
+  min-height: 42px;
+  border-color: var(--neural-border);
+  background-color: rgba(255, 255, 255, 0.06);
+  color: var(--bs-body-color);
+}
+
+[data-bs-theme="light"] .neural-signal-field .form-control,
+[data-bs-theme="light"] .neural-signal-field .form-select {
+  background-color: rgba(255, 255, 255, 0.82);
+}
+
+.neural-signal-field .form-control:focus,
+.neural-signal-field .form-select:focus,
+.neural-signal-field .form-check-input:focus {
+  border-color: rgba(34, 211, 238, 0.72);
+  box-shadow: 0 0 0 0.22rem rgba(34, 211, 238, 0.18);
+}
+
+.neural-signal-field--check {
+  grid-template-columns: 1.1rem 1fr;
+  align-items: center;
+  align-content: end;
+  min-height: 74px;
+  padding: 0.6rem 0;
+}
+
+.neural-signal-field--check span {
+  display: block;
+  color: var(--bs-body-color);
+}
+
+.neural-signal-field--check .form-check-input {
+  margin: 0;
+}
+
+.neural-signal-tooltip-card {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 0.7rem);
+  z-index: 20;
+  width: min(360px, calc(100vw - 3rem));
+  padding: 0.85rem 0.95rem;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(34, 211, 238, 0.28);
+  background: rgba(9, 13, 27, 0.96);
+  box-shadow: 0 24px 54px rgba(0, 0, 0, 0.38), 0 0 0 1px rgba(34, 211, 238, 0.08);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.86rem;
+  font-weight: 400;
+  line-height: 1.48;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-4px);
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.neural-signal-tooltip-card::before {
+  content: '';
+  position: absolute;
+  left: 1rem;
+  top: -0.42rem;
+  width: 0.78rem;
+  height: 0.78rem;
+  transform: rotate(45deg);
+  border-left: 1px solid rgba(34, 211, 238, 0.28);
+  border-top: 1px solid rgba(34, 211, 238, 0.28);
+  background: inherit;
+}
+
+.neural-signal-tooltip-card strong {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--neural-cyan);
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 750;
+}
+
+.neural-signal-field--tooltip:hover .neural-signal-tooltip-card,
+.neural-signal-field--tooltip:focus-within .neural-signal-tooltip-card {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+[data-bs-theme="light"] .neural-signal-tooltip-card {
+  background: rgba(255, 255, 255, 0.98);
+  color: rgba(15, 18, 28, 0.74);
+  box-shadow: 0 24px 50px rgba(15, 18, 28, 0.18), 0 0 0 1px rgba(13, 110, 253, 0.08);
+}
+
+@media (min-width: 760px) {
+  .neural-signal-input-grid .neural-signal-field:nth-child(3n) .neural-signal-tooltip-card {
+    left: auto;
+    right: 0;
+  }
+
+  .neural-signal-input-grid .neural-signal-field:nth-child(3n) .neural-signal-tooltip-card::before {
+    left: auto;
+    right: 1rem;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .neural-signal-tooltip-card {
+    position: static;
+    width: 100%;
+    margin-top: 0.25rem;
+    transform: none;
+  }
+
+  .neural-signal-tooltip-card::before {
+    display: none;
+  }
+
+  .neural-signal-field--tooltip:hover .neural-signal-tooltip-card,
+  .neural-signal-field--tooltip:focus-within .neural-signal-tooltip-card {
+    transform: none;
+  }
+}
+
+.neural-signal-kicker {
+  margin: 0 0 0.35rem;
+  color: var(--neural-cyan);
+  font-size: 0.78rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.neural-signal-workspace {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.2rem;
+}
+
+@media (min-width: 1100px) {
+  .neural-signal-workspace {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  }
+}
+
+.neural-signal-network {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.8rem;
+  min-height: 560px;
+  padding: 1rem;
+  border-radius: 0.9rem;
+  overflow: hidden;
+}
+
+@media (min-width: 780px) {
+  .neural-signal-network {
+    grid-template-columns: minmax(175px, 1fr) minmax(60px, 0.25fr) minmax(175px, 1fr) minmax(60px, 0.25fr) minmax(175px, 1fr);
+    align-items: center;
+    min-height: 460px;
+  }
+}
+
+.neural-signal-layer {
+  display: grid;
+  gap: 0.65rem;
+  align-content: center;
+  min-width: 0;
+}
+
+.neural-signal-layer h3 {
+  margin: 0 0 0.25rem;
+  color: var(--neural-muted);
+  font-size: 0.82rem;
+  font-weight: 720;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.neural-signal-node {
+  --activation: 0.1;
+  width: 100%;
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 0.8rem;
+  border: 1px solid rgba(96, 165, 250, calc(0.18 + (var(--activation) * 0.46)));
+  color: var(--bs-body-color);
+  background:
+    linear-gradient(90deg, rgba(96, 165, 250, calc(0.07 + (var(--activation) * 0.22))), transparent),
+    rgba(255, 255, 255, 0.035);
+  text-align: left;
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+}
+
+.neural-signal-node:hover,
+.neural-signal-node:focus-visible,
+.neural-signal-node.is-hot {
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.12), 0 14px 28px rgba(0, 0, 0, 0.18);
+}
+
+.neural-signal-node:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 0.22rem rgba(34, 211, 238, 0.28);
+}
+
+.neural-signal-node--hidden {
+  border-color: rgba(52, 211, 153, calc(0.18 + (var(--activation) * 0.44)));
+  background:
+    linear-gradient(90deg, rgba(52, 211, 153, calc(0.07 + (var(--activation) * 0.2))), transparent),
+    rgba(255, 255, 255, 0.035);
+}
+
+.neural-signal-node--output {
+  border-color: rgba(251, 191, 36, calc(0.18 + (var(--activation) * 0.46)));
+  background:
+    linear-gradient(90deg, rgba(251, 191, 36, calc(0.07 + (var(--activation) * 0.22))), transparent),
+    rgba(255, 255, 255, 0.035);
+}
+
+.neural-signal-node--output.is-winner {
+  border-color: rgba(251, 191, 36, 0.95);
+  box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.22), 0 18px 34px rgba(251, 191, 36, 0.12);
+}
+
+.neural-signal-node__label {
+  min-width: 0;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.neural-signal-node__value {
+  flex: 0 0 auto;
+  min-width: 3.25rem;
+  padding: 0.25rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--neural-cyan);
+  font-family: 'Fira Code', monospace;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+[data-bs-theme="light"] .neural-signal-node__value {
+  background: rgba(13, 110, 253, 0.08);
+}
+
+.neural-signal-edges {
+  display: none;
+}
+
+@media (min-width: 780px) {
+  .neural-signal-edges {
+    display: grid;
+    gap: 0.7rem;
+    align-content: center;
+  }
+
+  .neural-signal-edges span {
+    height: 2px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(96, 165, 250, 0.1), rgba(34, 211, 238, 0.72), rgba(52, 211, 153, 0.1));
+    transform: rotate(var(--edge-rotation, 0deg));
+    animation: neural-signal-flow 1.8s linear infinite;
+  }
+
+  .neural-signal-edges span:nth-child(2n) {
+    --edge-rotation: 10deg;
+  }
+
+  .neural-signal-edges span:nth-child(3n) {
+    --edge-rotation: -10deg;
+  }
+
+  .neural-signal-edges--output span {
+    background: linear-gradient(90deg, rgba(52, 211, 153, 0.1), rgba(251, 191, 36, 0.76), rgba(251, 113, 133, 0.12));
+  }
+}
+
+@keyframes neural-signal-flow {
+  0% {
+    opacity: 0.35;
+    transform: translateX(-4px) rotate(var(--edge-rotation, 0deg));
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.35;
+    transform: translateX(4px) rotate(var(--edge-rotation, 0deg));
+  }
+}
+
+.neural-signal-inspector {
+  align-self: stretch;
+  padding: 1rem;
+  border-radius: 0.9rem;
+}
+
+.neural-signal-inspector h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1.25rem;
+}
+
+.neural-signal-inspector__meta {
+  margin: 0 0 1rem;
+  color: var(--neural-muted);
+  line-height: 1.45;
+}
+
+.neural-signal-verdict {
+  display: grid;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+  padding: 0.9rem;
+  border-radius: 0.8rem;
+  background: var(--neural-surface-strong);
+  border: 1px solid var(--neural-border);
+}
+
+.neural-signal-verdict span {
+  color: var(--neural-muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.neural-signal-verdict strong {
+  font-size: 1.35rem;
+}
+
+.neural-signal-bars {
+  display: grid;
+  gap: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.neural-signal-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.3rem 0.7rem;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.neural-signal-bar strong {
+  color: var(--neural-cyan);
+  font-family: 'Fira Code', monospace;
+  font-size: 0.85rem;
+}
+
+.neural-signal-bar__track {
+  grid-column: 1 / -1;
+  height: 0.45rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.neural-signal-bar__track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--neural-blue), var(--neural-green), var(--neural-yellow));
+  transition: width 0.35s ease;
+}
+
+.neural-signal-action {
+  display: grid;
+  grid-template-columns: 2.4rem 1fr;
+  gap: 0.75rem;
+  align-items: start;
+  padding: 0.9rem;
+  border-radius: 0.8rem;
+  background: rgba(34, 211, 238, 0.1);
+  border: 1px solid rgba(34, 211, 238, 0.24);
+}
+
+.neural-signal-action__icon {
+  width: 2.4rem;
+  height: 2.4rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--neural-cyan);
+  background: rgba(34, 211, 238, 0.14);
+}
+
+.neural-signal-section__header {
+  max-width: 760px;
+  margin-bottom: 1rem;
+}
+
+.neural-signal-section h2 {
+  margin: 0;
+  font-size: clamp(1.55rem, 3vw, 2.25rem);
+}
+
+.neural-signal-card-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 760px) {
+  .neural-signal-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.neural-signal-card {
+  min-height: 100%;
+  padding: 1rem;
+  border-radius: 0.9rem;
+}
+
+.neural-signal-card i {
+  width: 2.25rem;
+  height: 2.25rem;
+  display: grid;
+  place-items: center;
+  margin-bottom: 0.75rem;
+  border-radius: 0.75rem;
+  color: var(--neural-cyan);
+  background: rgba(34, 211, 238, 0.12);
+}
+
+.neural-signal-card h3 {
+  margin: 0 0 0.45rem;
+  font-size: 1.05rem;
+}
+
+.neural-signal-card p,
+.neural-signal-stack-list {
+  color: var(--neural-muted);
+  line-height: 1.6;
+}
+
+.neural-signal-card p {
+  margin: 0;
+}
+
+.neural-signal-stack-list {
+  display: grid;
+  gap: 0.7rem;
+  padding: 1rem;
+  border-radius: 0.9rem;
+}
+
+.neural-signal-stack-list strong {
+  color: var(--bs-body-color);
+}
+
+@media (max-width: 575.98px) {
+  .neural-signal-demo__actions .btn {
+    width: 100%;
+  }
+
+  .neural-signal-title {
+    overflow-wrap: anywhere;
+  }
+
+  .neural-signal-hero__facts span {
+    display: grid;
+    gap: 0.2rem;
   }
 }
 

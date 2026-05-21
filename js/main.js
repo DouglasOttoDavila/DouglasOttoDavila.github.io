@@ -9,6 +9,7 @@ class SPARouter {
             'relationship-graph': 'content/relationship-graph.html',
             'relationship-entity': 'content/relationship-entity.html',
             'user-story-analyzer': 'content/user-story-analyzer.html',
+            'neural-test-signal-classifier': 'content/neural-test-signal-classifier.html',
             'login': 'content/login.html',
             'privacy': 'content/privacy.html',
             'profile': 'content/profile.html'
@@ -16,6 +17,7 @@ class SPARouter {
         this.currentPage = '';
         this.currentRouteTarget = '';
         this.navContainer = document.getElementById('primaryNav');
+        this.neuralSignalCleanup = null;
 
         this.protectedPagesConfigUrl = 'content/protected-pages.json';
         this.authConfigUrl = 'content/auth.config.json';
@@ -1621,6 +1623,7 @@ class SPARouter {
             'relationship-graph': 'Operational Context Graph | Douglas D\'Avila',
             'relationship-entity': 'Operational Context Record | Douglas D\'Avila',
             'user-story-analyzer': 'User Story Quality Analyzer | Douglas D\'Avila',
+            'neural-test-signal-classifier': 'Neural Test Signal Classifier | Douglas D\'Avila',
             'login': 'Sign in | Douglas D\'Avila',
             'privacy': 'Privacy | Douglas D\'Avila',
             'profile': 'Profile | Douglas D\'Avila'
@@ -1634,6 +1637,10 @@ class SPARouter {
         }
         if (window.RelationshipEntityPageFeature?.unmount) {
             window.RelationshipEntityPageFeature.unmount();
+        }
+        if (typeof this.neuralSignalCleanup === 'function') {
+            this.neuralSignalCleanup();
+            this.neuralSignalCleanup = null;
         }
     }
 
@@ -1655,6 +1662,10 @@ class SPARouter {
             this.setupUserStoryAnalyzer();
         }
 
+        if (page === 'neural-test-signal-classifier') {
+            this.setupNeuralTestSignalClassifier();
+        }
+
         if (page === 'login') {
             this.setupLoginPage();
         }
@@ -1662,6 +1673,288 @@ class SPARouter {
         if (page === 'profile') {
             this.setupProfilePage();
         }
+    }
+
+    setupNeuralTestSignalClassifier() {
+        const root = document.getElementById('neural-signal-root');
+        if (!root) return;
+
+        const events = [
+            {
+                title: 'Checkout UI retry failure',
+                meta: 'checkout-ui / payment-summary.spec.ts / retry passed',
+                inputs: { retry: 1, flip: 0.82, duration: 0.68, churn: 0.22, keyword: 0.55 },
+                hidden: { pattern: 0.91, regression: 0.28, environment: 0.52 },
+                probabilities: { product_regression: 0.11, flaky_test: 0.76, infra_issue: 0.13 },
+                action: 'Rerun once, quarantine if repeated, and inspect async waits around the payment summary refresh.'
+            },
+            {
+                title: 'API assertion after service change',
+                meta: 'orders-api / contract regression / source churn high',
+                inputs: { retry: 0, flip: 0.18, duration: 0.25, churn: 0.88, keyword: 0.83 },
+                hidden: { pattern: 0.24, regression: 0.89, environment: 0.18 },
+                probabilities: { product_regression: 0.81, flaky_test: 0.07, infra_issue: 0.12 },
+                action: 'Open or link a defect with the failed assertion, request payload, response body, and related source changes.'
+            },
+            {
+                title: 'Browser grid timeout',
+                meta: 'cross-browser smoke / runner timeout / network keyword',
+                inputs: { retry: 0.42, flip: 0.46, duration: 0.94, churn: 0.12, keyword: 0.92 },
+                hidden: { pattern: 0.51, regression: 0.16, environment: 0.93 },
+                probabilities: { product_regression: 0.08, flaky_test: 0.24, infra_issue: 0.68 },
+                action: 'Attach runner logs and route to the CI or test environment owner before escalating to product teams.'
+            }
+        ];
+
+        const labels = {
+            product_regression: 'Product regression',
+            flaky_test: 'Flaky test',
+            infra_issue: 'Infra issue'
+        };
+
+        const nodeEls = new Map(Array.from(root.querySelectorAll('[data-node]')).map(node => [node.dataset.node, node]));
+        const titleEl = root.querySelector('#neural-signal-event-title');
+        const metaEl = root.querySelector('#neural-signal-event-meta');
+        const verdictEl = root.querySelector('#neural-signal-verdict strong');
+        const actionEl = root.querySelector('#neural-signal-action-text');
+        const barsEl = root.querySelector('#neural-signal-bars');
+        const toggleBtn = root.querySelector('#neural-signal-toggle');
+        const toggleText = toggleBtn?.querySelector('span');
+        const toggleIcon = toggleBtn?.querySelector('i');
+        const nextBtn = root.querySelector('#neural-signal-next');
+        const sampleModeBtn = root.querySelector('#neural-signal-sample-mode');
+        const customControls = {
+            form: root.querySelector('#neural-signal-input-form'),
+            testName: root.querySelector('#neural-signal-test-name'),
+            keyword: root.querySelector('#neural-signal-error-keyword'),
+            retryPassed: root.querySelector('#neural-signal-retry-passed'),
+            flipRate: root.querySelector('#neural-signal-flip-rate'),
+            durationRatio: root.querySelector('#neural-signal-duration-ratio'),
+            changedFiles: root.querySelector('#neural-signal-changed-files'),
+            flipOutput: root.querySelector('[data-output-for="flip"]'),
+            durationOutput: root.querySelector('[data-output-for="duration"]'),
+            churnOutput: root.querySelector('[data-output-for="churn"]')
+        };
+
+        let currentIndex = 0;
+        let isPlaying = true;
+        let isCustomMode = false;
+        let timerId = null;
+        let suppressCustomInputUntil = 0;
+
+        const formatDecimal = value => Number(value || 0).toFixed(2);
+        const formatPercent = value => `${Math.round(Number(value || 0) * 100)}%`;
+
+        const setNode = (key, value, displayValue = formatDecimal(value)) => {
+            const node = nodeEls.get(key);
+            if (!node) return;
+            const intensity = Math.max(0.05, Math.min(1, Number(value) || 0));
+            node.style.setProperty('--activation', intensity.toFixed(2));
+            node.classList.toggle('is-hot', intensity >= 0.67);
+            const valueEl = node.querySelector('.neural-signal-node__value');
+            if (valueEl) valueEl.textContent = displayValue;
+        };
+
+        const renderBars = probabilities => {
+            if (!barsEl) return;
+            barsEl.innerHTML = Object.entries(probabilities).map(([key, value]) => `
+                <div class="neural-signal-bar">
+                    <span>${labels[key]}</span>
+                    <strong>${formatPercent(value)}</strong>
+                    <div class="neural-signal-bar__track">
+                        <span style="width: ${formatPercent(value)}"></span>
+                    </div>
+                </div>
+            `).join('');
+        };
+
+        const renderEvent = eventOrIndex => {
+            const event = typeof eventOrIndex === 'number' ? events[eventOrIndex] : eventOrIndex;
+            if (!event) return;
+
+            const winner = Object.entries(event.probabilities)
+                .sort((left, right) => right[1] - left[1])[0]?.[0];
+
+            if (titleEl) titleEl.textContent = event.title;
+            if (metaEl) metaEl.textContent = event.meta;
+            if (verdictEl) verdictEl.textContent = labels[winner] || 'Unknown';
+            if (actionEl) actionEl.textContent = event.action;
+
+            Object.entries(event.inputs).forEach(([key, value]) => setNode(key, value));
+            Object.entries(event.hidden).forEach(([key, value]) => setNode(key, value));
+            Object.entries(event.probabilities).forEach(([key, value]) => {
+                setNode(key, value, formatPercent(value));
+                const node = nodeEls.get(key);
+                if (node) node.classList.toggle('is-winner', key === winner);
+            });
+
+            renderBars(event.probabilities);
+            root.dataset.activeCategory = winner || '';
+            root.dataset.mode = isCustomMode ? 'custom' : 'sample';
+        };
+
+        const advance = () => {
+            isCustomMode = false;
+            currentIndex = (currentIndex + 1) % events.length;
+            renderEvent(currentIndex);
+        };
+
+        const start = () => {
+            if (timerId) window.clearInterval(timerId);
+            timerId = window.setInterval(advance, 3200);
+        };
+
+        const stop = () => {
+            if (timerId) {
+                window.clearInterval(timerId);
+                timerId = null;
+            }
+        };
+
+        const syncToggleState = () => {
+            if (!toggleBtn) return;
+            toggleBtn.classList.toggle('btn-primary', isPlaying);
+            toggleBtn.classList.toggle('btn-outline-primary', !isPlaying);
+            if (toggleText) toggleText.textContent = isPlaying ? 'Pause' : 'Play';
+            if (toggleIcon) {
+                toggleIcon.classList.toggle('fa-pause', isPlaying);
+                toggleIcon.classList.toggle('fa-play', !isPlaying);
+            }
+        };
+
+        const keywordActivation = value => {
+            const activations = {
+                assertion: 0.86,
+                timeout: 0.9,
+                network: 0.82,
+                dependency: 0.72
+            };
+            return activations[value] ?? 0.5;
+        };
+
+        const normalize = (value, min, max) => {
+            const numeric = Number(value);
+            if (!Number.isFinite(numeric)) return 0;
+            return Math.max(0, Math.min(1, (numeric - min) / (max - min)));
+        };
+
+        const softmax = scores => {
+            const entries = Object.entries(scores);
+            const max = Math.max(...entries.map(([, value]) => value));
+            const expEntries = entries.map(([key, value]) => [key, Math.exp(value - max)]);
+            const total = expEntries.reduce((sum, [, value]) => sum + value, 0) || 1;
+            return Object.fromEntries(expEntries.map(([key, value]) => [key, value / total]));
+        };
+
+        const buildCustomEvent = () => {
+            const retry = customControls.retryPassed?.checked ? 1 : 0;
+            const flip = Number(customControls.flipRate?.value || 0);
+            const durationRaw = Number(customControls.durationRatio?.value || 1);
+            const changedFilesRaw = Number(customControls.changedFiles?.value || 0);
+            const duration = normalize(durationRaw, 0.5, 4);
+            const churn = normalize(changedFilesRaw, 0, 40);
+            const keyword = customControls.keyword?.value || 'assertion';
+            const keywordValue = keywordActivation(keyword);
+
+            const hidden = {
+                pattern: Math.min(1, (retry * 0.38) + (flip * 0.48) + (duration * 0.22)),
+                regression: Math.min(1, (churn * 0.56) + (keyword === 'assertion' ? 0.34 : 0.08) + ((1 - retry) * 0.16)),
+                environment: Math.min(1, (duration * 0.44) + (['timeout', 'network', 'dependency'].includes(keyword) ? 0.34 : 0.04) + (retry * 0.08))
+            };
+
+            const probabilities = softmax({
+                product_regression: (hidden.regression * 2.5) + (churn * 0.8) + (keyword === 'assertion' ? 0.75 : 0) - (retry * 0.45),
+                flaky_test: (hidden.pattern * 2.25) + (retry * 0.75) + (flip * 0.5) - (churn * 0.22),
+                infra_issue: (hidden.environment * 2.45) + (duration * 0.55) + (['timeout', 'network', 'dependency'].includes(keyword) ? 0.5 : 0)
+            });
+
+            const title = customControls.testName?.value?.trim() || 'Custom failure event';
+            const keywordLabel = customControls.keyword?.selectedOptions?.[0]?.textContent || 'Keyword';
+
+            return {
+                title,
+                meta: `${keywordLabel} signal / ${changedFilesRaw} changed files / duration ${durationRaw.toFixed(1)}x`,
+                inputs: { retry, flip, duration, churn, keyword: keywordValue },
+                hidden,
+                probabilities,
+                action: this.getNeuralSignalAction(probabilities)
+            };
+        };
+
+        const renderCustomEvent = () => {
+            if (Date.now() < suppressCustomInputUntil) return;
+            if (customControls.flipOutput) customControls.flipOutput.textContent = Number(customControls.flipRate?.value || 0).toFixed(2);
+            if (customControls.durationOutput) customControls.durationOutput.textContent = `${Number(customControls.durationRatio?.value || 1).toFixed(1)}x`;
+            if (customControls.churnOutput) customControls.churnOutput.textContent = String(customControls.changedFiles?.value || 0);
+
+            isCustomMode = true;
+            isPlaying = false;
+            stop();
+            syncToggleState();
+            renderEvent(buildCustomEvent());
+        };
+
+        const resumeSampleMode = () => {
+            suppressCustomInputUntil = Date.now() + 500;
+            isCustomMode = false;
+            isPlaying = true;
+            renderEvent(currentIndex);
+            syncToggleState();
+            start();
+        };
+
+        toggleBtn?.addEventListener('click', () => {
+            if (isCustomMode) {
+                resumeSampleMode();
+                return;
+            }
+            isPlaying = !isPlaying;
+            syncToggleState();
+            if (isPlaying) {
+                start();
+            } else {
+                stop();
+            }
+        });
+
+        nextBtn?.addEventListener('click', () => {
+            isCustomMode = false;
+            advance();
+            if (isPlaying) start();
+        });
+
+        sampleModeBtn?.addEventListener('click', resumeSampleMode);
+        customControls.form?.addEventListener('submit', event => event.preventDefault());
+        [
+            customControls.testName,
+            customControls.keyword,
+            customControls.retryPassed,
+            customControls.flipRate,
+            customControls.durationRatio,
+            customControls.changedFiles
+        ].forEach(control => {
+            control?.addEventListener('input', renderCustomEvent);
+            control?.addEventListener('change', renderCustomEvent);
+        });
+
+        renderEvent(currentIndex);
+        start();
+        this.neuralSignalCleanup = stop;
+    }
+
+    getNeuralSignalAction(probabilities) {
+        const winner = Object.entries(probabilities)
+            .sort((left, right) => right[1] - left[1])[0]?.[0];
+
+        if (winner === 'product_regression') {
+            return 'Open or link a defect with assertion evidence, changed files, request/response data, and the failing test history.';
+        }
+
+        if (winner === 'infra_issue') {
+            return 'Attach runner logs and route to the CI, browser grid, dependency, or test environment owner before product escalation.';
+        }
+
+        return 'Rerun once, inspect instability history, and quarantine the test if the pass/fail pattern repeats.';
     }
 
     setupLoginPage() {

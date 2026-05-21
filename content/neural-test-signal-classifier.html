@@ -1,0 +1,235 @@
+<section class="neural-signal-page" id="neural-signal-root">
+  <div class="neural-signal-hero">
+    <div class="neural-signal-hero__copy">
+      <span class="badge rounded-pill bg-primary-subtle text-primary-emphasis px-3 py-2">AI-Driven SDET Workflow</span>
+      <h1 class="neural-signal-title">Neural Test Signal Classifier</h1>
+      <p class="neural-signal-lede">
+        A portfolio-ready Python project that classifies failed automated test runs as product regressions, flaky tests,
+        or infrastructure issues, then recommends the next SDET action.
+      </p>
+    </div>
+    <div class="neural-signal-hero__facts" aria-label="Project summary">
+      <span><strong>Model</strong> scikit-learn MLPClassifier</span>
+      <span><strong>Visual</strong> Dash + dash-cytoscape</span>
+      <span><strong>Use case</strong> CI failure triage</span>
+    </div>
+  </div>
+
+  <section class="neural-signal-demo" aria-labelledby="neural-signal-demo-title">
+    <div class="neural-signal-demo__header">
+      <div>
+        <p class="neural-signal-kicker">Live processing demo</p>
+        <h2 class="h3 mb-2" id="neural-signal-demo-title">Watch failure signals move through the network.</h2>
+        <p class="text-body-secondary mb-0">
+          This browser demo mirrors the proposed Python dashboard: input features activate hidden layers, class
+          probabilities update, and the selected triage action changes in real time.
+        </p>
+      </div>
+      <div class="neural-signal-demo__actions">
+        <button class="btn btn-primary" type="button" id="neural-signal-toggle">
+          <i class="fa-solid fa-pause me-2" aria-hidden="true"></i><span>Pause</span>
+        </button>
+        <button class="btn btn-outline-secondary" type="button" id="neural-signal-next">
+          <i class="fa-solid fa-forward-step me-2" aria-hidden="true"></i>Next event
+        </button>
+      </div>
+    </div>
+
+    <form class="neural-signal-input-panel" id="neural-signal-input-form">
+      <div class="neural-signal-input-panel__header">
+        <div>
+          <p class="neural-signal-kicker">Try your own failure</p>
+          <h3>Adjust CI signals and watch the network react.</h3>
+        </div>
+        <button class="btn btn-sm btn-outline-primary" type="button" id="neural-signal-sample-mode">
+          <i class="fa-solid fa-wand-magic-sparkles me-2" aria-hidden="true"></i>Resume sample autoplay
+        </button>
+      </div>
+      <div class="neural-signal-input-grid">
+        <label class="neural-signal-field neural-signal-field--tooltip">
+          <span>Test or suite name</span>
+          <input class="form-control" type="text" id="neural-signal-test-name" value="Custom checkout failure"
+            autocomplete="off">
+          <span class="neural-signal-tooltip-card" role="tooltip">
+            <strong>Stable identity signal</strong>
+            The name groups failures by test or suite so repeated behavior can be recognized. In this browser demo it labels the event; in the Python model it would usually be encoded or hashed. Reusing the same name suggests history matters, while a new name suggests the model should rely more on the other signals.
+          </span>
+        </label>
+        <label class="neural-signal-field neural-signal-field--tooltip">
+          <span>Error keyword</span>
+          <select class="form-select" id="neural-signal-error-keyword">
+            <option value="assertion">Assertion</option>
+            <option value="timeout">Timeout</option>
+            <option value="network">Browser or network</option>
+            <option value="dependency">Dependency unavailable</option>
+          </select>
+          <span class="neural-signal-tooltip-card" role="tooltip">
+            <strong>Failure message category</strong>
+            This tells the network what kind of error text appeared. Assertion keywords push analysis toward product regression. Timeout, network, and dependency signals increase environment-noise activation and can raise the infrastructure probability.
+          </span>
+        </label>
+        <label class="neural-signal-field neural-signal-field--check neural-signal-field--tooltip">
+          <input class="form-check-input" type="checkbox" id="neural-signal-retry-passed" checked>
+          <span>Passed on retry</span>
+          <span class="neural-signal-tooltip-card" role="tooltip">
+            <strong>Retry outcome</strong>
+            Passing on retry is one of the strongest flakiness indicators. Turning it on increases the instability-pattern node and usually raises flaky-test probability. Turning it off makes regression or infrastructure causes more plausible.
+          </span>
+        </label>
+        <label class="neural-signal-field neural-signal-field--tooltip">
+          <span>Recent flip rate <strong data-output-for="flip">0.50</strong></span>
+          <input class="form-range" type="range" id="neural-signal-flip-rate" min="0" max="1" step="0.05" value="0.5">
+          <span class="neural-signal-tooltip-card" role="tooltip">
+            <strong>Pass/fail instability</strong>
+            Flip rate estimates how often the test alternates between passing and failing. Increasing it strengthens the instability-pattern hidden node and can move the result toward flaky test. Decreasing it makes the failure look more deterministic.
+          </span>
+        </label>
+        <label class="neural-signal-field neural-signal-field--tooltip">
+          <span>Duration ratio <strong data-output-for="duration">2.0x</strong></span>
+          <input class="form-range" type="range" id="neural-signal-duration-ratio" min="0.5" max="4" step="0.1" value="2">
+          <span class="neural-signal-tooltip-card" role="tooltip">
+            <strong>Runtime anomaly</strong>
+            Duration ratio compares this run to the test's normal runtime. Higher values suggest slowdowns, waits, timeouts, or environment pressure and raise infra_issue likelihood. Lower values reduce environment-noise activation.
+          </span>
+        </label>
+        <label class="neural-signal-field neural-signal-field--tooltip">
+          <span>Changed files <strong data-output-for="churn">12</strong></span>
+          <input class="form-range" type="range" id="neural-signal-changed-files" min="0" max="40" step="1" value="12">
+          <span class="neural-signal-tooltip-card" role="tooltip">
+            <strong>Change pressure</strong>
+            Changed files approximate code churn near the failure. Increasing this value strengthens regression pressure, especially with assertion errors. Decreasing it makes a product regression less likely and lets flakiness or infrastructure signals dominate.
+          </span>
+        </label>
+      </div>
+    </form>
+
+    <div class="neural-signal-workspace">
+      <article class="neural-signal-network" aria-label="Interactive neural network visualization">
+        <div class="neural-signal-layer" data-layer="input">
+          <h3>Input Signals</h3>
+          <button class="neural-signal-node" type="button" data-node="retry">
+            <span class="neural-signal-node__label">Retry passed</span>
+            <span class="neural-signal-node__value">0.00</span>
+          </button>
+          <button class="neural-signal-node" type="button" data-node="flip">
+            <span class="neural-signal-node__label">Flip rate</span>
+            <span class="neural-signal-node__value">0.00</span>
+          </button>
+          <button class="neural-signal-node" type="button" data-node="duration">
+            <span class="neural-signal-node__label">Duration ratio</span>
+            <span class="neural-signal-node__value">0.00</span>
+          </button>
+          <button class="neural-signal-node" type="button" data-node="churn">
+            <span class="neural-signal-node__label">Code churn</span>
+            <span class="neural-signal-node__value">0.00</span>
+          </button>
+          <button class="neural-signal-node" type="button" data-node="keyword">
+            <span class="neural-signal-node__label">Error keyword</span>
+            <span class="neural-signal-node__value">0.00</span>
+          </button>
+        </div>
+
+        <div class="neural-signal-edges" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span><span></span>
+        </div>
+
+        <div class="neural-signal-layer" data-layer="hidden">
+          <h3>Hidden Layers</h3>
+          <button class="neural-signal-node neural-signal-node--hidden" type="button" data-node="pattern">
+            <span class="neural-signal-node__label">Instability pattern</span>
+            <span class="neural-signal-node__value">0.00</span>
+          </button>
+          <button class="neural-signal-node neural-signal-node--hidden" type="button" data-node="regression">
+            <span class="neural-signal-node__label">Regression pressure</span>
+            <span class="neural-signal-node__value">0.00</span>
+          </button>
+          <button class="neural-signal-node neural-signal-node--hidden" type="button" data-node="environment">
+            <span class="neural-signal-node__label">Environment noise</span>
+            <span class="neural-signal-node__value">0.00</span>
+          </button>
+        </div>
+
+        <div class="neural-signal-edges neural-signal-edges--output" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </div>
+
+        <div class="neural-signal-layer" data-layer="output">
+          <h3>Predicted Class</h3>
+          <button class="neural-signal-node neural-signal-node--output" type="button" data-node="product_regression">
+            <span class="neural-signal-node__label">Product regression</span>
+            <span class="neural-signal-node__value">0%</span>
+          </button>
+          <button class="neural-signal-node neural-signal-node--output" type="button" data-node="flaky_test">
+            <span class="neural-signal-node__label">Flaky test</span>
+            <span class="neural-signal-node__value">0%</span>
+          </button>
+          <button class="neural-signal-node neural-signal-node--output" type="button" data-node="infra_issue">
+            <span class="neural-signal-node__label">Infra issue</span>
+            <span class="neural-signal-node__value">0%</span>
+          </button>
+        </div>
+      </article>
+
+      <aside class="neural-signal-inspector" aria-live="polite">
+        <p class="neural-signal-kicker">Current failure</p>
+        <h3 id="neural-signal-event-title">Loading event</h3>
+        <p class="neural-signal-inspector__meta" id="neural-signal-event-meta"></p>
+        <div class="neural-signal-verdict" id="neural-signal-verdict">
+          <span>Prediction</span>
+          <strong>Waiting</strong>
+        </div>
+        <div class="neural-signal-bars" id="neural-signal-bars" aria-label="Class probabilities"></div>
+        <div class="neural-signal-action">
+          <span class="neural-signal-action__icon"><i class="fa-solid fa-route" aria-hidden="true"></i></span>
+          <p class="mb-0" id="neural-signal-action-text">The recommended SDET action will appear here.</p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="neural-signal-section" aria-labelledby="neural-signal-proposal-title">
+    <div class="neural-signal-section__header">
+      <p class="neural-signal-kicker">Project blueprint</p>
+      <h2 id="neural-signal-proposal-title">What the implemented Python project should include</h2>
+    </div>
+    <div class="neural-signal-card-grid">
+      <article class="neural-signal-card">
+        <i class="fa-solid fa-database" aria-hidden="true"></i>
+        <h3>Dataset and features</h3>
+        <p>Start with synthetic CI history, then support real imports from JUnit XML or CI CSV files. Key signals include retry behavior, flip rate, duration ratio, changed files, and error keywords.</p>
+      </article>
+      <article class="neural-signal-card">
+        <i class="fa-solid fa-brain" aria-hidden="true"></i>
+        <h3>Model comparison</h3>
+        <p>Train logistic regression, random forest, and a small MLP. Keep the neural network honest by comparing macro F1, confusion matrix behavior, and class-level precision/recall.</p>
+      </article>
+      <article class="neural-signal-card">
+        <i class="fa-solid fa-diagram-project" aria-hidden="true"></i>
+        <h3>Real-time visualization</h3>
+        <p>Use Dash with <code>dash-cytoscape</code> to render input, hidden, and output nodes while replaying failures. Node intensity maps to activation, and output labels show live probabilities.</p>
+      </article>
+      <article class="neural-signal-card">
+        <i class="fa-solid fa-vial-circle-check" aria-hidden="true"></i>
+        <h3>SDET delivery quality</h3>
+        <p>Ship a CLI, prediction contract tests, feature extraction tests, activation-trace tests, and a compact evaluation report that explains where the model helps and where it should not be trusted.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="neural-signal-section neural-signal-section--split" aria-labelledby="neural-signal-stack-title">
+    <div>
+      <p class="neural-signal-kicker">Recommended stack</p>
+      <h2 id="neural-signal-stack-title">Best library choice for the real project</h2>
+      <p class="text-body-secondary">
+        Dash plus <code>dash-cytoscape</code> is the strongest option for this project because it keeps the dashboard in
+        Python while providing a real network canvas with callbacks, styling, zoom, drag, and click interaction.
+      </p>
+    </div>
+    <div class="neural-signal-stack-list">
+      <div><strong>Primary:</strong> Dash, dash-cytoscape, Plotly, NetworkX</div>
+      <div><strong>ML:</strong> pandas, scikit-learn MLPClassifier, joblib</div>
+      <div><strong>Quality:</strong> pytest, synthetic-data fixtures, activation-trace tests</div>
+      <div><strong>Optional:</strong> FastAPI for CI integration, Streamlit for a simpler report-style dashboard</div>
+    </div>
+  </section>
+</section>
