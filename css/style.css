@@ -1,4 +1,5 @@
 :root {
+  --site-visual-scale: 90%;
   --brand-gradient-start: #0d6efd;
   --brand-gradient-end: #6f42c1;
   --brand-gradient-alt: #20c997;
@@ -30,6 +31,10 @@
   --text: rgba(255, 255, 255, 0.92);
   --muted: var(--space-text-dim);
   --danger: rgba(239, 68, 68, 0.95);
+}
+
+html {
+  font-size: var(--site-visual-scale);
 }
 
 [data-bs-theme="light"] {
@@ -79,7 +84,7 @@ main {
   --pill-stroke: rgba(84, 183, 255, 0.42);
   --pill-glow: rgba(84, 183, 255, 0.22);
 
-  height: 40px;
+  height: 2.5rem;
   padding: 0.4rem 0.75rem;
   border-radius: 999px;
   border: 1px solid var(--pill-stroke);
@@ -115,8 +120,8 @@ main {
 }
 
 .user-pill-avatar {
-  width: 28px;
-  height: 28px;
+  width: 1.75rem;
+  height: 1.75rem;
   border-radius: 50%;
   border: 1px solid rgba(84, 183, 255, 0.35);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
@@ -196,7 +201,7 @@ main {
 /* Theme-based logo switching */
 .navbar-logo {
   width: auto;
-  height: 64px;
+  height: 4rem;
   display: block;
 }
 
@@ -464,8 +469,8 @@ header .navbar-nav .nav-link.active {
   background: transparent;
   padding: 0;
   border-radius: 999px;
-  width: 44px;
-  height: 26px;
+  width: 2.75rem;
+  height: 1.625rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -487,8 +492,8 @@ header .navbar-nav .nav-link.active {
 
 .theme-toggle-track {
   position: relative;
-  width: 36px;
-  height: 18px;
+  width: 2.25rem;
+  height: 1.125rem;
   border-radius: 999px;
   background: var(--toggle-track);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
@@ -500,10 +505,10 @@ header .navbar-nav .nav-link.active {
 
 .theme-toggle-thumb {
   position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 14px;
-  height: 14px;
+  top: 0.125rem;
+  left: 0.125rem;
+  width: 0.875rem;
+  height: 0.875rem;
   border-radius: 50%;
   background: var(--toggle-thumb);
   box-shadow: 0 6px 14px var(--toggle-shadow);
@@ -512,7 +517,7 @@ header .navbar-nav .nav-link.active {
 
 /* When light theme is active, thumb moves right. */
 [data-bs-theme="light"] .theme-toggle-thumb {
-  transform: translateX(18px);
+  transform: translateX(1.125rem);
 }
 
 .theme-toggle-icon {
@@ -520,7 +525,7 @@ header .navbar-nav .nav-link.active {
   inset: 0;
   display: grid;
   place-items: center;
-  font-size: 10px;
+  font-size: 0.625rem;
   color: rgba(15, 18, 28, 0.85);
   opacity: 0;
   transition: opacity 0.2s ease;
