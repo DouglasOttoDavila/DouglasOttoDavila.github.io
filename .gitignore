@@ -16,3 +16,7 @@ content/auth.runtime.json
 /docs/supabase-bootstrap.sql
 /docs/supabase-has-privileges-migration.sql
 /docs/supabase-recovery.md
+/.impeccable
+/.codex
+/.github/skills/impeccable
+/.github/hooks/impeccable.json
