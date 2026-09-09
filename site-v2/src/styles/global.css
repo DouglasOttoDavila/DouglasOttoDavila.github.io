@@ -39,6 +39,11 @@ html {
   scrollbar-color: var(--line-strong) var(--ink-950);
 }
 
+/* Inertia owns wheel/key movement; native navigation must not start a second tween. */
+html.lenis {
+  scroll-behavior: auto;
+}
+
 body {
   min-width: 20rem;
   margin: 0;

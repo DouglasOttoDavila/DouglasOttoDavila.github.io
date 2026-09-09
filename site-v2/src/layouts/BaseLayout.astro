@@ -39,6 +39,9 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <meta name="twitter:card" content="summary_large_image" />
     <title>{title}</title>
     <ClientRouter />
+    <script>
+      import '../scripts/organic-scroll';
+    </script>
     <script is:inline>
       document.documentElement.classList.add('js');
       if (location.pathname === '/' || location.pathname === '/index.html') {
