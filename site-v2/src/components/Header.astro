@@ -1,0 +1,47 @@
+---
+import { navigation, site } from '../data/site';
+
+interface Props { current?: string }
+const { current = '' } = Astro.props;
+---
+
+<header class="site-header">
+  <a class="brand" href="/" aria-label={`${site.name}, home`}>
+    <span class="brand-mark" aria-hidden="true"><i></i><i></i></span>
+    <span>{site.name}</span>
+  </a>
+  <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">
+    <span>Menu</span>
+    <span class="nav-toggle-lines" aria-hidden="true"><i></i><i></i></span>
+  </button>
+  <nav id="site-navigation" class="site-nav" aria-label="Primary navigation">
+    {navigation.map((item) => (
+      <a href={item.href} aria-current={current === item.label.toLowerCase() ? 'page' : undefined}>{item.label}</a>
+    ))}
+    <a href="/login" data-astro-reload aria-current={current === 'login' ? 'page' : undefined}>Lab access</a>
+  </nav>
+</header>
+
+<script>
+  function initializeNavigation() {
+    const toggle = document.querySelector<HTMLButtonElement>('.nav-toggle');
+    const navigation = document.querySelector<HTMLElement>('.site-nav');
+    if (!toggle || !navigation || toggle.dataset.initialized === 'true') return;
+
+    toggle.dataset.initialized = 'true';
+    toggle.addEventListener('click', () => {
+      const expanded = toggle.getAttribute('aria-expanded') === 'true';
+      toggle.setAttribute('aria-expanded', String(!expanded));
+      navigation.classList.toggle('is-open', !expanded);
+    });
+
+    navigation.addEventListener('click', (event) => {
+      if (!(event.target instanceof HTMLAnchorElement)) return;
+      toggle.setAttribute('aria-expanded', 'false');
+      navigation.classList.remove('is-open');
+    });
+  }
+
+  document.addEventListener('astro:page-load', initializeNavigation);
+  initializeNavigation();
+</script>

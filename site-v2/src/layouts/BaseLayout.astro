@@ -1,0 +1,62 @@
+---
+import '@fontsource-variable/onest';
+import '@fontsource-variable/recursive';
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { ClientRouter } from 'astro:transitions';
+
+interface Props {
+  title: string;
+  description: string;
+  current?: string;
+  image?: string;
+}
+
+const {
+  title,
+  description,
+  current = '',
+  image = '/social-card.png'
+} = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#050914" />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={new URL(image, Astro.site)} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <title>{title}</title>
+    <ClientRouter />
+    <script is:inline>
+      document.documentElement.classList.add('js');
+      if (location.pathname === '/' || location.pathname === '/index.html') {
+        const routes = { 'relationship-graph': '/lab/context-graph', 'relationship-entity': '/lab/context-graph/entity', 'user-story-analyzer': '/lab/user-story-analyzer', 'neural-test-signal-classifier': '/lab/neural-test-signal-classifier', login: '/login', profile: '/settings' };
+        const [route, query] = location.hash.replace(/^#\/?/, '').split('?');
+        if (Object.prototype.hasOwnProperty.call(routes, route)) {
+          const entity = new URLSearchParams(query || location.search).get('entity');
+          location.replace(routes[route] + (entity ? '?entity=' + encodeURIComponent(entity) : ''));
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <Header current={current} />
+    <main id="main-content">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>

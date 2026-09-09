@@ -1,4 +1,5 @@
 import { corsHeaders } from '../_shared/cors.ts';
+import { requirePrivilegedUser, reserveAiInteraction, completeAiInteraction, readBody, LabError, dispatchAiInteraction } from '../_shared/lab.ts';
 import {
   buildGraphAssistantSystemPrompt,
   buildGraphAssistantUserPrompt
@@ -10,26 +11,9 @@ const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
 
 type AssistantRequestPayload = {
   question?: string;
+  request_id?: string;
   conversationHistory?: Array<{ role?: string; text?: string }>;
   graphContext?: Record<string, unknown>;
-};
-
-type SupabaseAuthUser = {
-  id?: string;
-  email?: string;
-};
-
-type PrivilegedAccess = {
-  ok: true;
-  token: string;
-  user: SupabaseAuthUser;
-};
-
-type AiInteractionReservation = {
-  log_id?: string;
-  daily_count?: number;
-  daily_limit?: number;
-  remaining?: number;
 };
 
 Deno.serve(async (request) => {
@@ -37,6 +21,9 @@ Deno.serve(async (request) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  if (request.method !== 'POST') return jsonResponse({ error: 'Method not allowed.' }, 405);
+  let reservedId: string | undefined;
+  let reservedToken = '';
   try {
     const access = await requirePrivilegedUser(request);
     if (!access.ok) {
@@ -50,11 +37,11 @@ Deno.serve(async (request) => {
       return jsonResponse({ error: 'GEMINI_API_KEY is not configured for the operational graph assistant.' }, 500);
     }
 
-    const payload = await request.json() as AssistantRequestPayload;
+    const payload = await readBody(request) as AssistantRequestPayload;
     const question = String(payload?.question || '').trim();
     const graphContext = payload?.graphContext || {};
 
-    if (!question) {
+    if (typeof payload?.question !== 'string' || !question || question.length > 4000) {
       return jsonResponse({ error: 'A graph question is required.' }, 400);
     }
 
@@ -62,6 +49,12 @@ Deno.serve(async (request) => {
       return jsonResponse({ error: 'Graph context is missing nodes or links.' }, 400);
     }
 
+    if (payload.conversationHistory !== undefined && (!Array.isArray(payload.conversationHistory) || payload.conversationHistory.length > 20 || payload.conversationHistory.some(item => !item || !['user', 'assistant'].includes(String(item.role)) || typeof item.text !== 'string' || item.text.length > 8000))) return jsonResponse({ error: 'Invalid conversation history.' }, 400);
+    if ((graphContext as any).nodes.length > 300 || (graphContext as any).links.length > 1000) return jsonResponse({ error: 'Graph context is too large.' }, 400);
+    const nodes = (graphContext as any).nodes;
+    const links = (graphContext as any).links;
+    const nodeIds = new Set(nodes.map((node: any) => node?.id));
+    if (!nodes.length || nodeIds.size !== nodes.length || nodes.some((node: any) => !node || typeof node.id !== 'string' || !node.id || typeof node.type !== 'string' || typeof node.label !== 'string') || links.some((link: any) => !link || typeof link.source !== 'string' || typeof link.target !== 'string' || !nodeIds.has(link.source) || !nodeIds.has(link.target))) return jsonResponse({ error: 'Graph context contains invalid entities or relationships.' }, 400);
     const promptCatalog = await loadToolPromptCatalog('operational-graph-assistant');
     const systemPromptTemplate = promptCatalog['system'];
     const userPromptTemplate = promptCatalog['user'];
@@ -87,18 +80,23 @@ Deno.serve(async (request) => {
     const interaction = await reserveAiInteraction(access.token, 'operational-graph-assistant', {
       question,
       conversationHistory: payload.conversationHistory || [],
-      systemPrompt,
-      userPrompt
-    });
+      graphContext
+    }, payload.request_id);
 
     if (!interaction.ok) {
       return jsonResponse({ error: interaction.error }, interaction.status);
     }
+    if (interaction.replay) return interaction.replay;
+    reservedId = interaction.reservation.log_id;
+    reservedToken = access.token;
+    await dispatchAiInteraction(reservedId!);
 
-    const geminiResponse = await fetch(`${GEMINI_API_BASE}/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+    const geminiResponse = await fetch(`${GEMINI_API_BASE}/${encodeURIComponent(model)}:generateContent`, {
       method: 'POST',
+      signal: AbortSignal.timeout(45000),
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'x-goog-api-key': apiKey
       },
       body: JSON.stringify({
         system_instruction: {
@@ -127,7 +125,7 @@ Deno.serve(async (request) => {
     });
 
     if (!geminiResponse.ok) {
-      const errorText = await geminiResponse.text();
+      const errorText = `Model provider returned status ${geminiResponse.status}.`;
       await completeAiInteraction(access.token, interaction.reservation.log_id, {}, 'error', errorText);
       return jsonResponse(
         { error: `Gemini request failed with status ${geminiResponse.status}. ${errorText}`.trim() },
@@ -149,7 +147,9 @@ Deno.serve(async (request) => {
 
     return jsonResponse({
       ...normalized,
+      execution_id: interaction.reservation.log_id,
       aiUsage: {
+        ...interaction.reservation.usage,
         dailyCount: interaction.reservation.daily_count,
         dailyLimit: interaction.reservation.daily_limit,
         remaining: interaction.reservation.remaining
@@ -157,65 +157,10 @@ Deno.serve(async (request) => {
     }, 200);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unexpected assistant error.';
-    return jsonResponse({ error: message }, 500);
+    if (reservedId) { try { await completeAiInteraction(reservedToken, reservedId, {}, 'error', message); } catch { /* Reservation remains consumed and cannot dispatch again. */ } }
+    return jsonResponse({ error: message }, error instanceof LabError ? error.status : 500);
   }
 });
-
-async function requirePrivilegedUser(request: Request): Promise<PrivilegedAccess | { ok: false; status: number; error: string }> {
-  const supabaseUrl = Deno.env.get('SUPABASE_URL');
-  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
-  const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return { ok: false, status: 500, error: 'Assistant authorization is not configured.' };
-  }
-
-  const authHeader = request.headers.get('Authorization') || '';
-  const match = authHeader.match(/^Bearer\s+(.+)$/i);
-  const token = match?.[1]?.trim();
-  if (!token) {
-    return { ok: false, status: 401, error: 'Log in to unlock the graph AI assistant.' };
-  }
-
-  const userResponse = await fetch(`${supabaseUrl}/auth/v1/user`, {
-    headers: {
-      apikey: supabaseAnonKey,
-      Authorization: `Bearer ${token}`
-    }
-  });
-
-  if (!userResponse.ok) {
-    return { ok: false, status: 401, error: 'Log in to unlock the graph AI assistant.' };
-  }
-
-  const user = await userResponse.json() as SupabaseAuthUser;
-  if (!user?.id) {
-    return { ok: false, status: 401, error: 'Log in to unlock the graph AI assistant.' };
-  }
-
-  const profileUrl = new URL('/rest/v1/profiles', supabaseUrl);
-  profileUrl.searchParams.set('select', 'has_privileges');
-  profileUrl.searchParams.set('user_id', `eq.${user.id}`);
-  profileUrl.searchParams.set('limit', '1');
-
-  const profileResponse = await fetch(profileUrl, {
-    headers: {
-      apikey: supabaseServiceRoleKey || supabaseAnonKey,
-      Authorization: `Bearer ${supabaseServiceRoleKey || token}`,
-      Accept: 'application/json'
-    }
-  });
-
-  if (!profileResponse.ok) {
-    return { ok: false, status: 403, error: 'Your account is not approved for this AI feature.' };
-  }
-
-  const profiles = await profileResponse.json() as Array<{ has_privileges?: boolean }>;
-  if (!profiles.some(profile => profile?.has_privileges === true)) {
-    return { ok: false, status: 403, error: 'Your account is not approved for this AI feature.' };
-  }
-
-  return { ok: true, token, user };
-}
 
 function jsonResponse(body: Record<string, unknown>, status: number) {
   return new Response(JSON.stringify(body), {
@@ -266,94 +211,4 @@ async function loadToolPromptCatalog(toolKey: string): Promise<Record<string, st
   });
 
   return catalog;
-}
-
-async function reserveAiInteraction(
-  userToken: string,
-  toolKey: string,
-  promptPayload: Record<string, unknown>
-): Promise<{ ok: true; reservation: AiInteractionReservation } | { ok: false; status: number; error: string }> {
-  const supabaseUrl = Deno.env.get('SUPABASE_URL');
-  const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
-
-  if (!supabaseUrl || !anonKey) {
-    return { ok: false, status: 500, error: 'AI interaction tracking is not configured.' };
-  }
-
-  const response = await fetch(`${supabaseUrl}/rest/v1/rpc/reserve_ai_interaction`, {
-    method: 'POST',
-    headers: {
-      apikey: anonKey,
-      Authorization: `Bearer ${userToken}`,
-      'Content-Type': 'application/json',
-      Accept: 'application/json'
-    },
-    body: JSON.stringify({
-      p_tool_key: toolKey,
-      p_prompt_payload: promptPayload
-    })
-  });
-
-  const payload = await readJsonResponse(response);
-  if (!response.ok) {
-    const message = extractSupabaseError(payload, 'Unable to reserve an AI interaction.');
-    return {
-      ok: false,
-      status: message.toLowerCase().includes('limit reached') ? 429 : response.status,
-      error: message
-    };
-  }
-
-  const row = Array.isArray(payload) ? payload[0] : payload;
-  if (!row?.log_id) {
-    return { ok: false, status: 500, error: 'AI interaction reservation returned no log id.' };
-  }
-
-  return { ok: true, reservation: row };
-}
-
-async function completeAiInteraction(
-  userToken: string,
-  logId: string | undefined,
-  responsePayload: Record<string, unknown>,
-  status: 'completed' | 'error',
-  errorMessage = ''
-) {
-  const supabaseUrl = Deno.env.get('SUPABASE_URL');
-  const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
-
-  if (!supabaseUrl || !anonKey || !logId) return;
-
-  try {
-    await fetch(`${supabaseUrl}/rest/v1/rpc/complete_ai_interaction`, {
-      method: 'POST',
-      headers: {
-        apikey: anonKey,
-        Authorization: `Bearer ${userToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        p_log_id: logId,
-        p_response_payload: responsePayload,
-        p_status: status,
-        p_error_message: errorMessage
-      })
-    });
-  } catch (error) {
-    console.error('[ai-interactions] failed to complete interaction log', error);
-  }
-}
-
-async function readJsonResponse(response: Response): Promise<any> {
-  const text = await response.text();
-  if (!text) return null;
-  try {
-    return JSON.parse(text);
-  } catch {
-    return { message: text };
-  }
-}
-
-function extractSupabaseError(payload: any, fallback: string): string {
-  return String(payload?.message || payload?.error || payload?.hint || fallback);
 }

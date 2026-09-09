@@ -1,0 +1,20 @@
+---
+import Icon from './Icon.astro';
+const principles = [
+  { icon: 'target', title: 'Practical by design', text: 'Workflows teams can adopt, adapt, and trust.' },
+  { icon: 'nodes', title: 'AI as a teammate', text: 'It augments judgment. It does not replace it.' },
+  { icon: 'shield', title: 'Evidence over opinion', text: 'Decisions anchored in tests and real outcomes.' }
+] as const;
+---
+
+<section class="principles" aria-label="Working principles">
+  {principles.map((principle) => (
+    <article class="principle">
+      <span class="principle-icon"><Icon name={principle.icon} /></span>
+      <div>
+        <h2>{principle.title}</h2>
+        <p>{principle.text}</p>
+      </div>
+    </article>
+  ))}
+</section>

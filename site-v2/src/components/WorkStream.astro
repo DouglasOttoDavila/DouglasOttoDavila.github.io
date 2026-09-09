@@ -1,0 +1,46 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import Icon from './Icon.astro';
+
+interface Props {
+  project: CollectionEntry<'projects'>;
+  article: CollectionEntry<'writing'>;
+  experiment: CollectionEntry<'projects'>;
+}
+
+const { project, article, experiment } = Astro.props;
+---
+
+<section id="current-work" class="work-stream section-shell" aria-labelledby="work-stream-title">
+  <div class="work-stream-intro">
+    <h2 id="work-stream-title">Current work and thinking</h2>
+    <p>Where I’m shipping, sharing, and experimenting in public.</p>
+    <a class="text-link" href="/work">View all work <span aria-hidden="true">→</span></a>
+  </div>
+
+  <div class="work-stream-items">
+    <a class="stream-item stream-case" href={`/work/${project.id}`}>
+      <span class="stream-kind"><Icon name="briefcase" size={18} /> Case study</span>
+      <h3>{project.data.title}</h3>
+      <p>{project.data.description}</p>
+      <span class="stream-action">Read the case study <span aria-hidden="true">→</span></span>
+      <span class="stream-art stream-art-flow" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+    </a>
+
+    <a class="stream-item stream-article" href={article.data.externalUrl} target="_blank" rel="noreferrer">
+      <span class="stream-kind"><Icon name="article" size={18} /> LinkedIn article</span>
+      <h3>{article.data.title}</h3>
+      <p>{article.data.excerpt}</p>
+      <span class="stream-action">Read on LinkedIn <Icon name="external" size={16} /></span>
+      <span class="stream-art stream-art-page" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+    </a>
+
+    <a class="stream-item stream-experiment" href={`/work/${experiment.id}`}>
+      <span class="stream-kind"><Icon name="experiment" size={18} /> Live experiment</span>
+      <h3>{experiment.data.title}</h3>
+      <p>{experiment.data.description}</p>
+      <span class="stream-action">Open the experiment <span aria-hidden="true">→</span></span>
+      <span class="stream-art stream-art-graph" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+    </a>
+  </div>
+</section>

@@ -1,0 +1,70 @@
+---
+/*
+THESIS: Quality work becomes trustworthy when every decision leaves a visible trace; this refuses the generic portfolio card-dashboard.
+OWN-WORLD: Operational ink fields, electric-blue signal paths, evidence teal, risk amber, crisp rectangular artifacts, and human technical typography.
+STORY: Visitors understand Douglas's SDET focus, watch one requirement become evidence, inspect work and writing, then choose a deeper path or contact.
+FIRST VIEWPORT: Positioning occupies the left third; the interactive four-stage signal spans the right and crosses the fold; the primary action sits below the thesis.
+FORM: Signal Trace, first-ranked and user-approved; asymmetric evidence pipeline staged as an interactive system. Approved comp: design-references/signal-trace-approved.png.
+*/
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SignalTrace from '../components/SignalTrace';
+import EvidenceTable from '../components/EvidenceTable';
+import Principles from '../components/Principles.astro';
+import WorkStream from '../components/WorkStream.astro';
+import ContactBand from '../components/ContactBand.astro';
+import Icon from '../components/Icon.astro';
+import ExperiencePreview from '../components/ExperiencePreview.astro';
+import { site } from '../data/site';
+
+const projects = await getCollection('projects');
+const writing = await getCollection('writing');
+const project = projects.find((entry) => entry.id === 'user-story-evaluator') ?? projects[0];
+const experiment = projects.find((entry) => entry.id === 'context-graph') ?? projects[1];
+const article = writing.find((entry) => entry.id === 'ai-junior-qa') ?? writing[0];
+---
+
+<BaseLayout
+  title="Douglas D'Avila — SDET & AI-Assisted Quality Engineering"
+  description="Douglas D'Avila builds practical, professional AI-assisted quality systems that connect requirements, risks, tests, and release evidence."
+>
+  <section class="hero section-shell">
+    <div class="hero-copy">
+      <p class="hero-role">SDET · Quality engineering · Practical AI</p>
+      <h1>AI-assisted quality systems, built for real delivery.</h1>
+      <p class="hero-summary">I design quality workflows that connect requirements to reliable automation and decision-ready evidence—without outsourcing engineering judgment to the model.</p>
+      <div class="hero-actions">
+        <a class="button button-primary" href="/work">Explore the work <Icon name="arrow" size={19} /></a>
+        <a class="button button-secondary" href="/experience">View experience</a>
+      </div>
+      <p class="hero-location"><Icon name="location" size={18} /> {site.location} · Working across the Americas and Europe</p>
+    </div>
+    <SignalTrace client:load />
+  </section>
+
+  <Principles />
+
+  <section id="featured-case" class="featured-case section-shell" aria-labelledby="featured-title">
+    <div class="featured-case-copy">
+      <p class="section-context">Featured case study</p>
+      <h2 id="featured-title">A requirement is only useful when the team can test what it means.</h2>
+      <p>The User Story Quality Analyzer reviews clarity, completeness, testability, feasibility, relevance, and acceptance criteria—then makes the gaps discussable.</p>
+      <a class="text-link" href={`/work/${project.id}`}>Inspect the case study <span aria-hidden="true">→</span></a>
+    </div>
+    <EvidenceTable client:visible />
+  </section>
+
+  <WorkStream project={project} article={article} experiment={experiment} />
+
+  <section id="trajectory" class="home-experience section-shell" aria-labelledby="trajectory-title">
+    <div class="home-experience-intro">
+      <p class="section-context">Experience trajectory</p>
+      <h2 id="trajectory-title">From technical support to engineering quality systems.</h2>
+      <p>Each role added another layer: operational discipline, automation architecture, team enablement, and now AI-assisted quality engineering.</p>
+      <a class="text-link" href="/experience">Explore the full experience <span aria-hidden="true">→</span></a>
+    </div>
+    <ExperiencePreview />
+  </section>
+
+  <ContactBand />
+</BaseLayout>

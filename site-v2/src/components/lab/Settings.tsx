@@ -1,0 +1,29 @@
+import { useEffect, useState } from 'react';
+import { callLab } from '../../lib/lab-client';
+import { message } from './LabApp';
+
+export default function Settings({ refresh }: { refresh: () => Promise<void> }) {
+  const [data, setData] = useState<any>(null);
+  const [settings, setSettings] = useState<any>(null);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [busy, setBusy] = useState(false);
+  async function load() { const next = await callLab('lab-access', { action: 'admin_overview' }); setData(next); setSettings(next.settings); }
+  useEffect(() => { load().catch(reason => setError(message(reason))); }, []);
+  async function perform(body: Record<string, unknown>, success: string) {
+    if (busy) return; setBusy(true); setError(''); setNotice('');
+    try { await callLab('lab-access', body); await load(); await refresh(); setNotice(success); }
+    catch (reason) { setError(message(reason)); }
+    finally { setBusy(false); }
+  }
+  return <div className="settings-workspace">
+    {error && <p className="lab-error" role="alert">{error} <button className="text-link" onClick={() => load().catch(reason => setError(message(reason)))}>Reload settings</button></p>}
+    {notice && <p role="status">{notice}</p>}
+    {!data || !settings ? <p role="status">Loading site settings…</p> : <>
+      <div className="tool-workspace"><section className="tool-input"><h2>Access requests</h2><p>Approval grants access to all Lab demonstrations. Revocation takes effect on the next server request.</p><div className="request-list">{!data.requests.length && <p>No access requests yet.</p>}{data.requests.map((request: any) => <article key={request.user_id}><div><h3>{request.full_name || request.email}</h3><p>{request.email}</p><span className="lab-tag">{request.state}{request.is_admin ? ' · Administrator' : ''}</span></div>{!request.is_admin && <div className="lab-actions">{request.state !== 'approved' && <button disabled={busy} className="button button-primary" onClick={() => perform({ action: 'review', user_id: request.user_id, state: 'approved' }, 'Access approved. The notification is queued.')}>Approve access</button>}{request.state === 'pending' && <button disabled={busy} className="button button-secondary" onClick={() => perform({ action: 'review', user_id: request.user_id, state: 'denied' }, 'Access request declined.')}>Decline</button>}{request.state === 'approved' && <button disabled={busy} className="button button-secondary" onClick={() => perform({ action: 'review', user_id: request.user_id, state: 'revoked' }, 'Access revoked.')}>Revoke access</button>}</div>}</article>)}</div></section>
+      <form className="tool-output" onSubmit={event => { event.preventDefault(); void perform({ action: 'settings', settings }, 'Site settings saved. New requests use these limits immediately.'); }}><h2>Processing & notifications</h2><p>Allowances are shared across tools. Administrator executions count toward both limits.</p><label htmlFor="lifetime-limit">Lifetime executions per user</label><input id="lifetime-limit" type="number" min={0} max={10000} required value={settings.lifetime_limit} onChange={e => setSettings({ ...settings, lifetime_limit: Number(e.target.value) })} /><label htmlFor="daily-limit">Daily executions across all users</label><input id="daily-limit" type="number" min={0} max={10000} required value={settings.daily_limit} onChange={e => setSettings({ ...settings, daily_limit: Number(e.target.value) })} /><label htmlFor="reset-timezone">Daily reset timezone</label><input id="reset-timezone" required maxLength={100} value={settings.timezone} onChange={e => setSettings({ ...settings, timezone: e.target.value })} /><p className="lab-muted">IANA timezone, such as America/Sao_Paulo. Changing it changes the current day’s accounting window.</p><label htmlFor="notification-email">Send access requests to</label><input id="notification-email" type="email" required value={settings.notification_email} onChange={e => setSettings({ ...settings, notification_email: e.target.value })} /><label className="checkbox-label"><input type="checkbox" checked={settings.paused} onChange={e => setSettings({ ...settings, paused: e.target.checked })} /> Pause processing site-wide</label><button disabled={busy} className="button button-primary">{busy ? 'Saving…' : 'Save site settings'}</button></form></div>
+      <section className="settings-section"><div className="tool-section-heading"><h2>Email delivery</h2><button className="button button-secondary" disabled={busy} onClick={() => perform({ action: 'retry_notifications' }, 'Unsent notifications are queued for delivery.')}>Retry unsent notifications</button></div><p className="lab-muted">Delivery requires the configured Resend sender and scheduled notification worker.</p><div className="table-scroll"><table><thead><tr><th>Created</th><th>Notification</th><th>Status</th><th>Attempts</th><th>Delivery detail</th></tr></thead><tbody>{(data.notifications || []).map((entry: any) => <tr key={entry.id}><td>{new Date(entry.created_at).toLocaleString()}</td><td>{entry.kind}</td><td>{entry.status}</td><td>{entry.attempts}</td><td>{entry.last_error || '—'}</td></tr>)}</tbody></table></div>{!data.notifications?.length && <p>No notifications yet.</p>}</section>
+      <section className="settings-section"><h2>Execution history</h2><p className="lab-muted">Recent processing attempts, including failed dispatched requests.</p><div className="table-scroll"><table><thead><tr><th>Started</th><th>User</th><th>Tool</th><th>Status</th></tr></thead><tbody>{(data.logs || []).map((entry: any) => <tr key={entry.id}><td>{new Date(entry.created_at || entry.started_at).toLocaleString()}</td><td>{entry.email || entry.user_id}</td><td>{entry.tool_key}</td><td>{entry.status}</td></tr>)}</tbody></table></div>{!data.logs?.length && <p>No executions recorded.</p>}</section>
+    </>}
+  </div>;
+}

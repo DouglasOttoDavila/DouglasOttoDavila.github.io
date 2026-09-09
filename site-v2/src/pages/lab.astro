@@ -1,0 +1,40 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+import ContactBand from '../components/ContactBand.astro';
+import LabApp from '../components/lab/LabApp';
+import '../styles/lab.css';
+
+const projects = (await getCollection('projects')).filter((entry) => entry.data.kind !== 'case-study');
+---
+
+<BaseLayout title="Lab — Douglas D'Avila" description="Working demonstrations and experiments in AI-assisted QA, requirements analysis, and quality intelligence." current="lab">
+  <header class="page-hero lab-hero section-shell">
+    <p class="section-context">Interactive lab</p>
+    <h1>Experiments should expose their reasoning, not just their output.</h1>
+    <p>These tools are inspectable portfolio prototypes. They demonstrate workflows and engineering decisions; they are not presented as finished commercial products.</p>
+  </header>
+
+  <div class="section-shell"><LabApp surface="index" client:only="react" /><noscript><p>Enable JavaScript to sign in and use the interactive Lab.</p></noscript></div>
+  <section class="lab-index section-shell" aria-label="Interactive experiments">
+    {projects.map((project) => (
+      <article class={`lab-row tone-${project.data.signal}`}>
+        <div class="lab-visual" aria-hidden="true"><i></i><i></i><i></i><span></span></div>
+        <div class="lab-copy">
+          <div class="lab-meta"><span>{project.data.status}</span><span>{project.data.year}</span></div>
+          <h2>{project.data.title}</h2>
+          <p>{project.data.description}</p>
+          <ul>{project.data.skills.map((skill) => <li>{skill}</li>)}</ul>
+          <div class="lab-actions">
+            <a class="text-link" href={`/work/${project.id}`}>Read the context <span aria-hidden="true">→</span></a>
+            {project.data.labUrl && <a class="text-link" href={project.data.labUrl} data-astro-reload>Explore experiment <span aria-hidden="true">→</span></a>}
+            {!project.data.labUrl && project.data.externalUrl && <a class="text-link" href={project.data.externalUrl} target="_blank" rel="noreferrer">View extension source <Icon name="external" size={16} /></a>}
+          </div>
+        </div>
+      </article>
+    ))}
+  </section>
+
+  <ContactBand />
+</BaseLayout>

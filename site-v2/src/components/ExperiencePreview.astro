@@ -1,0 +1,57 @@
+---
+import { getCollection } from 'astro:content';
+
+const roles = (await getCollection('experience')).sort((a, b) => a.data.sequence - b.data.sequence);
+const positions = [ [6, 88], [23, 70], [43, 51], [65, 32], [94, 12] ];
+const titles: Record<string, string> = {
+  '2024-sdet': 'SDET',
+  '2020-qa-engineer': 'QA Engineer',
+};
+---
+
+<div class="experience-preview">
+  <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+    <defs>
+      <linearGradient id="home-career-trace" x1="0" y1="1" x2="1" y2="0">
+        <stop offset="0" stop-color="var(--teal)" />
+        <stop offset="1" stop-color="var(--blue-bright)" />
+      </linearGradient>
+    </defs>
+    <path d="M6 88 C8 77 18 79 23 70 S36 63 43 51 S58 44 65 32 S84 31 94 12" />
+  </svg>
+  <ol aria-label="Career progression, oldest to newest">
+    {roles.map((role, index) => (
+      <li style={`--x:${positions[index][0]}%;--y:${positions[index][1]}%;--size:${10 + index * 2}px`}>
+        <span class="preview-node" aria-hidden="true"></span>
+        <div class="preview-label">
+          <strong>{titles[role.id] ?? role.data.role}</strong>
+          <span>{role.data.start}–{role.data.end}</span>
+        </div>
+      </li>
+    ))}
+  </ol>
+</div>
+
+<style>
+  .experience-preview { position: relative; min-width: 0; height: 28rem; align-self: center; }
+  svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  path { fill: none; stroke: url(#home-career-trace); stroke-width: 2; vector-effect: non-scaling-stroke; }
+  ol { margin: 0; padding: 0; list-style: none; }
+  li { position: absolute; left: var(--x); top: var(--y); }
+  .preview-node { position: absolute; width: var(--size); height: var(--size); transform: translate(-50%, -50%); border: 2px solid var(--blue-bright); border-radius: 50%; background: var(--ink-950); }
+  li:first-child .preview-node { border-color: var(--teal); }
+  li:last-child .preview-node { background: var(--blue-bright); }
+  .preview-label { position: absolute; left: 1.3rem; top: -0.65rem; width: max-content; max-width: 11rem; }
+  li:nth-child(n+4) .preview-label { left: auto; right: 1.3rem; top: auto; bottom: 0.5rem; text-align: right; }
+  strong { display: block; color: var(--text); font-size: 0.9rem; line-height: 1.35; font-weight: 600; }
+  .preview-label > span { display: block; margin-top: 0.4rem; color: var(--text-faint); font-size: 0.7rem; line-height: 1.4; }
+  @media (max-width: 74rem) and (min-width: 56.01rem) {
+    .preview-label { max-width: 8rem; }
+  }
+  @media (max-width: 38rem) {
+    .experience-preview { height: 27rem; }
+    .preview-label { max-width: 9rem; }
+    strong { font-size: 0.85rem; }
+    .preview-label > span { font-size: 0.65rem; }
+  }
+</style>

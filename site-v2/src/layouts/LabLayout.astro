@@ -1,0 +1,13 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import '../styles/lab.css';
+interface Props { title: string; description: string }
+const { title, description } = Astro.props;
+---
+<BaseLayout title={`${title} — Douglas D'Avila`} description={description} current="lab">
+  <div class="lab-shell section-shell">
+    <header class="tool-hero"><a href="/lab" class="back-link" data-astro-reload>← All experiments</a><h1>{title}</h1><p>{description}</p></header>
+    <noscript><p class="lab-access">JavaScript is needed for Google sign-in and the interactive tools. You can still <a href="/work">read the project context</a>.</p></noscript>
+    <slot />
+  </div>
+</BaseLayout>

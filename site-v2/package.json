@@ -1,0 +1,33 @@
+{
+  "name": "douglas-portfolio-v2",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "dev": "node scripts/copy-legacy.mjs public && astro dev",
+    "build": "astro check && node scripts/copy-legacy.mjs public && astro build",
+    "preview": "astro preview",
+    "check": "astro check"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "latest",
+    "@astrojs/react": "latest",
+    "@fontsource-variable/onest": "latest",
+    "@fontsource-variable/recursive": "latest",
+    "@supabase/supabase-js": "^2.116.0",
+    "astro": "latest",
+    "d3": "^7.9.0",
+    "motion": "latest",
+    "react": "latest",
+    "react-dom": "latest"
+  },
+  "devDependencies": {
+    "@astrojs/check": "latest",
+    "@playwright/test": "^1.63.0",
+    "@types/d3": "^7.4.3",
+    "@types/node": "^26.5.0",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "typescript": "latest"
+  }
+}

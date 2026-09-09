@@ -1,0 +1,16 @@
+---
+import { site } from '../data/site';
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div>
+    <p class="footer-thesis">Clear requirements. Actionable tests. Calm releases.</p>
+    <a href={`mailto:${site.email}`}>Let’s build better quality systems <span aria-hidden="true">↗</span></a>
+  </div>
+  <div class="footer-meta">
+    <span>{site.location}</span>
+    <span>{site.timezone}</span>
+    <span>© {year}</span>
+  </div>
+</footer>

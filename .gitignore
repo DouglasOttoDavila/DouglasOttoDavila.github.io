@@ -13,6 +13,9 @@ content/auth.runtime.json
 /private_pages
 /supabase/.temp/
 /supabase/migrations/
+!/supabase/migrations/
+/supabase/migrations/*
+!/supabase/migrations/202609080001_lab_access.sql
 /docs/supabase-bootstrap.sql
 /docs/supabase-has-privileges-migration.sql
 /docs/supabase-recovery.md
@@ -20,3 +23,12 @@ content/auth.runtime.json
 /.codex
 /.github/skills/impeccable
 /.github/hooks/impeccable.json
+/site-v2/public/legacy/
+/site-v2/public/auth.runtime.json
+/site-v2/public/lab-data/
+/site-v2/node_modules/
+/site-v2/dist/
+/site-v2/.astro/
+/site-v2/test-results/
+/site-v2/playwright-report/
+/supabase/tests/.postgres-*/

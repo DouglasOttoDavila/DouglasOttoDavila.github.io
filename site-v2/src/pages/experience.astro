@@ -1,0 +1,49 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ContactBand from '../components/ContactBand.astro';
+import ExperienceRoadmap from '../components/ExperienceRoadmap';
+import { site } from '../data/site';
+
+const roles = await getCollection('experience');
+roles.sort((a, b) => a.data.sequence - b.data.sequence);
+if (new Set(roles.map(({ data }) => data.sequence)).size !== roles.length) {
+  throw new Error('Experience entries must use unique sequence values.');
+}
+const milestones = roles.map(({ id, data }) => ({ id, ...data }));
+---
+
+<BaseLayout title="Experience — Douglas D'Avila" description="Douglas D'Avila's trajectory from technical operations to AI-assisted quality-system engineering." current="experience">
+  <header class="page-hero experience-hero section-shell">
+    <p class="section-context">Experience</p>
+    <h1>From testing software to engineering confidence.</h1>
+    <p>The through-line is not a list of tools. It is a growing ability to find risk, make it visible, and give teams a dependable way to act on it.</p>
+    <a class="button button-secondary" href={site.resume} target="_blank" rel="noreferrer">Open résumé ↗</a>
+  </header>
+
+  <section class="experience-roadmap-section section-shell" aria-label="Professional experience roadmap">
+    <ExperienceRoadmap roles={milestones} client:load />
+    <noscript>
+      <style>.career-roadmap { display: none !important; }</style>
+      <div class="experience-noscript" aria-label="Professional experience, oldest to newest">
+        {milestones.length === 0 && <p class="career-roadmap-empty">Experience milestones are temporarily unavailable.</p>}
+        {milestones.map((role) => (
+          <article class={`experience-noscript-entry stage-${role.stage}`}>
+            <p>{role.start}–{role.end} · {role.company} · {role.location}</p>
+            <h2>{role.role}</h2>
+            <strong>{role.summary}</strong>
+            {role.outcomes.length > 0 && (
+              <dl>
+                {role.outcomes.map((outcome) => <div><dt>{outcome.value}</dt><dd>{outcome.label}</dd></div>)}
+              </dl>
+            )}
+            <ul>{role.responsibilities.map((responsibility) => <li>{responsibility}</li>)}</ul>
+            <p>{role.skills.join(' · ')}</p>
+          </article>
+        ))}
+      </div>
+    </noscript>
+  </section>
+
+  <ContactBand />
+</BaseLayout>

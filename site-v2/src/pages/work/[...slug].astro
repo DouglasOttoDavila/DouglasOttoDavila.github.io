@@ -1,0 +1,43 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Icon from '../../components/Icon.astro';
+import ContactBand from '../../components/ContactBand.astro';
+
+export async function getStaticPaths() {
+  const projects = await getCollection('projects');
+  return projects.map((project) => ({ params: { slug: project.id }, props: { project } }));
+}
+
+const { project } = Astro.props;
+const { Content } = await render(project);
+---
+
+<BaseLayout title={`${project.data.title} — Douglas D'Avila`} description={project.data.description} current="work">
+  <article class={`case-study tone-${project.data.signal}`}>
+    <header class="case-study-hero section-shell">
+      <a class="back-link" href="/work"><span aria-hidden="true">←</span> All work</a>
+      <div class="case-study-title">
+        <p class="section-context">{project.data.kind.replace('-', ' ')} · {project.data.year}</p>
+        <h1>{project.data.title}</h1>
+        <p>{project.data.description}</p>
+      </div>
+      <div class="case-study-status">
+        <span>Status</span>
+        <strong>{project.data.status}</strong>
+        <ul>{project.data.skills.map((skill) => <li>{skill}</li>)}</ul>
+      </div>
+    </header>
+
+    <div class="case-transition" aria-hidden="true"><i></i><i></i><i></i><i></i><span></span></div>
+
+    <div class="case-study-body section-shell prose">
+      <Content />
+      <aside class="case-study-links" aria-label="Project links">
+        {project.data.externalUrl && <a class="button button-primary" href={project.data.externalUrl} target="_blank" rel="noreferrer">View source <Icon name="external" size={18} /></a>}
+        {project.data.labUrl && <a class="button button-secondary" href={project.data.labUrl} data-astro-reload>Explore in the Lab →</a>}
+      </aside>
+    </div>
+  </article>
+  <ContactBand />
+</BaseLayout>

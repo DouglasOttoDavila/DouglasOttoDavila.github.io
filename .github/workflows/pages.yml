@@ -23,6 +23,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: site-v2/package-lock.json
+
       - name: Upload protected pages to Supabase Storage (optional)
         shell: bash
         env:
@@ -119,26 +126,23 @@ jobs:
           console.log('Wrote content/auth.runtime.json');
           NODE
 
-      - name: Build Pages artifact (dist)
+      - name: Build Astro Pages artifact
         shell: bash
         run: |
           set -euo pipefail
 
-          rm -rf dist
-          mkdir -p dist
+          npm ci --prefix site-v2
+          npm run build --prefix site-v2
 
-          # Copy only what the static site needs.
-          cp index.html dist/
-          cp -R assets content css js dist/
+          # Protected content sources must never enter the static artifact.
+          test ! -d site-v2/dist/private_pages
+          test ! -d site-v2/dist/legacy/docs
 
-          # The operational graph runtime fetches this fictional dataset at page load.
-          # Copy only the runtime JSON instead of publishing the whole docs folder.
-          mkdir -p dist/docs/relationship-graph-refactor
-          cp docs/relationship-graph-refactor/operational-context-graph.dataset.json dist/docs/relationship-graph-refactor/
-
-          # Convenience: keep README out of the deploy artifact.
-          # Protected content sources (if present) must never be deployed.
-          rm -rf dist/private_pages || true
+      - name: Browser acceptance tests
+        working-directory: site-v2
+        run: |
+          npx playwright install --with-deps chromium
+          npm run test:e2e
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -146,11 +150,11 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: site-v2/dist
 
   deploy:
     runs-on: ubuntu-latest
-    needs: build
+    needs: [build, deploy-supabase-functions]
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -162,6 +166,7 @@ jobs:
   deploy-supabase-functions:
     runs-on: ubuntu-latest
     needs: build
+    environment: github-pages
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -169,10 +174,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
         with:
           version: latest
+
+      - name: Apply reviewed Lab schema
+        run: node scripts/deploy-lab-schema.mjs --apply
 
       - name: Deploy Supabase Edge Functions
         shell: bash
@@ -199,4 +212,4 @@ jobs:
           NODE
           )"
 
-          supabase functions deploy --project-ref "${project_ref}"
+          supabase functions deploy --project-ref "${project_ref}" --use-api

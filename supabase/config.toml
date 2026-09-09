@@ -1,2 +1,8 @@
 [functions.operational-graph-assistant]
 verify_jwt = false
+[functions.user-story-analyzer]
+verify_jwt = false
+[functions.lab-access]
+verify_jwt = false
+[functions.lab-notifications]
+verify_jwt = false

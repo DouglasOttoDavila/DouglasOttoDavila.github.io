@@ -1,0 +1,33 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+import ContactBand from '../components/ContactBand.astro';
+
+const articles = (await getCollection('writing')).sort((a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf());
+const date = new Intl.DateTimeFormat('en', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+---
+
+<BaseLayout title="Writing — Douglas D'Avila" description="Writing on AI-assisted quality engineering, testing careers, risk, and developer workflows." current="writing">
+  <header class="page-hero reading-hero section-shell">
+    <p class="section-context">Writing</p>
+    <h1>Notes from the changing edge of quality engineering.</h1>
+    <p>I write about what happens when AI enters testing work: where it creates leverage, where it creates new risk, and why professional judgment still matters.</p>
+  </header>
+
+  <section class="writing-index section-shell" aria-label="Articles">
+    {articles.map((article) => (
+      <article class="writing-row">
+        <div class="writing-date"><span>{date.format(article.data.publishedAt)}</span><span>{article.data.source}</span></div>
+        <div>
+          <h2><a href={article.data.externalUrl} target="_blank" rel="noreferrer">{article.data.title}</a></h2>
+          <p>{article.data.excerpt}</p>
+          <ul>{article.data.topics.map((topic) => <li>{topic}</li>)}</ul>
+        </div>
+        <a class="writing-open" href={article.data.externalUrl} target="_blank" rel="noreferrer" aria-label={`Read ${article.data.title} on LinkedIn`}><Icon name="external" /></a>
+      </article>
+    ))}
+  </section>
+
+  <ContactBand />
+</BaseLayout>
