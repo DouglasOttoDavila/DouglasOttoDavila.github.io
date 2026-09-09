@@ -6,7 +6,7 @@ const project = 'zlixsxbovbshsyptxymp';
 const token = process.env.SUPABASE_ACCESS_TOKEN;
 if (!token) throw new Error('SUPABASE_ACCESS_TOKEN is required.');
 if (process.env.SUPABASE_URL && process.env.SUPABASE_URL.replace(/\/$/, '') !== `https://${project}.supabase.co`) throw new Error('Unexpected Supabase project.');
-const migration = await readFile(new URL('../supabase/migrations/202609080001_lab_access.sql', import.meta.url), 'utf8');
+const migration = (await readFile(new URL('../supabase/migrations/202609080001_lab_access.sql', import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
 const checksum = createHash('sha256').update(migration).digest('hex');
 async function query(sql) {
   const response = await fetch(`https://api.supabase.com/v1/projects/${project}/database/query`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ query: sql }), signal: AbortSignal.timeout(60000) });
@@ -17,7 +17,12 @@ const [exists] = await query("select to_regclass('public.lab_schema_migrations')
 if (exists.installed) {
   const rows = await query("select checksum from public.lab_schema_migrations where version='202609080001'");
   if (rows.length) {
-    if (rows[0].checksum !== checksum) throw new Error('Applied Lab migration differs from the local file. Add a new migration instead of rewriting history.');
+    if (rows[0].checksum !== checksum) {
+      const windowsChecksum = createHash('sha256').update(migration.replace(/\n/g, '\r\n')).digest('hex');
+      if (rows[0].checksum !== windowsChecksum) throw new Error('Applied Lab migration differs from the local file. Add a new migration instead of rewriting history.');
+      // Git normalizes Windows line endings; reconcile only an identical SQL body.
+      await query(`update public.lab_schema_migrations set checksum='${checksum}' where version='202609080001' and checksum='${windowsChecksum}'`);
+    }
     console.log('Lab schema already matches the reviewed migration.');
     return;
   }
