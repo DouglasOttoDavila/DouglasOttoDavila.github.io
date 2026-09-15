@@ -7,6 +7,6 @@ const { current = '' } = Astro.props;
 <a class="brand" href="/" aria-label={`${site.name}, home`}>{site.name}</a>
 <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu <span aria-hidden="true">☰</span></button>
 <nav id="site-navigation" class="site-nav" aria-label="Primary navigation">
-{navigation.map(item => <a href={`/#${item.label.toLowerCase()}`} data-section={item.label.toLowerCase()} aria-current={current === item.label.toLowerCase() ? 'location' : undefined}>{item.label}</a>)}
+{navigation.map(item => <a href={item.label === "Work" ? "/#work" : item.href} data-section={item.label === "Work" ? "work" : undefined} aria-current={current === item.label.toLowerCase() ? (item.label === 'Work' ? 'location' : 'page') : undefined}>{item.label}</a>)}
 <a class="access-link" href="/login" data-astro-reload aria-current={current === 'login' ? 'page' : undefined}>Lab access</a>
 </nav></header>

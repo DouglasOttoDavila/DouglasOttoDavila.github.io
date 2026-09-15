@@ -1651,3 +1651,29 @@ time {
   .evolution-note p { font-size: 16px; }
   .career-content .career-company, .career-content .skills-line { font-size: 13px; }
 }
+
+/* Full-width overview rows and readable résumé details. */
+.overview-rows > section, .resume-section {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) minmax(0, 3fr);
+  gap: 48px;
+  padding-block: 48px;
+  border-top: 1px solid var(--line);
+}
+.overview-content, .resume-section > div { max-width: 70ch; }
+.overview-content h2, .resume-section h2 { font-size: clamp(26px, 3vw, 36px); }
+.overview-content p, .resume-section p, .resume-section li { color: var(--text-soft); }
+.overview-content article + article { margin-top: 24px; }
+.overview-content article { margin-bottom: 24px; }
+.overview-content h3 { margin-bottom: 8px; }
+.resume-section h3 { margin-top: 32px; margin-bottom: 16px; }
+.resume-section li + li { margin-top: 12px; }
+.resume-skills { margin: 0; }
+.resume-skills > div { display: grid; grid-template-columns: 180px 1fr; gap: 24px; padding-block: 16px; border-bottom: 1px solid var(--line); }
+.resume-skills dt { font-weight: 600; }
+.resume-skills dd { margin: 0; color: var(--text-soft); }
+.about-aside img { height: auto; aspect-ratio: 1; object-fit: cover; }
+@media (max-width: 800px) {
+  .overview-rows > section, .resume-section { grid-template-columns: 1fr; gap: 16px; padding-block: 32px; }
+  .resume-skills > div { grid-template-columns: 1fr; gap: 4px; }
+}

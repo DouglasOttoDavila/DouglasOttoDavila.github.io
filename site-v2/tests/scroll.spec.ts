@@ -30,7 +30,7 @@ test("section navigation updates URL and focus without passive history changes",
   await page.waitForTimeout(300);
   expect(await page.evaluate(() => window.history.length)).toBe(history);
 });
-test("mobile menu supports Escape and navigates to overview from detail", async ({
+test("mobile menu supports Escape and navigates between detail pages", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
@@ -46,8 +46,8 @@ test("mobile menu supports Escape and navigates to overview from detail", async 
     .getByRole("navigation")
     .getByRole("link", { name: "Writing", exact: true })
     .click();
-  await expect(page).toHaveURL(/\/#writing$/);
-  await expect(page.locator("#writing")).toBeInViewport();
+  await expect(page).toHaveURL(/\/writing$/);
+  await expect(page.locator("main h1")).toBeInViewport();
   await expect(menu).toHaveAttribute("aria-expanded", "false");
 });
 test("article filters survive refresh and Back", async ({ page }) => {
