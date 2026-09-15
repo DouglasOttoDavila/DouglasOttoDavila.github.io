@@ -8,7 +8,7 @@ export const site = {
   linkedin: 'https://www.linkedin.com/in/douglasottodavila',
   github: 'https://github.com/DouglasOttoDavila',
   calendar: 'https://cal.com/douglas-odavila',
-  resume: 'https://drive.google.com/file/d/1AWl9S0oBfP9YzF3QjT9_MsPhbzxOsyQP/view?usp=sharing'
+  resume: '/documents/douglas-davila-resume.pdf'
 } as const;
 
 export const navigation = [

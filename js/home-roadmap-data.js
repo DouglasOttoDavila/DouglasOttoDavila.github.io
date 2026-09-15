@@ -7,7 +7,7 @@ window.HomeRoadmapData = {
   roleActions: [
     {
       label: 'Resume',
-      href: 'https://drive.google.com/file/d/1AWl9S0oBfP9YzF3QjT9_MsPhbzxOsyQP/view?usp=sharing',
+      href: '/documents/douglas-davila-resume.pdf',
       external: true
     },
     {
@@ -181,7 +181,7 @@ window.HomeRoadmapData = {
       },
       {
         label: 'Download Resume (PDF)',
-        href: 'https://drive.google.com/file/d/1AWl9S0oBfP9YzF3QjT9_MsPhbzxOsyQP/view?usp=sharing',
+        href: '/documents/douglas-davila-resume.pdf',
         icon: 'fa-solid fa-file-arrow-down',
         variant: 'btn-outline-light',
         external: true
