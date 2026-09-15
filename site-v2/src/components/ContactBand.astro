@@ -1,15 +1,8 @@
 ---
-import Icon from './Icon.astro';
 import { site } from '../data/site';
+interface Props { overview?: boolean }
+const { overview = false } = Astro.props;
 ---
-
-<section class="contact-band section-shell" aria-labelledby="contact-title">
-  <div>
-    <p class="section-context">The next quality problem</p>
-    <h2 id="contact-title">Need stronger evidence before the next release?</h2>
-  </div>
-  <div class="contact-band-actions">
-    <a class="button button-primary" href={`mailto:${site.email}`}><Icon name="mail" size={19} /> Email Douglas</a>
-    <a class="button button-secondary" href={site.calendar} target="_blank" rel="noreferrer">Book a conversation <Icon name="external" size={18} /></a>
-  </div>
-</section>
+<section id="contact" class:list={['contact-band','section-shell', { 'contact-overview': overview }]} aria-labelledby="contact-title">
+<div><h2 id="contact-title">{overview ? 'Let’s talk about your next quality problem.' : 'Let’s build better quality systems.'}</h2><p>Thoughtful conversations about quality engineering, automation, and practical AI.</p></div>
+<div class="contact-band-actions"><a class="button button-primary" href={`mailto:${site.email}`}>Email Douglas ↗</a><a class="text-link" href={site.calendar} target="_blank" rel="noreferrer">Book a conversation ↗</a></div></section>

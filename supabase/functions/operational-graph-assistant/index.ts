@@ -1,15 +1,16 @@
+import { models, assertModel, DEFAULT_MODEL } from '../_shared/models.ts';
 import { corsHeaders } from '../_shared/cors.ts';
-import { requirePrivilegedUser, reserveAiInteraction, completeAiInteraction, readBody, LabError, dispatchAiInteraction } from '../_shared/lab.ts';
+import { serviceRpc, requirePrivilegedUser, reserveAiInteraction, completeAiInteraction, readBody, LabError, dispatchAiInteraction } from '../_shared/lab.ts';
 import {
   buildGraphAssistantSystemPrompt,
   buildGraphAssistantUserPrompt
 } from './prompt.ts';
-import { getAssistantResponseSchema, normalizeAssistantResponse, parseGeminiJsonResponse } from './response.ts';
+import { normalizeAssistantResponse } from './response.ts';
+import { providerConfig, generateGraphAnswer } from './provider.ts';
 
-const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
-const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
 
 type AssistantRequestPayload = {
+  model?: string;
   question?: string;
   request_id?: string;
   conversationHistory?: Array<{ role?: string; text?: string }>;
@@ -30,14 +31,11 @@ Deno.serve(async (request) => {
       return jsonResponse({ error: access.error }, access.status);
     }
 
-    const apiKey = Deno.env.get('GEMINI_API_KEY');
-    const model = Deno.env.get('GEMINI_MODEL') || DEFAULT_GEMINI_MODEL;
-
-    if (!apiKey) {
-      return jsonResponse({ error: 'GEMINI_API_KEY is not configured for the operational graph assistant.' }, 500);
-    }
+    let provider = providerConfig();
 
     const payload = await readBody(request) as AssistantRequestPayload;
+    if (payload.model !== undefined) { try { provider = {...providerConfig(name => name === 'GRAPH_ASSISTANT_PROVIDER' ? 'nvidia' : Deno.env.get(name)), model: assertModel(payload.model)}; } catch(error) { throw new LabError((error as Error).message,400); } }
+    else if (provider.provider === 'nvidia') { const preference = await serviceRpc('lab_model_preference',{p_user_id:access.user.id}); provider.model = models.some(model => model.id === preference) ? preference : DEFAULT_MODEL; }
     const question = String(payload?.question || '').trim();
     const graphContext = payload?.graphContext || {};
 
@@ -78,6 +76,7 @@ Deno.serve(async (request) => {
       graphContext
     }, userPromptTemplate);
     const interaction = await reserveAiInteraction(access.token, 'operational-graph-assistant', {
+      provider: provider.provider, model: provider.model,
       question,
       conversationHistory: payload.conversationHistory || [],
       graphContext
@@ -91,58 +90,8 @@ Deno.serve(async (request) => {
     reservedToken = access.token;
     await dispatchAiInteraction(reservedId!);
 
-    const geminiResponse = await fetch(`${GEMINI_API_BASE}/${encodeURIComponent(model)}:generateContent`, {
-      method: 'POST',
-      signal: AbortSignal.timeout(45000),
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': apiKey
-      },
-      body: JSON.stringify({
-        system_instruction: {
-          parts: [
-            {
-              text: systemPrompt
-            }
-          ]
-        },
-        contents: [
-          {
-            role: 'user',
-            parts: [
-              {
-                text: userPrompt
-              }
-            ]
-          }
-        ],
-        generationConfig: {
-          temperature: 0.2,
-          responseMimeType: 'application/json',
-          responseSchema: getAssistantResponseSchema()
-        }
-      })
-    });
-
-    if (!geminiResponse.ok) {
-      const errorText = `Model provider returned status ${geminiResponse.status}.`;
-      await completeAiInteraction(access.token, interaction.reservation.log_id, {}, 'error', errorText);
-      return jsonResponse(
-        { error: `Gemini request failed with status ${geminiResponse.status}. ${errorText}`.trim() },
-        502
-      );
-    }
-
-    const geminiPayload = await geminiResponse.json();
-    let normalized: Record<string, unknown>;
-    try {
-      const parsed = parseGeminiJsonResponse(geminiPayload);
-      normalized = normalizeAssistantResponse(parsed, graphContext);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to parse Gemini response.';
-      await completeAiInteraction(access.token, interaction.reservation.log_id, { raw: geminiPayload }, 'error', message);
-      throw error;
-    }
+    const parsed = await generateGraphAnswer(provider, systemPrompt, userPrompt).catch(error => { throw new LabError(error.message, 502); });
+    const normalized = {...normalizeAssistantResponse(parsed, graphContext), model: provider.model, provider: provider.provider};
     await completeAiInteraction(access.token, interaction.reservation.log_id, normalized, 'completed');
 
     return jsonResponse({

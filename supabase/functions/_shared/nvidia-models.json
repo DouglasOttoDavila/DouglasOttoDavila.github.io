@@ -1,0 +1,86 @@
+[
+  {
+    "id": "nvidia/nemotron-3-super-120b-a12b",
+    "label": "nvidia/nemotron-3-super-120b-a12b",
+    "verified": true,
+    "checkedAt": "2026-09-14"
+  },
+  {
+    "id": "nvidia/nemotron-3-ultra-550b-a55b",
+    "label": "nvidia/nemotron-3-ultra-550b-a55b",
+    "verified": false,
+    "checkedAt": "2026-09-14"
+  },
+  {
+    "id": "openai/gpt-oss-20b",
+    "label": "openai/gpt-oss-20b",
+    "verified": false,
+    "checkedAt": "2026-09-14"
+  },
+  {
+    "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+    "label": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+    "verified": false,
+    "checkedAt": "2026-09-14"
+  },
+  {
+    "id": "google/gemma-4-31b-it",
+    "label": "google/gemma-4-31b-it",
+    "verified": false,
+    "checkedAt": "2026-09-14"
+  },
+  {
+    "id": "meta/llama-3.2-90b-vision-instruct",
+    "label": "meta/llama-3.2-90b-vision-instruct",
+    "verified": true,
+    "checkedAt": "2026-09-14"
+  },
+  {
+    "id": "google/diffusiongemma-26b-a4b-it",
+    "label": "google/diffusiongemma-26b-a4b-it",
+    "verified": false,
+    "checkedAt": "2026-09-14"
+  },
+  {
+    "id": "meta/llama-3.2-11b-vision-instruct",
+    "label": "meta/llama-3.2-11b-vision-instruct",
+    "verified": true,
+    "checkedAt": "2026-09-14"
+  },
+  {
+    "id": "mistralai/mistral-nemotron",
+    "label": "mistralai/mistral-nemotron",
+    "verified": true,
+    "checkedAt": "2026-09-14"
+  },
+  {
+    "id": "deepseek-ai/deepseek-v4-flash-0731",
+    "label": "deepseek-ai/deepseek-v4-flash-0731",
+    "verified": true,
+    "checkedAt": "2026-09-14"
+  },
+  {
+    "id": "moonshotai/kimi-k3",
+    "label": "moonshotai/kimi-k3",
+    "verified": true,
+    "checkedAt": "2026-09-14"
+  },
+  {
+    "id": "poolside/laguna-xs-2.1",
+    "label": "poolside/laguna-xs-2.1",
+    "verified": true,
+    "checkedAt": "2026-09-14"
+  },
+  {
+    "id": "meta/muse-glimmer-30b",
+    "label": "meta/muse-glimmer-30b",
+    "verified": true,
+    "checkedAt": "2026-09-14"
+  },
+  {
+    "id": "nvidia/nemotron-3.5-lightning-30b-a3b",
+    "label": "nvidia/nemotron-3.5-lightning-30b-a3b",
+    "verified": true,
+    "checkedAt": "2026-09-14"
+  }
+]

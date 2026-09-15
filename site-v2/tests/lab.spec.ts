@@ -15,6 +15,7 @@ async function setup(page: Page, options: { signedIn?: boolean; state?: string; 
     localStorage.setItem(`sb-${project}-auth-token`, JSON.stringify({ access_token: token, refresh_token: 'test-refresh', token_type: 'bearer', expires_at: 9999999999, expires_in: 3600, user: { id: uid, email: 'recruiter@example.test', app_metadata: { provider: 'google', providers: ['google'] }, user_metadata: {}, aud: 'authenticated', created_at: '2026-01-01T00:00:00Z' } }));
   }, { token, uid, project });
   await page.route('**/auth.runtime.json', route => route.fulfill({ json: { supabase: { url: `https://${project}.supabase.co`, anonKey: 'public-test-key' } } }));
+  let preferredModel = 'nvidia/nemotron-3-super-120b-a12b';
   await page.route(`https://${project}.supabase.co/**`, async route => {
     const url = route.request().url();
     if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 200, headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*' } });
@@ -22,6 +23,7 @@ async function setup(page: Page, options: { signedIn?: boolean; state?: string; 
     if (url.includes('/auth/v1/logout')) return route.fulfill({ status: 204, headers });
     if (url.includes('/auth/v1/')) return route.fulfill({ headers, json: { id: uid, email: 'recruiter@example.test' } });
     const body = route.request().postDataJSON();
+    if (url.endsWith('/model-catalog')) { if(body.action === 'save') preferredModel=body.model; return route.fulfill({headers,json:{models:[{id:'nvidia/nemotron-3-super-120b-a12b',label:'Nemotron Super',verified:true},{id:'meta/llama-3.2-11b-vision-instruct',label:'Llama 11B',verified:true}],defaultModel:preferredModel,checkedAt:'2026-09-14'}}); }
     if (url.endsWith('/lab-access')) {
       actions.push(body);
       if (body.action === 'admin_overview') return route.fulfill({ headers, json: { requests, settings, logs: [], notifications: [] } });
@@ -41,7 +43,7 @@ test('signed-out deep links expose sign-in, not tool controls; no legacy links',
   await expect(page.getByRole('button', { name: 'Continue with Google' })).toBeVisible();
   await expect(page.getByLabel('User story and acceptance criteria')).toHaveCount(0);
   await page.goto('/lab'); await expect(page.locator('a[href*="/legacy/"]')).toHaveCount(0);
-  await expect(page.getByRole('link', { name: 'Explore experiment' })).toHaveCount(3);
+  await expect(page.getByRole('link', { name: 'Open experiment' })).toHaveCount(3);
 });
 test('pending approval and revoked users cannot access tool controls', async ({ page }) => {
   const state = await setup(page, { state: 'pending' }); await page.goto('/lab/user-story-analyzer');
@@ -73,6 +75,8 @@ test('global quota disables processing but preserves simulation', async ({ page 
   await expect(page.getByRole('heading', { name: 'Product regression', exact: true })).toBeVisible();
 });
 test('graph supports entity inspection, filtering, assistant and new entity URLs', async ({ page }) => {
+  const pageErrors: string[] = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
   await setup(page); await page.goto('/lab/context-graph');
   await expect(page.locator('.graph-node').first()).toBeVisible();
   await page.screenshot({ path: 'test-results/graph-desktop.png', fullPage: true });
@@ -80,10 +84,12 @@ test('graph supports entity inspection, filtering, assistant and new entity URLs
   await expect(page.getByRole('link', { name: 'Open entity record' })).toBeVisible();
   const recordUrl = await page.getByRole('link', { name: 'Open entity record' }).getAttribute('href');
   expect(recordUrl).toContain('/lab/context-graph/entity?entity=');
+  await page.getByRole('button', { name: 'Ask about this entity' }).click();
   await page.getByLabel('Your question').fill('Which tests cover this requirement?');
   await page.getByRole('button', { name: 'Ask assistant · 1 execution' }).click();
   await expect(page.getByText('Inspect the requirement and its related tests.')).toBeVisible();
   await page.goto(recordUrl!); await expect(page.getByRole('link', { name: 'Open in graph' })).toBeVisible();
+  expect(pageErrors).toEqual([]);
 });
 test('admin approves and configures quotas; non-admin settings remain unavailable', async ({ page }) => {
   const state = await setup(page, { admin: true }); await page.goto('/settings');
@@ -94,13 +100,15 @@ test('admin approves and configures quotas; non-admin settings remain unavailabl
   await expect(page.getByText('Site settings saved.', { exact: false })).toBeVisible();
   expect(state.settings.daily_limit).toBe(12);
   state.access.is_admin = false; await page.getByRole('button', { name: 'Refresh access' }).click();
-  await expect(page.getByText('Site settings are available to Douglas only.')).toBeVisible();
+  await expect(page.getByText('Administrative settings are available to Douglas only.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Save site settings' })).toHaveCount(0);
 });
 test('mobile tools fit the viewport and logout closes the workspace', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 }); await setup(page);
   for (const path of ['/lab/user-story-analyzer', '/lab/neural-test-signal-classifier', '/lab/context-graph']) {
-    await page.goto(path); await expect(page.getByText('Lab access approved', { exact: true })).toBeVisible();
+    await page.goto(path);
+    if (path.endsWith('context-graph')) await page.locator('.graph-access-disclosure > summary').click();
+    await expect(page.getByText('Lab access approved', { exact: true })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
     await page.screenshot({ path: `test-results/mobile-${path.split('/').pop()}.png`, fullPage: true });
   }
@@ -154,4 +162,80 @@ test('a late status response cannot restore tools after logout', async ({ page }
   await page.getByRole('button', { name: 'Sign out', exact: true }).click(); release();
   await expect(page.getByRole('button', { name: 'Continue with Google' })).toBeVisible();
   await expect(page.getByLabel('User story and acceptance criteria')).toHaveCount(0);
+});
+
+test('access screen distinguishes lifetime and shared daily allowances and preserves return destination', async ({ page }) => {
+  await setup(page, { quota: { lifetime_remaining: 4 } }); await page.goto('/login?next=/lab/user-story-analyzer');
+  await expect(page.getByRole('heading', { name: 'You’re ready to explore.' })).toBeVisible();
+  await expect(page.locator('.usage-line')).toContainText('Account allowance: 4 of 10 runs remaining');
+  await expect(page.locator('.usage-line')).toContainText('Shared daily capacity: 10 of 10 runs available');
+  await expect(page.getByRole('link', { name: 'Continue to experiment' })).toHaveAttribute('href', '/lab/user-story-analyzer');
+  await expect(page.getByRole('link', { name: 'Site settings' })).toHaveAttribute('href', '/settings');
+  await page.screenshot({ path: 'test-results/redesign/access-approved.png', fullPage: true });
+});
+test('account exhaustion, pause, and status failures stay explicit', async ({ page }) => {
+  const state = await setup(page, { quota: { lifetime_remaining: 0 } }); await page.goto('/login');
+  await expect(page.getByText('Your account allowance has been used.', { exact: false })).toBeVisible();
+  state.currentUsage.paused = true; await page.getByRole('button', { name: 'Refresh access' }).click();
+  await expect(page.getByText('Processing is paused by Douglas.', { exact: false })).toBeVisible();
+  await page.route('**/functions/v1/lab-access', route => route.fulfill({ status: 503, json: { error: 'Access service unavailable.' } }));
+  await page.getByRole('button', { name: 'Refresh access' }).click();
+  await expect(page.getByRole('alert')).toContainText('Access service unavailable');
+  await expect(page.getByRole('button', { name: 'Retry access check' })).toBeVisible();
+});
+
+
+test('graph inspector preserves canvas, drafts and viewport on desktop and mobile', async ({ page }) => {
+  await setup(page);
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/lab/context-graph');
+    await page.locator('.graph-node').first().waitFor();
+    await page.getByRole('button', { name: 'Expand workspace', exact: true }).click();
+    const before = await page.evaluate(() => scrollY);
+    await page.locator('.graph-node').first().focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('complementary', { name: 'Graph inspector' })).toBeVisible();
+    expect(await page.evaluate(() => scrollY)).toBe(before);
+    const transform = await page.locator('.graph-stage svg > g').getAttribute('transform');
+    await page.getByRole('button', { name: 'Ask about this entity' }).click();
+    await page.getByLabel('Your question').fill('Keep this draft');
+    await page.locator('.graph-panel-tabs').getByRole('button', { name: 'Details', exact: true }).click();
+    await page.locator('.graph-panel-tabs').getByRole('button', { name: 'Assistant', exact: true }).click();
+    await expect(page.getByLabel('Your question')).toHaveValue('Keep this draft');
+    expect(await page.locator('.graph-stage svg > g').getAttribute('transform')).toBe(transform);
+    if (width === 390 && await page.getByRole('button', { name: 'Expand panel', exact: true }).isVisible()) await page.getByRole('button', { name: 'Expand panel', exact: true }).click();
+    const box = await page.getByRole('button', { name: 'Ask assistant · 1 execution' }).boundingBox();
+    expect(box!.y + box!.height).toBeLessThanOrEqual(900);
+    await page.screenshot({path: 'test-results/graph-inspector-'+width+'.png'});
+    expect(await page.locator('header').first().evaluate(el => Boolean(el.closest('[inert]')))).toBeTruthy();
+    if (width === 390) {
+      await page.setViewportSize({ width, height: 450 });
+      await page.getByLabel('Your question').focus();
+      await expect.poll(async () => { const submit = await page.getByRole('button', { name: 'Ask assistant · 1 execution' }).boundingBox(); return submit!.y + submit!.height; }).toBeLessThanOrEqual(450);
+      await page.setViewportSize({ width, height: 900 });
+    }
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('complementary', {name:'Graph inspector'})).toHaveCount(0);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
+  }
+});
+
+
+test('model preference persists while graph override remains local to visit', async ({page}) => {
+ const state = await setup(page);
+ await page.goto('/settings');
+ await page.getByLabel('Default assistant model').selectOption('meta/llama-3.2-11b-vision-instruct');
+ await page.getByRole('button',{name:'Save model preference'}).click();
+ await expect(page.getByText('Your default model was saved.')).toBeVisible();
+ await page.reload();await expect(page.getByLabel('Default assistant model')).toHaveValue('meta/llama-3.2-11b-vision-instruct');
+ await page.goto('/lab/context-graph');await page.locator('.graph-node').first().waitFor();
+ await page.getByRole('button',{name:'Assistant',exact:true}).click();
+ await page.getByLabel('Model for this graph').selectOption('nvidia/nemotron-3-super-120b-a12b');
+ await page.getByLabel('Your question').fill('Which tests cover this requirement?');
+ await page.getByRole('button',{name:'Ask assistant · 1 execution'}).click();
+ await expect(page.getByText('Inspect the requirement and its related tests.')).toBeVisible();
+ expect(state.executions[0].model).toBe('nvidia/nemotron-3-super-120b-a12b');
+ await page.goto('/settings');await expect(page.getByLabel('Default assistant model')).toHaveValue('meta/llama-3.2-11b-vision-instruct');
+ await page.goto('/lab/context-graph');await page.locator('.graph-node').first().waitFor();await page.getByRole('button',{name:'Assistant',exact:true}).click();await expect(page.getByLabel('Model for this graph')).toHaveValue('');
 });

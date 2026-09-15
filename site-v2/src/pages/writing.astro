@@ -1,33 +1,33 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import Icon from '../components/Icon.astro';
-import ContactBand from '../components/ContactBand.astro';
-
-const articles = (await getCollection('writing')).sort((a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf());
-const date = new Intl.DateTimeFormat('en', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+const articles=(await getCollection('writing')).sort((a,b)=>b.data.publishedAt.valueOf()-a.data.publishedAt.valueOf());
+const featured=articles.find(a=>a.id==='ai-tests-and-trust')!;
+const date=(d:Date)=>d.toLocaleDateString('en',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
+const category=(id:string)=>id==='leadership-and-respect'?'leadership':['ai-tests-and-trust','ai-code-verification','ai-qa-guardrails'].includes(id)?'quality':'ai';
 ---
-
-<BaseLayout title="Writing — Douglas D'Avila" description="Writing on AI-assisted quality engineering, testing careers, risk, and developer workflows." current="writing">
-  <header class="page-hero reading-hero section-shell">
-    <p class="section-context">Writing</p>
-    <h1>Notes from the changing edge of quality engineering.</h1>
-    <p>I write about what happens when AI enters testing work: where it creates leverage, where it creates new risk, and why professional judgment still matters.</p>
-  </header>
-
-  <section class="writing-index section-shell" aria-label="Articles">
-    {articles.map((article) => (
-      <article class="writing-row">
-        <div class="writing-date"><span>{date.format(article.data.publishedAt)}</span><span>{article.data.source}</span></div>
-        <div>
-          <h2><a href={article.data.externalUrl} target="_blank" rel="noreferrer">{article.data.title}</a></h2>
-          <p>{article.data.excerpt}</p>
-          <ul>{article.data.topics.map((topic) => <li>{topic}</li>)}</ul>
-        </div>
-        <a class="writing-open" href={article.data.externalUrl} target="_blank" rel="noreferrer" aria-label={`Read ${article.data.title} on LinkedIn`}><Icon name="external" /></a>
-      </article>
-    ))}
-  </section>
-
-  <ContactBand />
+<BaseLayout title="Writing — Douglas D'Avila" description="Notes on quality, AI, and engineering judgment." current="writing">
+<header class="page-hero writing-hero section-shell"><div><p class="section-context">Writing</p><h1>Notes on quality, AI, and engineering judgment.</h1><p>Ideas from the work, shared in public.</p></div><aside class="featured-article"><p class="section-context">Featured article</p><h2>{featured.data.title}</h2><p>{featured.data.excerpt}</p><a class="text-link" href={featured.data.externalUrl} target="_blank" rel="noreferrer">Read on LinkedIn ↗</a></aside></header>
+<section class="writing-index section-shell" aria-label="Articles">
+<div class="writing-filters" role="group" aria-label="Filter articles" hidden>{[['all','All'],['quality','Quality engineering'],['ai','AI & delivery'],['leadership','Leadership']].map(([value,label])=><button type="button" data-filter={value} aria-pressed={value==='all'}>{label}</button>)}</div>
+<p class="sr-only" role="status" id="writing-count"></p>
+{articles.map(a=><article class="writing-row" data-category={category(a.id)}><time datetime={a.data.publishedAt.toISOString()}>{date(a.data.publishedAt)}</time><div><h2><a href={a.data.externalUrl} target="_blank" rel="noreferrer">{a.data.title}</a></h2><p>{a.data.excerpt}</p></div><a class="text-link" href={a.data.externalUrl} target="_blank" rel="noreferrer" aria-label={`Read ${a.data.title} on LinkedIn`}>Read on LinkedIn ↗</a></article>)}
+<p id="writing-empty" hidden>No articles in this category. <button class="text-link" data-filter="all">Clear filters</button></p>
+</section>
 </BaseLayout>
+<script>
+let dispose:(()=>void)|undefined;
+function initializeWriting(){
+ dispose?.();const controls=document.querySelector<HTMLElement>('.writing-filters');if(!controls)return;controls.hidden=false;
+ const controller=new AbortController(),{signal}=controller;
+ const apply=(filter:string)=>{const known=['all','quality','ai','leadership'].includes(filter)?filter:'all';let count=0;
+ document.querySelectorAll<HTMLElement>('.writing-row').forEach(row=>{row.hidden=known!=='all'&&row.dataset.category!==known;if(!row.hidden)count++;});
+ controls.querySelectorAll('button').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.filter===known)));
+ document.getElementById('writing-count')!.textContent=count+' articles';
+ document.getElementById('writing-empty')!.hidden=count!==0;};
+ document.querySelectorAll<HTMLButtonElement>('[data-filter]').forEach(button=>button.addEventListener('click',()=>{const url=new URL(location.href);if(button.dataset.filter==='all')url.searchParams.delete('topic');else url.searchParams.set('topic',button.dataset.filter!);history.pushState({},'',url);apply(button.dataset.filter!);},{signal}));
+ window.addEventListener('popstate',()=>apply(new URLSearchParams(location.search).get('topic')||'all'),{signal});
+ apply(new URLSearchParams(location.search).get('topic')||'all');dispose=()=>controller.abort();
+}
+document.addEventListener('astro:page-load',initializeWriting);document.addEventListener('astro:before-swap',()=>dispose?.());initializeWriting();
+</script>

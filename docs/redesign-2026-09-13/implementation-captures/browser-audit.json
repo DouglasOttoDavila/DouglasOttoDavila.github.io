@@ -1,0 +1,294 @@
+{
+  "note": "Local browser audit. Contrast samples visible HTML text against solid ancestor surfaces; not a complete WCAG certification. Lab uses signed-out fixture configuration. External OAuth and production field performance are not simulated as live evidence.",
+  "routes": [
+    {
+      "route": "/",
+      "title": "Douglas D'Avila — SDET & Quality Engineering",
+      "h1": "Quality systems,built for real delivery.",
+      "checkedText": 81,
+      "minimumTextContrast": 5.82,
+      "contrastFailures": [],
+      "overflow": false,
+      "internalLinks": [
+        "#main-content",
+        "/",
+        "/#work",
+        "/#experience",
+        "/#writing",
+        "/#lab",
+        "/#about",
+        "/login",
+        "#work",
+        "/experience",
+        "/work",
+        "/work/user-story-evaluator",
+        "/work/context-graph",
+        "/work/ai-document-generator",
+        "/experience",
+        "/writing",
+        "/lab",
+        "/about",
+        "/"
+      ]
+    },
+    {
+      "route": "/experience",
+      "title": "Experience — Douglas D'Avila",
+      "h1": "A career built on making systems clearer.",
+      "checkedText": 72,
+      "minimumTextContrast": 5.82,
+      "contrastFailures": [],
+      "overflow": false,
+      "internalLinks": [
+        "#main-content",
+        "/",
+        "/#work",
+        "/#experience",
+        "/#writing",
+        "/#lab",
+        "/#about",
+        "/login",
+        "/"
+      ]
+    },
+    {
+      "route": "/writing",
+      "title": "Writing — Douglas D'Avila",
+      "h1": "Notes on quality, AI, and engineering judgment.",
+      "checkedText": 51,
+      "minimumTextContrast": 5.82,
+      "contrastFailures": [],
+      "overflow": false,
+      "internalLinks": [
+        "#main-content",
+        "/",
+        "/#work",
+        "/#experience",
+        "/#writing",
+        "/#lab",
+        "/#about",
+        "/login",
+        "/"
+      ]
+    },
+    {
+      "route": "/lab",
+      "title": "Lab — Douglas D'Avila",
+      "h1": "Small experiments.Inspectable decisions.",
+      "checkedText": 63,
+      "minimumTextContrast": 5.82,
+      "contrastFailures": [],
+      "overflow": false,
+      "internalLinks": [
+        "#main-content",
+        "/",
+        "/#work",
+        "/#experience",
+        "/#writing",
+        "/#lab",
+        "/#about",
+        "/login",
+        "/login",
+        "/work/user-story-evaluator",
+        "/lab/user-story-analyzer",
+        "/work/context-graph",
+        "/lab/context-graph",
+        "/work/neural-test-signal-classifier",
+        "/lab/neural-test-signal-classifier",
+        "/work/ai-document-generator",
+        "/"
+      ]
+    },
+    {
+      "route": "/about",
+      "title": "About — Douglas D'Avila",
+      "h1": "Curiosity, made useful.",
+      "checkedText": 36,
+      "minimumTextContrast": 6.36,
+      "contrastFailures": [],
+      "overflow": false,
+      "internalLinks": [
+        "#main-content",
+        "/",
+        "/#work",
+        "/#experience",
+        "/#writing",
+        "/#lab",
+        "/#about",
+        "/login",
+        "/"
+      ]
+    },
+    {
+      "route": "/login",
+      "title": "Explore the Lab — Douglas D'Avila",
+      "h1": "Explore the Lab",
+      "checkedText": 18,
+      "minimumTextContrast": 6.36,
+      "contrastFailures": [],
+      "overflow": false,
+      "internalLinks": [
+        "#main-content",
+        "/",
+        "/#work",
+        "/#experience",
+        "/#writing",
+        "/#lab",
+        "/#about",
+        "/login",
+        "/lab",
+        "/lab",
+        "/"
+      ]
+    },
+    {
+      "route": "/work",
+      "title": "Work — Douglas D'Avila",
+      "h1": "Tools and systems for higher quality software.",
+      "checkedText": 64,
+      "minimumTextContrast": 6.35,
+      "contrastFailures": [],
+      "overflow": false,
+      "internalLinks": [
+        "#main-content",
+        "/",
+        "/#work",
+        "/#experience",
+        "/#writing",
+        "/#lab",
+        "/#about",
+        "/login",
+        "/work/context-graph",
+        "/work/context-graph",
+        "/work/user-story-evaluator",
+        "/work/user-story-evaluator",
+        "/work/neural-test-signal-classifier",
+        "/work/neural-test-signal-classifier",
+        "/work/ai-document-generator",
+        "/work/ai-document-generator",
+        "/"
+      ]
+    },
+    {
+      "route": "/work/context-graph",
+      "title": "Operational Context Graph — Douglas D'Avila",
+      "h1": "Operational Context Graph",
+      "checkedText": 34,
+      "minimumTextContrast": 6.36,
+      "contrastFailures": [],
+      "overflow": false,
+      "internalLinks": [
+        "#main-content",
+        "/",
+        "/#work",
+        "/#experience",
+        "/#writing",
+        "/#lab",
+        "/#about",
+        "/login",
+        "/work",
+        "/lab/context-graph",
+        "/"
+      ]
+    },
+    {
+      "route": "/404",
+      "title": "Not found — Douglas D'Avila",
+      "h1": "This path left no evidence.",
+      "checkedText": 16,
+      "minimumTextContrast": 6.36,
+      "contrastFailures": [],
+      "overflow": false,
+      "internalLinks": [
+        "#main-content",
+        "/",
+        "/#work",
+        "/#experience",
+        "/#writing",
+        "/#lab",
+        "/#about",
+        "/login",
+        "/",
+        "/"
+      ]
+    }
+  ],
+  "links": [
+    {
+      "href": "/",
+      "status": 200
+    },
+    {
+      "href": "/#work",
+      "status": 200
+    },
+    {
+      "href": "/#experience",
+      "status": 200
+    },
+    {
+      "href": "/#writing",
+      "status": 200
+    },
+    {
+      "href": "/#lab",
+      "status": 200
+    },
+    {
+      "href": "/#about",
+      "status": 200
+    },
+    {
+      "href": "/login",
+      "status": 200
+    },
+    {
+      "href": "/experience",
+      "status": 200
+    },
+    {
+      "href": "/work",
+      "status": 200
+    },
+    {
+      "href": "/work/user-story-evaluator",
+      "status": 200
+    },
+    {
+      "href": "/work/context-graph",
+      "status": 200
+    },
+    {
+      "href": "/work/ai-document-generator",
+      "status": 200
+    },
+    {
+      "href": "/writing",
+      "status": 200
+    },
+    {
+      "href": "/lab",
+      "status": 200
+    },
+    {
+      "href": "/about",
+      "status": 200
+    },
+    {
+      "href": "/lab/user-story-analyzer",
+      "status": 200
+    },
+    {
+      "href": "/lab/context-graph",
+      "status": 200
+    },
+    {
+      "href": "/work/neural-test-signal-classifier",
+      "status": 200
+    },
+    {
+      "href": "/lab/neural-test-signal-classifier",
+      "status": 200
+    }
+  ]
+}

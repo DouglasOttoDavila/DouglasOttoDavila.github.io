@@ -1,0 +1,27 @@
+{
+  "lab": "Edit this portfolio Lab design board, preserving composition and light green-white styling. Correct factual labels in BOTH desktop and mobile: User Story Quality Analyzer badge must be Shipped; Operational Context Graph badge must be Prototype. Replace account status '4 runs left today' with '4 account runs remaining'; second compact line '10 shared runs available today'. Rename Manage access to Access details. Classifier description must be 'Prototype exploring regressions, flaky tests, and environmental failures.' Classifier preview categories must be Regression, Flaky test, Environmental; remove confidence column entirely. Add 'Illustrative preview' inside all four artifact previews. Flatten gradients and shadows to solid pale sage and solid forest green; graph nodes use restrained flat color. Keep all other layouts and titles. No account settings link.",
+  "homeAndWriting": [
+    [
+      "01-home-corrected",
+      "exec-7530ee0f-5e17-44b8-adff-b5472b2c6495.png",
+      "Preserve this light portfolio board composition. Correct latest writing titles to real articles: 'Leadership is never only about how we treat the people below us.' date June 12, 2026; 'AI coding agents introduced a new kind of waiting anxiety.' date May 20, 2026. Remove invented existing article titles and dates. Project description of analyzer must say 'Reviews requirements for clarity, completeness, testability, feasibility, relevance, and acceptance criteria.' Keep illustrative workflow clearly labeled as illustrative, not actual analyzer output. Add a concise dedicated Lab preview strip above footer with 'Explore the Lab' and 'Four experiments in quality and delivery', linked to Lab. Flatten all button gradients to solid forest green. No other changes."
+    ],
+    [
+      "03-writing-corrected",
+      "exec-2d12b07c-4e97-4f0c-989e-b39bc76bfb63.png",
+      "Preserve this writing design precisely but correct all article dates in desktop and mobile: Leadership article June 12, 2026; AI coding agents waiting anxiety May 20, 2026; AI Just Got Promoted to Junior QA April 29, 2026; AI-generated code is not eliminating QA April 28, 2026; future QA guardrails April 21, 2026; AI plumbing September 1, 2025. Featured article date May 13, 2026 if shown. Keep existing titles and airy reading layout. Separate Work and Experience nav labels with proper 24px spacing. Lab access is internal link, remove external-link icon. No other changes."
+    ]
+  ],
+  "aboutAndAccess": [
+    [
+      "05-about-corrected",
+      "exec-8304f32d-a320-4ce0-82d5-04712970af17.png",
+      "Preserve this About design in both sizes. Remove invented footer email douglas@davila.dev and replace with plain 'Contact' link. Change collaboration fact to 'Remote collaboration' with 'Americas and Europe', removing worldwide and open availability claim. Keep existing portrait placeholder. Flatten button gradient to solid #285B46. No other changes."
+    ],
+    [
+      "06-lab-access-corrected",
+      "exec-a56ac029-37ff-4d95-b559-d354687be9eb.png",
+      "Correct this access board preserving desktop left/mobile right/approved inset composition and light theme. Remove ALL decorative room imagery, furniture, plants, window, bridge drawing and background slogans: plain near-white canvas. Remove three promotional benefit columns and corresponding mobile benefit stack. Keep centered sign-in panel, Back to Lab and compact footer. Google button white with dark text and subtle border. Approved-state inset: replace '4 of 10 runs remaining today' with TWO exact lines 'Account allowance: 4 of 10 runs remaining' and 'Shared daily capacity: 10 of 10 runs available'. Replace 'Account settings' with no link; retain Refresh access and Sign out, Open the Lab solid forest green primary. Keep 'Approved state · Illustrative account' label. No extra claims, no gradients or shadows."
+    ]
+  ]
+}

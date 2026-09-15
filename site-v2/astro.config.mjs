@@ -7,6 +7,8 @@ export default defineConfig({
   integrations: [mdx(), react()],
   output: 'static',
   vite: {
+    // Prebundle the graph renderer before an approved user opens the lazy Lab island.
+    optimizeDeps: { include: ['d3'] },
     build: {
       cssMinify: 'lightningcss'
     }

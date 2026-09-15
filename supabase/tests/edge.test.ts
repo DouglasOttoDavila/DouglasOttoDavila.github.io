@@ -9,12 +9,13 @@ Deno.test("Edge endpoints validate before dispatch and replay without another mo
     "SUPABASE_ANON_KEY",
     "SUPABASE_SERVICE_ROLE_KEY",
     "GEMINI_API_KEY",
+    "GRAPH_ASSISTANT_PROVIDER",
   ];
   const previous = names.map((name) => Deno.env.get(name));
   names.forEach((name) =>
     Deno.env.set(
       name,
-      name === "SUPABASE_URL" ? "https://fixture.supabase.co" : "fixture-key",
+      name === "SUPABASE_URL" ? "https://fixture.supabase.co" : name === "GRAPH_ASSISTANT_PROVIDER" ? "gemini" : "fixture-key",
     )
   );
   const handlers: any[] = [];

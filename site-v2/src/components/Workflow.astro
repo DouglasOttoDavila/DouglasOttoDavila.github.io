@@ -1,0 +1,23 @@
+---
+const stages = [
+{ label: 'Requirement', icon: '◇', text: 'As a registered user, I want to reset my password so that I can regain access to my account.' },
+{ label: 'Risk', icon: '△', items: ['Account enumeration', 'Reusable reset tokens', 'Unclear expiry rules', 'Unverified identity'] },
+{ label: 'Test', icon: '✓', items: ['Request with valid email', 'Verify link expiry', 'Try a reused reset link', 'Check identity rules'] },
+{ label: 'Evidence', icon: '▤', text: 'Scope clarified. Tests traceable. Execution captured. Remaining risk visible.' }
+];
+---
+<div class="workflow"><p class="artifact-label">Illustrative example</p><h2>User Story Quality Analyzer</h2><p class="artifact-intro">From a user story to testable, risk-aware quality artifacts.</p>
+<ol class="workflow-stages">{stages.map((stage,index) => <li><h3><button type="button" data-stage={stage.label} aria-pressed={index === 0}><span aria-hidden="true">{stage.icon}</span>{stage.label}</button></h3>{stage.items ? <ul>{stage.items.map(item => <li>{item}</li>)}</ul> : <p>{stage.text}</p>}</li>)}</ol>
+<p class="workflow-caption" role="status">A simplified view of how a requirement becomes risks, tests, and evidence.</p></div>
+<script>
+function initializeWorkflow() {
+ const workflow=document.querySelector<HTMLElement>('.workflow');if(!workflow || workflow.dataset.initialized)return;
+ workflow.dataset.initialized='true';
+ const descriptions:Record<string,string>={Requirement:'Start with the user’s need and a clear scope.',Risk:'Make ambiguities and possible failures visible.',Test:'Turn each risk into a testable question.',Evidence:'Record what was checked and what remains uncertain.'};
+ workflow.querySelectorAll<HTMLButtonElement>('[data-stage]').forEach(button=>button.addEventListener('click',()=>{
+  workflow.querySelectorAll('[data-stage]').forEach(other=>other.setAttribute('aria-pressed',String(other===button)));
+  workflow.querySelector('.workflow-caption')!.textContent='Illustrative workflow · '+descriptions[button.dataset.stage!];
+ }));
+}
+document.addEventListener('astro:page-load',initializeWorkflow);initializeWorkflow();
+</script>

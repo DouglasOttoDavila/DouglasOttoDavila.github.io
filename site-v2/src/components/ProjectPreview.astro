@@ -1,0 +1,11 @@
+---
+interface Props { id: string }
+const { id } = Astro.props;
+---
+<div class={`project-preview preview-${id}`}><p class="artifact-label">Illustrative preview</p>
+{id === 'user-story-evaluator' ? <div class="analyzer-preview"><p>As a user, I want to reset my password so that I can regain access to my account.</p><ul><li>✓ Clear user need</li><li>✓ Valuable outcome</li><li>△ Define acceptance criteria</li><li>△ Clarify expiry rules</li></ul></div>
+: id === 'context-graph' ? <svg viewBox="0 0 460 180" role="img" aria-label="A requirement connected to a test, release, evidence, service, and owner"><g stroke="currentColor" stroke-width="1.4"><path d="M230 88L95 32M230 88L365 32M230 88L390 120M230 88L230 157M230 88L70 120" fill="none"/></g><g fill="var(--artifact)" stroke="currentColor"><circle cx="95" cy="32" r="25"/><circle cx="365" cy="32" r="25"/><circle cx="390" cy="120" r="25"/><circle cx="230" cy="157" r="21"/><circle cx="70" cy="120" r="25"/><circle cx="230" cy="88" r="43" fill="var(--action)"/></g><g text-anchor="middle" fill="currentColor" font-size="12"><text x="95" y="36">Test</text><text x="365" y="36">Release</text><text x="390" y="124">Evidence</text><text x="230" y="161">Service</text><text x="70" y="124">Owner</text><text x="230" y="92" fill="white">Requirement</text></g></svg>
+: id === 'neural-test-signal-classifier' ? <table><thead><tr><th>Test signal</th><th>Review direction</th></tr></thead><tbody><tr><td>Assertion changed after release</td><td>Regression</td></tr><tr><td>Fails intermittently on retry</td><td>Flaky test</td></tr><tr><td>Dependency unavailable</td><td>Environment</td></tr></tbody></table>
+: <div class="document-preview"><div><strong>Source files</strong><p>▤ checkout.ts<br/>▤ payment.ts<br/>▤ order.test.ts</p></div><span aria-hidden="true">→</span><div><strong>Document outline</strong><ol><li>Overview</li><li>Key components</li><li>API reference</li><li>Usage examples</li></ol></div></div>}
+{id === 'context-graph' && <p class="graph-preview-legend">Requirement connected to test, release, evidence, service, and owner.</p>}
+</div>

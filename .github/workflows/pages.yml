@@ -187,6 +187,9 @@ jobs:
       - name: Apply reviewed Lab schema
         run: node scripts/deploy-lab-schema.mjs --apply
 
+      - name: Apply model preference schema
+        run: node scripts/deploy-model-preferences.mjs
+
       - name: Deploy Supabase Edge Functions
         shell: bash
         run: |

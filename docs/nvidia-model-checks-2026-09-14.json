@@ -1,0 +1,83 @@
+{
+  "source": "https://build.nvidia.com/models?orderBy=weightPopular%3ADESC&filters=nimType%3Anim_type_preview",
+  "totalFreeEndpoints": 35,
+  "generalChatCandidates": 14,
+  "method": "Synthetic graph answer via hosted server credential; JSON structure validation; 65s timeout; no Lab allowance charged for diagnostic checks.",
+  "results": [
+    {
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "working": true,
+      "ms": 1247
+    },
+    {
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
+      "working": false,
+      "error": "nvidia request failed (HTTP 503). The provider could not complete the request. This execution has been counted.",
+      "ms": 11945
+    },
+    {
+      "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+      "working": false,
+      "error": "nvidia request failed (HTTP 503). The provider could not complete the request. This execution has been counted.",
+      "ms": 535
+    },
+    {
+      "model": "openai/gpt-oss-20b",
+      "working": false,
+      "error": "nvidia request timed out or could not connect. This execution has been counted; start a new execution to try again.",
+      "ms": 65002
+    },
+    {
+      "model": "meta/llama-3.2-90b-vision-instruct",
+      "working": true,
+      "ms": 3533
+    },
+    {
+      "model": "google/gemma-4-31b-it",
+      "working": false,
+      "error": "nvidia request timed out or could not connect. This execution has been counted; start a new execution to try again.",
+      "ms": 65002
+    },
+    {
+      "model": "meta/llama-3.2-11b-vision-instruct",
+      "working": true,
+      "ms": 1199
+    },
+    {
+      "model": "mistralai/mistral-nemotron",
+      "working": true,
+      "ms": 5182
+    },
+    {
+      "model": "deepseek-ai/deepseek-v4-flash-0731",
+      "working": true,
+      "ms": 27760
+    },
+    {
+      "model": "google/diffusiongemma-26b-a4b-it",
+      "working": false,
+      "error": "nvidia request timed out or could not connect. This execution has been counted; start a new execution to try again.",
+      "ms": 65002
+    },
+    {
+      "model": "poolside/laguna-xs-2.1",
+      "working": true,
+      "ms": 1732
+    },
+    {
+      "model": "meta/muse-glimmer-30b",
+      "working": true,
+      "ms": 13674
+    },
+    {
+      "model": "moonshotai/kimi-k3",
+      "working": true,
+      "ms": 63621
+    },
+    {
+      "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+      "working": true,
+      "ms": 60365
+    }
+  ]
+}

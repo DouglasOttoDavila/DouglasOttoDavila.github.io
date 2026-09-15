@@ -2,48 +2,9 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ContactBand from '../components/ContactBand.astro';
-import ExperienceRoadmap from '../components/ExperienceRoadmap';
 import { site } from '../data/site';
-
-const roles = await getCollection('experience');
-roles.sort((a, b) => a.data.sequence - b.data.sequence);
-if (new Set(roles.map(({ data }) => data.sequence)).size !== roles.length) {
-  throw new Error('Experience entries must use unique sequence values.');
-}
-const milestones = roles.map(({ id, data }) => ({ id, ...data }));
+const roles=(await getCollection('experience')).sort((a,b)=>b.data.sequence-a.data.sequence);
 ---
-
-<BaseLayout title="Experience — Douglas D'Avila" description="Douglas D'Avila's trajectory from technical operations to AI-assisted quality-system engineering." current="experience">
-  <header class="page-hero experience-hero section-shell">
-    <p class="section-context">Experience</p>
-    <h1>From testing software to engineering confidence.</h1>
-    <p>The through-line is not a list of tools. It is a growing ability to find risk, make it visible, and give teams a dependable way to act on it.</p>
-    <a class="button button-secondary" href={site.resume} target="_blank" rel="noreferrer">Open résumé ↗</a>
-  </header>
-
-  <section class="experience-roadmap-section section-shell" aria-label="Professional experience roadmap">
-    <ExperienceRoadmap roles={milestones} client:load />
-    <noscript>
-      <style>.career-roadmap { display: none !important; }</style>
-      <div class="experience-noscript" aria-label="Professional experience, oldest to newest">
-        {milestones.length === 0 && <p class="career-roadmap-empty">Experience milestones are temporarily unavailable.</p>}
-        {milestones.map((role) => (
-          <article class={`experience-noscript-entry stage-${role.stage}`}>
-            <p>{role.start}–{role.end} · {role.company} · {role.location}</p>
-            <h2>{role.role}</h2>
-            <strong>{role.summary}</strong>
-            {role.outcomes.length > 0 && (
-              <dl>
-                {role.outcomes.map((outcome) => <div><dt>{outcome.value}</dt><dd>{outcome.label}</dd></div>)}
-              </dl>
-            )}
-            <ul>{role.responsibilities.map((responsibility) => <li>{responsibility}</li>)}</ul>
-            <p>{role.skills.join(' · ')}</p>
-          </article>
-        ))}
-      </div>
-    </noscript>
-  </section>
-
-  <ContactBand />
-</BaseLayout>
+<BaseLayout title="Experience — Douglas D'Avila" description="From technical operations to SDET: Douglas D'Avila's experience." current="experience">
+<header class="page-hero experience-hero section-shell"><div><p class="section-context">Experience</p><h1>A career built on making systems clearer.</h1><p>I work at the intersection of people, processes, and technology, using testing and automation to turn complexity into clarity.</p><a class="button button-primary" href={site.resume} target="_blank" rel="noreferrer">Open résumé ↗</a></div><aside class="evolution-note"><h2>How the work evolved</h2><p>My path started in operational support, where I learned to diagnose real problems and work close to users. Over time, I moved into engineering, building automation, improving test architecture, and applying engineering judgment.</p><p>Different roles, same focus: understand, simplify, improve.</p></aside></header>
+<section class="career-timeline section-shell" aria-label="Professional experience, most recent first">{roles.map((role,index)=><article class:list={['career-entry',{'is-current':index===0}]}><p class="career-date">{role.data.start} – {role.data.end}</p><div class="career-content"><svg class="career-path" viewBox="0 0 20 200" preserveAspectRatio="none" aria-hidden="true"><path d="M10 0 C-3 55 23 145 10 200" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><div class="career-identity"><div class="career-heading"><h2 title={role.data.role}>{index===0 ? "SDET" : role.data.sequence===3 ? "QA Engineer" : role.data.role}</h2>{index===0&&<span class="status-badge">Current role</span>}</div><p class="career-company">{role.data.company} · {role.data.location}</p></div><div class="career-narrative"><p>{role.data.summary}</p><details open={index===0}><summary>Role details</summary><ul>{role.data.responsibilities.map(item=><li>{item}</li>)}</ul><p class="skills-line">{role.data.skills.join(' · ')}</p></details></div></div></article>)}</section><ContactBand/></BaseLayout>

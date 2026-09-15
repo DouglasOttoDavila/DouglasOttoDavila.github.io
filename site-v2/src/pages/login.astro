@@ -1,5 +1,8 @@
 ---
-import LabLayout from '../layouts/LabLayout.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
 import LabApp from '../components/lab/LabApp';
+import '../styles/lab.css';
 ---
-<LabLayout title="Explore the Lab" description="Sign in with Google to request access to Douglas’s QA and delivery experiments."><LabApp surface="login" client:only="react" /></LabLayout>
+<BaseLayout title="Explore the Lab — Douglas D'Avila" description="Sign in with Google to request access to the experiments." current="login">
+<div class="access-page section-shell"><a class="back-link" href="/lab">← Back to Lab</a><LabApp surface="login" client:load/><noscript><p>JavaScript is needed for Google sign-in. You can still <a href="/lab">browse the experiments</a>.</p></noscript></div>
+</BaseLayout>

@@ -1,47 +1,15 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Icon from '../components/Icon.astro';
-import ContactBand from '../components/ContactBand.astro';
 import { site } from '../data/site';
+const principles=[
+['Ship trust, not test volume.','Coverage matters when it represents business risk and produces dependable evidence.'],
+['Use AI inside guardrails.','Models can expand and critique work; accountability stays with the engineering team.'],
+['Make failures useful.','Logs, traces, and reproducible context should shorten the path from failure to decision.'],
+['Design for the next engineer.','Leave systems clearer, simpler, and easier to maintain.']];
 ---
-
-<BaseLayout title="About — Douglas D'Avila" description="About Douglas D'Avila, an SDET and quality engineer based in Porto Alegre, Brazil." current="about">
-  <section class="about-hero section-shell">
-    <div class="about-copy">
-      <p class="section-context">About</p>
-      <h1>Quality engineering is how I turn curiosity into dependable delivery.</h1>
-      <p class="about-lead">I’m Douglas D’Avila, an SDET based in Porto Alegre. I work at the intersection of test architecture, delivery systems, and practical AI-assisted workflows.</p>
-      <p>I began in technical support and operations, where good diagnosis meant listening carefully, reproducing the problem, and leaving the system easier to understand than I found it. That same habit now shapes how I approach requirements, automation, and AI.</p>
-      <p>I’m hands-on with implementation, but I care just as much about adoption: a quality system succeeds when engineers understand it, trust it, and can improve it without its original author in the room.</p>
-    </div>
-    <aside class="about-aside">
-      <img src="/profile.png" width="112" height="112" alt="Douglas D'Avila" />
-      <dl>
-        <div><dt>Based in</dt><dd>{site.location}</dd></div>
-        <div><dt>Collaboration</dt><dd>Remote-first · Americas and Europe</dd></div>
-        <div><dt>Current focus</dt><dd>AI-assisted quality systems</dd></div>
-      </dl>
-    </aside>
-  </section>
-
-  <section class="about-practice section-shell" aria-labelledby="practice-title">
-    <div>
-      <p class="section-context">How I work</p>
-      <h2 id="practice-title">Engineering principles that survive the demo.</h2>
-    </div>
-    <ul>
-      <li><strong>Ship trust, not test volume.</strong><span>Coverage matters only when it represents business risk and produces dependable evidence.</span></li>
-      <li><strong>Use AI inside guardrails.</strong><span>Models can expand and critique work; accountability stays with the engineering team.</span></li>
-      <li><strong>Make failures useful.</strong><span>Logs, traces, reports, and reproducible context should shorten the path from failure to decision.</span></li>
-      <li><strong>Design for the next engineer.</strong><span>Frameworks and documentation should read like playbooks, not puzzles.</span></li>
-    </ul>
-  </section>
-
-  <section class="about-links section-shell" aria-label="Douglas online">
-    <a href={site.linkedin} target="_blank" rel="noreferrer">LinkedIn <Icon name="external" /></a>
-    <a href={site.github} target="_blank" rel="noreferrer">GitHub <Icon name="external" /></a>
-    <a href={site.resume} target="_blank" rel="noreferrer">Résumé <Icon name="external" /></a>
-  </section>
-
-  <ContactBand />
+<BaseLayout title="About — Douglas D'Avila" description="Douglas D'Avila, SDET and quality engineer based in Porto Alegre, Brazil." current="about">
+<section class="about-hero section-shell"><div class="about-copy"><p class="section-context">About</p><h1>Curiosity, made useful.</h1><p class="about-lead">I’m Douglas D’Avila, an SDET based in Porto Alegre, Brazil.</p><p>My path in tech started in technical support, where I learned to listen, investigate, and turn real problems into practical solutions. That experience still shapes how I approach quality today.</p><p>I focus on test architecture, delivery systems, and practical AI-assisted workflows. I care just as much about adoption: a quality system succeeds when engineers understand it, trust it, and can improve it.</p></div><aside class="about-aside"><img src="/profile.png" width="360" height="320" alt="Douglas D'Avila"/><dl><div><dt>Based in</dt><dd>{site.location}</dd></div><div><dt>Remote collaboration</dt><dd>Americas and Europe</dd></div></dl></aside></section>
+<section class="about-practice section-shell" aria-label="Guiding principles"><p class="section-context">Guiding principles</p><ul>{principles.map(([title,description],index)=><li><Icon name={(["shield","nodes","target","briefcase"] as const)[index]} size={32}/><h2>{title}</h2><p>{description}</p></li>)}</ul></section>
+<section class="about-connect section-shell" aria-label="Connect with Douglas"><div class="about-links"><a class="text-link" href={site.linkedin} target="_blank" rel="noreferrer">LinkedIn ↗</a><a class="text-link" href={site.github} target="_blank" rel="noreferrer">GitHub ↗</a><a class="text-link" href={site.resume} target="_blank" rel="noreferrer">Résumé ↗</a></div><div><p>Let’s build better quality systems.</p><div class="hero-actions"><a class="button button-primary" href={`mailto:${site.email}`}>Email Douglas</a><a class="text-link" href={site.calendar} target="_blank" rel="noreferrer">Book a conversation ↗</a></div></div></section>
 </BaseLayout>

@@ -6659,3 +6659,382 @@ header .navbar-nav .nav-link.active {
   margin: 0;
   color: var(--bs-secondary-color, #6c757d);
 }
+
+/* ── 2026 portfolio visual refresh: tactile quality control room ────────── */
+/*
+ * A single visual language for the portfolio and its interactive QA tools.
+ * The material is deliberately soft and physical (claymorphism), while the
+ * information hierarchy stays crisp enough for technical evidence and data.
+ */
+:root {
+  --site-visual-scale: 100%;
+  --clay-canvas: #0b1020;
+  --clay-surface: #171e35;
+  --clay-surface-raised: #202944;
+  --clay-ink: #f5f7ff;
+  --clay-muted: #bcc5db;
+  --clay-primary: #78a6ff;
+  --clay-primary-strong: #4f82ed;
+  --clay-teal: #54ddc5;
+  --clay-warm: #ffc670;
+  --clay-stroke: rgba(198, 213, 255, 0.14);
+  --clay-inset: inset 1px 1px 0 rgba(255, 255, 255, 0.09), inset -2px -2px 5px rgba(2, 5, 14, 0.26);
+  --clay-lift: 12px 12px 26px rgba(1, 4, 13, 0.34), -5px -5px 16px rgba(87, 107, 160, 0.08);
+  --clay-lift-hover: 17px 17px 31px rgba(1, 4, 13, 0.43), -6px -6px 18px rgba(91, 120, 190, 0.12);
+}
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+body {
+  font-family: 'Plus Jakarta Sans', Roboto, Arial, sans-serif;
+  background:
+    radial-gradient(900px 520px at -8% -10%, rgba(89, 118, 205, 0.22), transparent 68%),
+    radial-gradient(760px 540px at 105% 12%, rgba(43, 199, 187, 0.13), transparent 66%),
+    var(--clay-canvas);
+  color: var(--clay-ink);
+  overflow-x: hidden;
+}
+
+body::selection {
+  background: rgba(120, 166, 255, 0.42);
+  color: #fff;
+}
+
+main,
+main.bg-body,
+#main-content {
+  background: transparent !important;
+}
+
+header {
+  margin: 0.85rem auto 0;
+  width: min(1180px, calc(100% - 1.5rem));
+  border: 1px solid var(--clay-stroke) !important;
+  border-radius: 1.25rem;
+  box-shadow: var(--clay-inset), 0 12px 30px rgba(0, 0, 0, 0.22) !important;
+  overflow: visible;
+  z-index: 1030;
+}
+
+header .navbar,
+header.bg-body,
+header .bg-body-tertiary {
+  background: rgba(23, 30, 53, 0.88) !important;
+  border-radius: inherit;
+  backdrop-filter: blur(20px) saturate(125%);
+}
+
+header .container,
+#content-area,
+footer .container {
+  max-width: 1120px;
+}
+
+.navbar-logo { height: 3.25rem; }
+
+header .navbar-nav .nav-link {
+  position: relative;
+  padding: 0.58rem 0.72rem !important;
+  color: var(--clay-muted);
+  font-size: 0.91rem;
+  font-weight: 700;
+}
+
+header .navbar-nav .nav-link::after {
+  content: '';
+  position: absolute;
+  right: 0.72rem;
+  bottom: 0.27rem;
+  left: 0.72rem;
+  height: 2px;
+  border-radius: 99px;
+  background: var(--clay-primary);
+  transform: scaleX(0);
+  transition: transform 180ms ease;
+}
+
+header .navbar-nav .nav-link:hover::after,
+header .navbar-nav .nav-link:focus-visible::after,
+header .navbar-nav .nav-link.active::after { transform: scaleX(1); }
+
+header .navbar-nav .nav-link:hover,
+header .navbar-nav .nav-link:focus-visible,
+header .navbar-nav .nav-link.active { color: var(--clay-ink) !important; }
+
+.card,
+.glass-card,
+.roadmap-panel,
+.roadmap-role-card,
+.relationship-graph-canvas-card,
+.relationship-entity-main,
+.relationship-entity-sidebar,
+.neural-signal-card,
+.neural-signal-demo,
+.neural-signal-inspector,
+.neural-signal-network,
+.neural-signal-section,
+.neural-signal-stack-list {
+  border: 1px solid var(--clay-stroke) !important;
+  background: var(--clay-surface) !important;
+  box-shadow: var(--clay-inset), var(--clay-lift) !important;
+  border-radius: 1.15rem !important;
+  backdrop-filter: blur(16px) saturate(115%);
+}
+
+.card:not(.relationship-graph-canvas-card),
+.roadmap-panel,
+.roadmap-role-card,
+.neural-signal-card,
+.neural-signal-section {
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+}
+
+.card:not(.relationship-graph-canvas-card):hover,
+.roadmap-panel:hover,
+.roadmap-role-card:hover,
+.neural-signal-card:hover {
+  border-color: rgba(120, 166, 255, 0.32) !important;
+  box-shadow: var(--clay-inset), var(--clay-lift-hover) !important;
+  transform: translateY(-2px);
+}
+
+.hero-section,
+.relationship-graph-hero,
+.relationship-entity-hero,
+.neural-signal-hero {
+  border: 1px solid rgba(137, 171, 255, 0.23) !important;
+  border-radius: 1.5rem !important;
+  background:
+    radial-gradient(circle at 84% 18%, rgba(84, 221, 197, 0.16), transparent 31%),
+    radial-gradient(circle at 7% 82%, rgba(120, 166, 255, 0.16), transparent 42%),
+    var(--clay-surface) !important;
+  box-shadow: var(--clay-inset), 18px 18px 42px rgba(1, 4, 13, 0.4), -7px -7px 22px rgba(81, 106, 169, 0.08) !important;
+}
+
+.display-5,
+.display-6,
+h1,
+.relationship-graph-hero__title,
+.relationship-entity-hero__title,
+.neural-signal-title {
+  letter-spacing: -0.045em !important;
+  font-weight: 800 !important;
+}
+
+.text-body-secondary,
+.relationship-graph-hero__text,
+.neural-signal-lede,
+.neural-signal-card p,
+.neural-signal-stack-list { color: var(--clay-muted) !important; }
+
+.badge,
+.roadmap-chip,
+.roadmap-layer-label,
+.roadmap-eyebrow,
+.relationship-graph-kicker,
+.neural-signal-kicker {
+  font-family: 'DM Mono', 'Fira Code', monospace;
+  font-size: 0.72rem !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.04em;
+}
+
+.bg-primary-subtle,
+.text-bg-primary-subtle {
+  background: rgba(120, 166, 255, 0.13) !important;
+  border: 1px solid rgba(120, 166, 255, 0.28);
+  color: #c9dbff !important;
+}
+
+.btn {
+  min-height: 44px;
+  border-radius: 0.82rem;
+  border-width: 1px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease, border-color 180ms ease;
+}
+
+.btn-primary {
+  --bs-btn-bg: var(--clay-primary-strong);
+  --bs-btn-border-color: rgba(180, 205, 255, 0.32);
+  --bs-btn-hover-bg: #6293f6;
+  --bs-btn-hover-border-color: rgba(220, 230, 255, 0.5);
+  --bs-btn-active-bg: #3e70d6;
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.24), 5px 6px 13px rgba(0, 0, 0, 0.24);
+}
+
+.btn-outline-primary,
+.btn-outline-light,
+.btn-outline-secondary {
+  --bs-btn-color: #cddcff;
+  --bs-btn-border-color: rgba(165, 192, 251, 0.34);
+  --bs-btn-hover-bg: rgba(120, 166, 255, 0.16);
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-border-color: rgba(184, 208, 255, 0.55);
+  box-shadow: var(--clay-inset);
+}
+
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(1px); box-shadow: var(--clay-inset) !important; }
+
+.btn:focus-visible,
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid rgba(120, 166, 255, 0.7) !important;
+  outline-offset: 3px;
+  box-shadow: none !important;
+}
+
+.roadmap-pill,
+.roadmap-chip-button,
+.relationship-graph-filter,
+.relationship-graph-reset-btn {
+  border-radius: 0.75rem !important;
+  border: 1px solid var(--clay-stroke) !important;
+  background: #11182d !important;
+  box-shadow: var(--clay-inset) !important;
+  color: var(--clay-muted) !important;
+}
+
+.roadmap-pill.is-active,
+.roadmap-chip-button.is-active,
+.relationship-graph-filter.is-active {
+  background: rgba(79, 130, 237, 0.82) !important;
+  color: #fff !important;
+  border-color: rgba(201, 219, 255, 0.42) !important;
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.2), 0 7px 18px rgba(38, 81, 172, 0.34) !important;
+}
+
+.form-control,
+.form-select,
+.story-textarea,
+.neural-signal-field .form-control,
+.neural-signal-field .form-select {
+  min-height: 44px;
+  border: 1px solid var(--clay-stroke) !important;
+  border-radius: 0.75rem !important;
+  background: #10172b !important;
+  color: var(--clay-ink) !important;
+  box-shadow: var(--clay-inset) !important;
+}
+
+.form-control::placeholder,
+.story-textarea::placeholder { color: #98a4c0; opacity: 1; }
+
+.form-control:focus,
+.form-select:focus,
+.story-textarea:focus {
+  border-color: rgba(120, 166, 255, 0.76) !important;
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.08), 0 0 0 0.2rem rgba(120, 166, 255, 0.16) !important;
+}
+
+.dropdown-menu-panel,
+.dropdown-menu,
+.user-menu {
+  border: 1px solid var(--clay-stroke) !important;
+  background: #19223c !important;
+  box-shadow: var(--clay-inset), 14px 18px 36px rgba(0, 0, 0, 0.36) !important;
+}
+
+.dropdown-item { color: var(--clay-muted) !important; border-radius: 0.65rem; }
+.dropdown-item:hover,
+.dropdown-item:focus-visible { background: rgba(120, 166, 255, 0.15) !important; color: #fff !important; }
+
+footer {
+  margin-top: 2rem;
+  border-color: var(--clay-stroke) !important;
+  background: rgba(10, 15, 30, 0.65) !important;
+}
+
+[data-bs-theme="light"] {
+  --clay-canvas: #e8eef8;
+  --clay-surface: #edf2fa;
+  --clay-surface-raised: #f6f9ff;
+  --clay-ink: #172039;
+  --clay-muted: #52617d;
+  --clay-stroke: rgba(86, 111, 161, 0.18);
+  --clay-inset: inset 1px 1px 0 rgba(255, 255, 255, 0.96), inset -2px -2px 5px rgba(121, 141, 177, 0.18);
+  --clay-lift: 12px 12px 26px rgba(70, 91, 130, 0.16), -6px -6px 18px rgba(255, 255, 255, 0.9);
+  --clay-lift-hover: 16px 16px 32px rgba(70, 91, 130, 0.2), -7px -7px 20px rgba(255, 255, 255, 0.96);
+}
+
+[data-bs-theme="light"] body {
+  background: radial-gradient(900px 520px at -8% -10%, rgba(120, 166, 255, 0.25), transparent 68%), radial-gradient(740px 480px at 108% 14%, rgba(84, 221, 197, 0.18), transparent 66%), var(--clay-canvas);
+}
+
+[data-bs-theme="light"] header .navbar,
+[data-bs-theme="light"] header.bg-body,
+[data-bs-theme="light"] header .bg-body-tertiary { background: rgba(237, 242, 250, 0.88) !important; }
+
+[data-bs-theme="light"] .card,
+[data-bs-theme="light"] .glass-card,
+[data-bs-theme="light"] .roadmap-panel,
+[data-bs-theme="light"] .roadmap-role-card,
+[data-bs-theme="light"] .relationship-graph-canvas-card,
+[data-bs-theme="light"] .relationship-entity-main,
+[data-bs-theme="light"] .relationship-entity-sidebar,
+[data-bs-theme="light"] .neural-signal-card,
+[data-bs-theme="light"] .neural-signal-demo,
+[data-bs-theme="light"] .neural-signal-inspector,
+[data-bs-theme="light"] .neural-signal-network,
+[data-bs-theme="light"] .neural-signal-section,
+[data-bs-theme="light"] .neural-signal-stack-list { background: var(--clay-surface) !important; }
+
+[data-bs-theme="light"] .hero-section,
+[data-bs-theme="light"] .relationship-graph-hero,
+[data-bs-theme="light"] .relationship-entity-hero,
+[data-bs-theme="light"] .neural-signal-hero {
+  background: radial-gradient(circle at 84% 18%, rgba(84, 221, 197, 0.2), transparent 31%), radial-gradient(circle at 7% 82%, rgba(120, 166, 255, 0.2), transparent 42%), var(--clay-surface) !important;
+}
+
+[data-bs-theme="light"] .roadmap-pill,
+[data-bs-theme="light"] .roadmap-chip-button,
+[data-bs-theme="light"] .relationship-graph-filter,
+[data-bs-theme="light"] .relationship-graph-reset-btn,
+[data-bs-theme="light"] .form-control,
+[data-bs-theme="light"] .form-select,
+[data-bs-theme="light"] .story-textarea,
+[data-bs-theme="light"] .neural-signal-field .form-control,
+[data-bs-theme="light"] .neural-signal-field .form-select { background: #e7edf7 !important; color: var(--clay-ink) !important; }
+
+[data-bs-theme="light"] .dropdown-menu-panel,
+[data-bs-theme="light"] .dropdown-menu,
+[data-bs-theme="light"] .user-menu { background: #edf2fa !important; }
+
+.page-space {
+  background:
+    radial-gradient(900px 520px at -8% -10%, rgba(89, 118, 205, 0.22), transparent 68%),
+    radial-gradient(760px 540px at 105% 12%, rgba(43, 199, 187, 0.13), transparent 66%),
+    var(--clay-canvas) !important;
+}
+
+.page-space .card,
+.page-space .glass-card {
+  background: var(--clay-surface) !important;
+  border-color: var(--clay-stroke) !important;
+  box-shadow: var(--clay-inset), var(--clay-lift) !important;
+}
+
+[data-bs-theme="light"] .page-space {
+  background: radial-gradient(900px 520px at -8% -10%, rgba(120, 166, 255, 0.25), transparent 68%), radial-gradient(740px 480px at 108% 14%, rgba(84, 221, 197, 0.18), transparent 66%), var(--clay-canvas) !important;
+}
+
+@media (max-width: 991.98px) {
+  header { width: calc(100% - 1rem); margin-top: 0.5rem; }
+  header .navbar-collapse { padding: 0.9rem 0.25rem 0.2rem; }
+  #content-area { padding-top: 2rem !important; }
+}
+
+@media (max-width: 575.98px) {
+  header { border-radius: 1rem; }
+  .navbar-logo { height: 2.8rem; }
+  .hero-section,
+  .relationship-graph-hero,
+  .relationship-entity-hero,
+  .neural-signal-hero { border-radius: 1.15rem !important; }
+  .btn { width: 100%; }
+}

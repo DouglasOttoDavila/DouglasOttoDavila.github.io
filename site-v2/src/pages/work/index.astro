@@ -1,36 +1,8 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import Icon from '../../components/Icon.astro';
+import ProjectPreview from '../../components/ProjectPreview.astro';
 import ContactBand from '../../components/ContactBand.astro';
-
-const projects = (await getCollection('projects')).sort((a, b) => Number(b.data.featured) - Number(a.data.featured) || b.data.year - a.data.year);
+const projects=(await getCollection('projects')).sort((a,b)=>Number(b.data.featured)-Number(a.data.featured)||b.data.year-a.data.year);
 ---
-
-<BaseLayout title="Work — Douglas D'Avila" description="Case studies and experiments in AI-assisted quality engineering, automation, and delivery evidence." current="work">
-  <header class="page-hero section-shell">
-    <p class="section-context">Selected work</p>
-    <h1>Systems that make quality decisions inspectable.</h1>
-    <p>Tools, prototypes, and engineering work organized around the problem they address—not the technology used to decorate them.</p>
-  </header>
-
-  <section class="project-index section-shell" aria-label="Projects">
-    {projects.map((project) => (
-      <article class={`project-row tone-${project.data.signal}`}>
-        <a href={`/work/${project.id}`} aria-label={`Open ${project.data.title}`}>
-          <div class="project-row-copy">
-            <div class="project-row-meta"><span>{project.data.kind.replace('-', ' ')}</span><span>{project.data.year}</span><span>{project.data.status}</span></div>
-            <h2>{project.data.title}</h2>
-            <p>{project.data.description}</p>
-            <ul aria-label="Technologies and methods">
-              {project.data.skills.map((skill) => <li>{skill}</li>)}
-            </ul>
-          </div>
-          <span class="project-row-action"><Icon name="arrow" size={24} /></span>
-        </a>
-      </article>
-    ))}
-  </section>
-
-  <ContactBand />
-</BaseLayout>
+<BaseLayout title="Work — Douglas D'Avila" description="Projects in quality engineering, automation, and delivery evidence." current="work"><header class="page-hero section-shell"><p class="section-context">Selected work</p><h1>Tools and systems for higher quality software.</h1><p>Practical work, organized around the quality problem it addresses.</p></header><section class="project-index section-shell" aria-label="Projects">{projects.map(p=><article class="project-index-row"><ProjectPreview id={p.id}/><div><span class="status-badge">{p.data.status} · {p.data.year}</span><h2><a href={`/work/${p.id}`}>{p.data.title}</a></h2><p>{p.data.description}</p><p class="skills-line">{p.data.skills.join(' · ')}</p><a class="text-link" href={`/work/${p.id}`}>Explore project →</a></div></article>)}</section><ContactBand/></BaseLayout>

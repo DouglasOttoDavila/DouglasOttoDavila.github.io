@@ -1,206 +1,154 @@
-import { test, expect, type Page } from '@playwright/test';
-
-const y = (page: Page) => page.evaluate(() => window.scrollY);
-async function ready(page: Page, route = '/') {
-  await page.goto(route);
-  await expect(page.locator('html')).toHaveClass(/lenis/);
-  await page.mouse.move(10, 300);
-}
-async function settled(page: Page) {
-  await expect(page.locator('html')).not.toHaveClass(/lenis-smooth/);
-}
-
-test('wheel lands on main sections and momentum never skips a section', async ({ page }, testInfo) => {
-  await page.setViewportSize({ width: 1440, height: 1000 });
-  await ready(page);
-  const principles = await page.locator('.principles').evaluate(el => {
-    const rect = el.getBoundingClientRect();
-    const header = document.querySelector('.site-header')!.getBoundingClientRect().height;
-    return Math.round(scrollY + rect.top + rect.height / 2 - (innerHeight + header) / 2);
-  });
-  await page.mouse.wheel(0, 80);
-  await expect.poll(() => y(page)).toBeGreaterThan(0);
-  expect(await y(page)).toBeLessThan(principles);
-  for (let i = 0; i < 14; i++) {
-    await page.mouse.wheel(0, 40);
-    await page.waitForTimeout(90);
-  }
-  await settled(page);
-  expect(Math.abs(await y(page) - principles)).toBeLessThan(2);
-  await page.screenshot({ path: testInfo.outputPath('principles-stop.png') });
-  await page.waitForTimeout(220);
-  await page.mouse.wheel(0, 80);
-  await expect.poll(() => y(page)).toBeGreaterThan(principles + 50);
-  const before = await y(page);
-  await page.mouse.wheel(0, -80);
-  await expect.poll(() => y(page)).toBeLessThan(before);
-  await settled(page);
-  expect(Math.abs(await y(page) - principles)).toBeLessThan(2);
+import { test, expect } from "@playwright/test";
+test("native wheel movement is proportional and never snaps", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.mouse.move(20, 300);
+  await page.mouse.wheel(0, 120);
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(50);
+  const y = await page.evaluate(() => scrollY);
+  expect(y).toBeLessThan(220);
+  await page.waitForTimeout(500);
+  expect(Math.abs((await page.evaluate(() => scrollY)) - y)).toBeLessThan(2);
 });
-
-test('long sections retain overlapping reading stops before the next main section', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await ready(page, '/writing');
-  const index = page.locator('.writing-index');
-  for (let i = 0; i < 4; i++) {
-    await page.keyboard.press('ArrowDown');
-    await settled(page);
-    const rect = await index.boundingBox();
-    if (rect && rect.y < 150) break;
-  }
-  const before = await y(page);
-  await page.keyboard.press('ArrowDown');
-  await settled(page);
-  const after = await y(page);
-  expect(after - before).toBeGreaterThan(0);
-  expect(after - before).toBeLessThan(844 * 0.8);
-  await expect(page.locator('.contact-band')).not.toBeInViewport();
-});
-
-test('case studies focus their main text headings below the sticky header', async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 1000 });
-  await ready(page, '/work/context-graph');
-  await page.keyboard.press('ArrowDown');
-  await settled(page);
-  const first = page.locator('.case-study-body > h2').first();
-  await expect(first).toBeInViewport();
-  const header = await page.locator('.site-header').boundingBox();
-  expect((await first.boundingBox())!.y).toBeGreaterThan(header!.height);
-  const before = await y(page);
-  await page.keyboard.press('ArrowDown');
-  await settled(page);
-  expect(await y(page)).toBeGreaterThan(before);
-});
-
-test('each arrow press advances one reading stop and holding does not skip', async ({ page }) => {
-  await ready(page);
-  await page.keyboard.down('ArrowDown');
-  await expect.poll(() => y(page)).toBeGreaterThan(0);
-  await settled(page);
-  const stopped = await y(page);
-  await page.keyboard.down('ArrowDown');
-  await page.waitForTimeout(250);
-  expect(await y(page)).toBe(stopped);
-  await page.keyboard.up('ArrowDown');
-  await page.keyboard.press('ArrowUp');
-  await expect.poll(() => y(page)).toBeLessThan(stopped - 30);
-  await settled(page);
-});
-
-test('nested scrolling, editable fields and graph gestures retain native ownership', async ({ page }) => {
-  await ready(page);
-  await page.evaluate(() => {
-    const fixture = document.createElement('div');
-    fixture.style.cssText = 'position:fixed;inset:150px auto auto 50px;z-index:9999;background:black';
-    fixture.innerHTML = '<textarea aria-label="Scroll test input">one\ntwo\nthree</textarea><div id="nested" tabindex="0" style="height:100px;width:200px;overflow:auto"><div style="height:1000px">Nested</div></div><div class="graph-stage" style="height:100px">Graph gesture</div>';
-    document.body.append(fixture);
-  });
-  await page.locator('#nested').hover();
+test("section navigation updates URL and focus without passive history changes", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("link", { name: "Explore selected work" }).click();
+  await expect(page).toHaveURL(/#work$/);
+  await expect(page.locator("#work")).toBeFocused();
+  await expect
+    .poll(() =>
+      page
+        .locator("#work")
+        .evaluate((el) => Math.round(el.getBoundingClientRect().top)),
+    )
+    .toBeGreaterThan(70);
+  const history = await page.evaluate(() => window.history.length);
   await page.mouse.wheel(0, 200);
-  await expect.poll(() => page.locator('#nested').evaluate(el => el.scrollTop)).toBeGreaterThan(0);
-  expect(await y(page)).toBe(0);
-  await page.getByRole('textbox', { name: 'Scroll test input' }).focus();
-  await page.keyboard.press('ArrowDown');
-  expect(await y(page)).toBe(0);
-  const native = await page.locator('.graph-stage').evaluate(el => {
-    const wheel = new WheelEvent('wheel', { deltaY: 200, bubbles: true, cancelable: true });
-    el.dispatchEvent(wheel);
-    return !wheel.defaultPrevented;
-  });
-  expect(native).toBe(true);
+  await page.waitForTimeout(300);
+  expect(await page.evaluate(() => window.history.length)).toBe(history);
 });
-
-test('reduced motion works initially and when toggled during inertia', async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/');
-  await expect(page.locator('html')).not.toHaveClass(/lenis/);
-  expect(await page.locator('html').evaluate(el => getComputedStyle(el).scrollBehavior)).toBe('auto');
-  await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await expect(page.locator('html')).toHaveClass(/lenis/);
-  await page.mouse.move(10, 300);
-  await page.mouse.wheel(0, 700);
-  await expect.poll(() => y(page)).toBeGreaterThan(0);
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await expect(page.locator('html')).not.toHaveClass(/lenis/);
-  const stopped = await y(page);
-  await page.waitForTimeout(200);
-  expect(await y(page)).toBe(stopped);
-  await page.keyboard.press('ArrowDown');
-  await expect.poll(() => y(page)).toBeGreaterThan(stopped);
-});
-
-test('Astro navigation restores history and never multiplies keyboard listeners', async ({ page }) => {
-  await ready(page);
-  await page.mouse.wheel(0, 650);
-  await expect.poll(() => y(page)).toBeGreaterThan(0);
-  await settled(page);
-  const restored = await y(page);
-  await page.locator('.site-nav a[href="/about"]').evaluate((el: HTMLAnchorElement) => el.click());
-  await expect(page).toHaveURL(/\/about\/?$/);
-  await expect.poll(() => y(page)).toBe(0);
-  await page.goBack();
-  await expect(page).toHaveURL(/\/$/);
-  await expect.poll(() => y(page)).toBe(restored);
-  await expect(page.locator('html')).toHaveClass(/lenis/);
-  await page.keyboard.press('ArrowDown');
-  await expect.poll(() => y(page)).toBeGreaterThan(restored);
-  await settled(page);
-  const next = await y(page);
-  await page.keyboard.press('ArrowUp');
-  await settled(page);
-  expect(next).toBeGreaterThan(restored);
-  expect(Math.abs(await y(page) - restored)).toBeLessThan(2);
-});
-
-test('native scrollbar/programmatic movement and page keys interrupt inertia', async ({ page }) => {
-  await ready(page);
-  await page.mouse.wheel(0, 800);
-  await expect.poll(() => y(page)).toBeGreaterThan(0);
-  await page.mouse.down();
-  await page.evaluate(() => window.scrollTo({ top: 200, behavior: 'instant' }));
-  await page.mouse.up();
-  await page.waitForTimeout(200);
-  expect(await y(page)).toBe(200);
-  await page.keyboard.press('End');
-  await expect.poll(() => page.evaluate(() => Math.abs(scrollY - (document.documentElement.scrollHeight - innerHeight)))).toBeLessThan(2);
-  await page.keyboard.press('ArrowDown');
-  await settled(page);
-  await page.keyboard.press('Home');
-  await expect.poll(() => y(page)).toBe(0);
-});
-
-test('touch gestures remain native on a narrow viewport and content growth updates bounds', async ({ page }) => {
+test("mobile menu supports Escape and navigates to overview from detail", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await ready(page, '/404.html');
-  expect(await page.evaluate(() => {
-    const event = new Event('touchmove', { bubbles: true, cancelable: true });
-    Object.defineProperty(event, 'targetTouches', { value: [{ clientX: 10, clientY: 200 }] });
-    document.body.dispatchEvent(event);
-    return !event.defaultPrevented;
-  })).toBe(true);
-  await page.evaluate(() => {
-    const content = document.createElement('div');
-    content.style.height = '3000px';
-    document.querySelector('main > section')!.append(content);
-  });
-  await page.waitForTimeout(300); // ResizeObserver debounce after dynamic content arrives.
-  await page.mouse.wheel(0, 1600);
-  await expect.poll(() => y(page)).toBeGreaterThan(0);
-  await settled(page);
-  const first = await y(page);
-  await page.keyboard.press('ArrowDown');
-  await expect.poll(() => y(page)).toBeGreaterThan(first);
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.goto("/experience");
+  const menu = page.locator(".site-header").getByRole("button", { name: "Menu" });
+  await menu.click();
+  await expect(menu).toHaveAttribute("aria-expanded", "true");
+  await page.keyboard.press("Escape");
+  await expect(menu).toBeFocused();
+  await expect(menu).toHaveAttribute("aria-expanded", "false");
+  await menu.click();
+  await page
+    .getByRole("navigation")
+    .getByRole("link", { name: "Writing", exact: true })
+    .click();
+  await expect(page).toHaveURL(/\/#writing$/);
+  await expect(page.locator("#writing")).toBeInViewport();
+  await expect(menu).toHaveAttribute("aria-expanded", "false");
 });
-
-for (const route of ['/', '/about', '/experience', '/writing', '/work', '/work/ai-document-generator', '/work/context-graph', '/work/neural-test-signal-classifier', '/work/user-story-evaluator', '/lab', '/login', '/settings', '/auth/callback', '/lab/context-graph', '/lab/context-graph/entity', '/lab/neural-test-signal-classifier', '/lab/user-story-analyzer', '/404.html']) {
-  test(`shared scrolling loads on ${route}`, async ({ page }) => {
-    const errors: string[] = [];
-    page.on('pageerror', error => errors.push(error.message));
-    await ready(page, route);
-    await page.keyboard.press('ArrowDown');
-    await expect.poll(() => y(page)).toBeGreaterThan(0);
-    await settled(page);
-    expect(errors).toEqual([]);
+test("article filters survive refresh and Back", async ({ page }) => {
+  await page.goto("/writing");
+  await page.getByRole("button", { name: "Leadership", exact: true }).click();
+  await expect(page.locator(".writing-row:visible")).toHaveCount(1);
+  await expect(page).toHaveURL(/topic=leadership/);
+  await page.reload();
+  await expect(page.locator(".writing-row:visible")).toHaveCount(1);
+  await page.getByRole("button", { name: "All", exact: true }).click();
+  await expect(page.locator(".writing-row:visible")).toHaveCount(7);
+  await page.goBack();
+  await expect(page.locator(".writing-row:visible")).toHaveCount(1);
+});
+test("reduced motion, direct anchors, and public content without JavaScript", async ({
+  page,
+  browser,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  await page.getByRole("link", { name: "Explore selected work" }).click();
+  await expect(page.locator("#work")).toBeInViewport();
+  const context = await browser.newContext({ javaScriptEnabled: false });
+  const staticPage = await context.newPage();
+  await staticPage.goto("/experience");
+  await expect(staticPage.locator(".career-entry")).toHaveCount(5);
+  await staticPage.locator("summary").nth(1).click();
+  await expect(staticPage.locator("details").nth(1)).toHaveAttribute(
+    "open",
+    "",
+  );
+  await staticPage.goto("/writing");
+  await expect(staticPage.locator(".writing-row")).toHaveCount(7);
+  await context.close();
+});
+for (const width of [320, 390, 768, 1024, 1440, 1920])
+  test("public routes fit at " + width + "px", async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.route("**/auth.runtime.json", (route) =>
+      route.fulfill({ status: 503, body: "Unavailable" }),
+    );
+    for (const path of [
+      "/",
+      "/work",
+      "/experience",
+      "/writing",
+      "/lab",
+      "/about",
+      "/login",
+      "/work/context-graph",
+    ]) {
+      await page.goto(path);
+      await page.locator("main h1").waitFor();
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+        path,
+      ).toBeTruthy();
+    }
   });
-}
+
+test("route navigation focuses the heading and Back restores the originating project link", async ({
+  page,
+}) => {
+  await page.goto("/work");
+  const link = page.getByRole("link", { name: "Explore project" }).first();
+  await link.click();
+  await expect(page.locator("main h1")).toBeFocused();
+  await page.goBack();
+  await expect(link).toBeFocused();
+  await expect(link).toBeInViewport();
+  await page.goForward();
+  await expect(page.locator("main h1")).toBeFocused();
+});
+test("workflow is keyboard selectable without hiding the evidence", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const risk = page.getByRole("button", { name: "Risk", exact: true });
+  await risk.focus();
+  await page.keyboard.press("Enter");
+  await expect(risk).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".workflow-caption")).toContainText("ambiguities");
+  await expect(page.locator(".workflow-stages>li")).toHaveCount(4);
+});
+test("enlarged text keeps public reading content within the viewport", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 768, height: 900 });
+  for (const path of ["/", "/experience", "/writing", "/about"]) {
+    await page.goto(path);
+    await page.addStyleTag({
+      content:
+        "body{font-size:200%}p,li,a,button,summary{font-size:1em!important}",
+    });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+      path,
+    ).toBeTruthy();
+  }
+});
