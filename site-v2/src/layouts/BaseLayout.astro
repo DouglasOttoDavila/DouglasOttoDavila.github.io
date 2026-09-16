@@ -27,15 +27,15 @@ const route = Astro.url.pathname.replace(/\/$/, '') || '/';
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="terminal">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
     <meta name="description" content={description} />
     <meta name="theme-color" content="#FAFBF8" />
     <script is:inline>
-      try { document.documentElement.dataset.theme = localStorage.getItem('portfolio-version') === 'terminal' ? 'terminal' : 'studio'; }
-      catch { document.documentElement.dataset.theme = 'studio'; }
+      try { document.documentElement.dataset.theme = localStorage.getItem('portfolio-version') === 'studio' ? 'studio' : 'terminal'; }
+      catch { document.documentElement.dataset.theme = 'terminal'; }
       document.querySelector('meta[name="theme-color"]').content = document.documentElement.dataset.theme === 'terminal' ? '#090E14' : '#FAFBF8';
     </script>
     <link rel="canonical" href={canonical} />

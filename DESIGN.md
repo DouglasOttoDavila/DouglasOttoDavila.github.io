@@ -14,7 +14,7 @@ Approved design: docs/redesign-2026-09-13. Near-white and forest green replace t
 
 ## Terminal alternate version — September 2026
 
-The top-menu Studio / Terminal control selects two complete presentations of the same content. Studio remains the default. The user approved the alternate editor/CLI direction and its 18 reference images in `docs/terminal-design-2026-09-15`; that specification governs Terminal and overrides the daylight rules below only while Terminal is selected.
+The top-menu Studio / Terminal control selects two complete presentations of the same content. Terminal is the default when no valid saved preference exists. Explicit Studio or Terminal selections persist in browser localStorage. The user approved the alternate editor/CLI direction and its 18 reference images in `docs/terminal-design-2026-09-15`; that specification governs Terminal and overrides the daylight rules below only while Terminal is selected.
 
 - Terminal tokens: canvas `#090E14`, surfaces `#101923`, text `#E6EDF5`, secondary `#A8BDD0`, dividers `#293F50`, control borders `#607B90`, cyan action `#65D9FF`. Cyan filled controls use near-black text. Flat surfaces, fine borders, 6px controls, restrained cyan emphasis.
 - Onest headings and prose; Recursive with MONO=1 for editor navigation, prompts and technical controls. Body 17px, technical labels 13px or larger except compact chrome. Do not reproduce the mockups' invented text or data.

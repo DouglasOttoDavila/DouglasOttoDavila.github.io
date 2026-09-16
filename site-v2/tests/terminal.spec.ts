@@ -9,7 +9,7 @@ const routes = ['/', '/work', '/experience', '/writing', '/about', '/lab',
 test('version persists through client navigation, reload and return to Studio', async ({ page }) => {
   await setup(page, { signedIn: false });
   await page.goto('/');
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'studio');
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'terminal');
   await page.getByRole('button', { name: 'Terminal', exact: true }).click();
   await expect(page.locator('.terminal-explorer')).toBeVisible();
   await page.locator('.site-nav').getByRole('link', { name: 'Work', exact: true }).click();
@@ -21,6 +21,7 @@ test('version persists through client navigation, reload and return to Studio', 
   await page.getByRole('button', { name: 'Studio', exact: true }).click();
   await expect(page.locator('.terminal-explorer')).toBeHidden();
   await expect(page.locator('.site-nav [data-work-nav]')).toHaveAttribute('href', '/#work');
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('portfolio-version'))).toBe('studio');
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'studio');
 });
@@ -116,7 +117,6 @@ test('storage unavailable and reduced motion remain usable', async ({ page }) =>
     Storage.prototype.setItem = () => { throw new Error('Storage unavailable'); };
   });
   await page.goto('/');
-  await page.getByRole('button', { name: 'Terminal', exact: true }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'terminal');
   expect(await page.locator('.terminal-cursor').evaluate(el => getComputedStyle(el).animationName)).toBe('none');
   await page.locator('.site-nav').getByRole('link', { name: 'About', exact: true }).click();

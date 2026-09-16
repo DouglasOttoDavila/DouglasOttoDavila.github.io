@@ -1,6 +1,6 @@
 // Switching presentation never replaces the DOM or remounts a tool island.
 type Version = 'studio' | 'terminal';
-let version: Version = document.documentElement.dataset.theme === 'terminal' ? 'terminal' : 'studio';
+let version: Version = document.documentElement.dataset.theme === 'studio' ? 'studio' : 'terminal';
 let observer: IntersectionObserver | undefined;
 function apply() {
   document.documentElement.dataset.theme = version;
@@ -25,7 +25,7 @@ document.addEventListener('click', event => {
 });
 window.addEventListener('storage', event => {
   if (event.key !== 'portfolio-version' && event.key !== null) return;
-  version = event.newValue === 'terminal' ? 'terminal' : 'studio';
+  version = event.newValue === 'studio' ? 'studio' : 'terminal';
   apply();
 });
 document.addEventListener('astro:before-swap', event => {

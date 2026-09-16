@@ -21,6 +21,6 @@ The independent Impeccable finish review identified four material fixes, all add
 
 ## Reference interpretation
 
-The PNGs remain concept images. Actual source copy, available controls, permissions and graph data govern implementation. The real graph has 82 entities, classifier values come from its existing simulation, and long pages scroll naturally. Illustrative preview schematics are labeled. Studio remains the initial default; choose Terminal in the top menu to view the alternate version.
+The PNGs remain concept images. Actual source copy, available controls, permissions and graph data govern implementation. The real graph has 82 entities, classifier values come from its existing simulation, and long pages scroll naturally. Illustrative preview schematics are labeled. As of September 16, Terminal is the initial default. The top-menu selection persists locally in the visitor browser; a saved Studio choice remains respected.
 
 Implementation is local and has not been deployed.
