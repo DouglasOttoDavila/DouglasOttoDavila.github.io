@@ -11,6 +11,18 @@ colors:
 ---
 ## Overview
 Approved design: docs/redesign-2026-09-13. Near-white and forest green replace the dark Signal Trace identity. The full specification governs incidental mockup inconsistencies.
+
+## Terminal alternate version — September 2026
+
+The top-menu Studio / Terminal control selects two complete presentations of the same content. Studio remains the default. The user approved the alternate editor/CLI direction and its 18 reference images in `docs/terminal-design-2026-09-15`; that specification governs Terminal and overrides the daylight rules below only while Terminal is selected.
+
+- Terminal tokens: canvas `#090E14`, surfaces `#101923`, text `#E6EDF5`, secondary `#A8BDD0`, dividers `#293F50`, control borders `#607B90`, cyan action `#65D9FF`. Cyan filled controls use near-black text. Flat surfaces, fine borders, 6px controls, restrained cyan emphasis.
+- Onest headings and prose; Recursive with MONO=1 for editor navigation, prompts and technical controls. Body 17px, technical labels 13px or larger except compact chrome. Do not reproduce the mockups' invented text or data.
+- Desktop has a 230px explorer, document tab/breadcrumb, main reading area and narrow status bar. Tool routes use a 68px rail; at 1100px the reading explorer also becomes a rail. At 800px navigation moves into the in-flow menu, the rail disappears and content stacks; the version switch stays visible. Status bar moves into flow on mobile.
+- Home pairs role and delivery flow, then selected project rows. Work uses compact illustrative rows. Case studies retain their real Markdown with section outlines. Experience keeps chronological disclosures; About uses the original portrait. Lab controls, auth, quotas and model settings retain existing behavior.
+- Switching versions changes a root data attribute, not route or React island identity. Persist the explicit preference in local storage before paint; retain a current-visit fallback when storage is unavailable. Drafts, graph camera, selection, conversation and unsaved fields survive switches.
+- Motion: decorative > prompt blinks at 1100ms and pauses offscreen/in a hidden document; delivery connectors reveal once at 450ms; controls transition at 150–180ms. Reduced motion makes these static. No terminal typing is required and no copy waits for animation.
+
 ## Colors
 Flat near-white, forest-green actions, sage artifacts, green-black text. Status includes text. No gradients or glow.
 ## Typography

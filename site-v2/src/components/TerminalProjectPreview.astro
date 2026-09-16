@@ -1,0 +1,31 @@
+---
+interface Props { id: string }
+const { id } = Astro.props;
+---
+<div class="terminal-only work-terminal-preview">
+  <p>Illustration</p>
+  <svg class="mini-schematic" viewBox="0 0 280 94" role="img" aria-label={`${id.replaceAll('-', ' ')} concept diagram`}>
+    {id === 'user-story-evaluator' && <>
+      <rect x="8" y="6" width="80" height="80" rx="4"/><path d="M22 24h48M22 35h36M22 46h42M22 57h28M88 46h25"/>
+      <path d="m122 22 4 4 8-9m-12 34 4 4 8-9m-12 34 4 4 8-9"/>
+      <text x="144" y="26">Clarity</text><text x="144" y="51">Testability</text><text x="144" y="76">Acceptance criteria</text>
+    </>}
+    {id === 'context-graph' && <>
+      <path d="m40 48 90-30 90 30-90 30Zm90-30v60M40 48h180"/>
+      <circle cx="40" cy="48" r="10"/><circle cx="130" cy="18" r="8"/><circle cx="130" cy="78" r="8"/><circle cx="220" cy="48" r="10"/>
+      <text x="5" y="20">Requirement</text><text x="151" y="16">Tests</text><text x="157" y="91">Evidence</text>
+    </>}
+    {id === 'neural-test-signal-classifier' && <>
+      <path d="M4 45h12l6-18 8 38 8-25 7 5h23M68 45h26"/>
+      <rect x="96" y="21" width="62" height="48" rx="4"/><text x="104" y="49">Signals</text>
+      <path d="M158 45h18V16h12m-12 29h12m-12 0v29h12"/>
+      <text x="193" y="20">Regression</text><text x="193" y="49">Flaky test</text><text x="193" y="78">Infra</text>
+    </>}
+    {id === 'ai-document-generator' && <>
+      <rect x="8" y="24" width="56" height="52" rx="3"/><rect x="16" y="16" width="56" height="52" rx="3"/>
+      <text x="24" y="45">{'</>'}</text><path d="M78 43h30m-6-5 6 5-6 5"/>
+      <rect x="114" y="8" width="148" height="76" rx="4"/><text x="125" y="28"># Documentation</text><path d="M126 41h118M126 52h88M126 63h103"/>
+      <text x="8" y="92">Source</text>
+    </>}
+  </svg>
+</div>

@@ -3,6 +3,7 @@ import { getCollection, render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Icon from '../../components/Icon.astro';
 import ContactBand from '../../components/ContactBand.astro';
+import ProjectPreview from '../../components/ProjectPreview.astro';
 
 export async function getStaticPaths() {
   const projects = await getCollection('projects');
@@ -10,7 +11,7 @@ export async function getStaticPaths() {
 }
 
 const { project } = Astro.props;
-const { Content } = await render(project);
+const { Content, headings } = await render(project);
 ---
 
 <BaseLayout title={`${project.data.title} — Douglas D'Avila`} description={project.data.description} current="work">
@@ -30,8 +31,11 @@ const { Content } = await render(project);
     </header>
 
     <div class="case-transition" aria-hidden="true"><i></i><i></i><i></i><i></i><span></span></div>
+    <aside class="terminal-only terminal-outline case-outline"><p>On this page</p><nav aria-label="Project sections">{headings.filter(h => h.depth === 2).map(h => <a href={`#${h.slug}`}>{h.text}</a>)}</nav></aside>
 
     <div class="case-study-body section-shell prose">
+      <div class="terminal-only case-preview"><ProjectPreview id={project.id}/></div>
+      {project.id === 'user-story-evaluator' && <aside class="terminal-only case-demo-note">The Lab demo uses deterministic INVEST scoring. Google sign-in and owner approval are required.</aside>}
       <Content />
       <aside class="case-study-links" aria-label="Project links">
         {project.data.externalUrl && <a class="button button-primary" href={project.data.externalUrl} target="_blank" rel="noreferrer">View source <Icon name="external" size={18} /></a>}

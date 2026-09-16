@@ -1,7 +1,9 @@
 ---
 import '@fontsource-variable/onest';
-import '@fontsource-variable/recursive';
+import '@fontsource-variable/recursive/mono.css';
 import '../styles/global.css';
+import '../styles/terminal.css';
+import TerminalChrome from '../components/TerminalChrome.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { ClientRouter } from 'astro:transitions';
@@ -21,6 +23,7 @@ const {
 } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, Astro.site);
+const route = Astro.url.pathname.replace(/\/$/, '') || '/';
 ---
 
 <!doctype html>
@@ -30,6 +33,11 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <meta name="viewport" content="width=device-width" />
     <meta name="description" content={description} />
     <meta name="theme-color" content="#FAFBF8" />
+    <script is:inline>
+      try { document.documentElement.dataset.theme = localStorage.getItem('portfolio-version') === 'terminal' ? 'terminal' : 'studio'; }
+      catch { document.documentElement.dataset.theme = 'studio'; }
+      document.querySelector('meta[name="theme-color"]').content = document.documentElement.dataset.theme === 'terminal' ? '#090E14' : '#FAFBF8';
+    </script>
     <link rel="canonical" href={canonical} />
     <meta property="og:type" content="website" />
     <meta property="og:title" content={title} />
@@ -41,6 +49,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <ClientRouter />
     <script>
       import '../scripts/organic-scroll';
+      import '../scripts/theme';
     </script>
     <script is:inline>
       document.documentElement.classList.add('js');
@@ -54,9 +63,10 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
       }
     </script>
   </head>
-  <body>
+  <body data-route={route} data-tool={route.startsWith('/lab/') ? 'true' : undefined}>
     <a class="skip-link" href="#main-content">Skip to content</a>
     <Header current={current} />
+    <TerminalChrome title={title} />
     <main id="main-content">
       <slot />
     </main>

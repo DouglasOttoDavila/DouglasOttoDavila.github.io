@@ -4,9 +4,9 @@ interface Props { current?: string }
 const { current = '' } = Astro.props;
 ---
 <header class="site-header">
-<a class="brand" href="/" aria-label={`${site.name}, home`}>{site.name}</a>
+<a class="brand" href="/" aria-label={`${site.name}, home`}><span class="terminal-only brand-prompt" aria-hidden="true">&gt;</span>{site.name}</a>
 <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-navigation">Menu <span aria-hidden="true">☰</span></button>
 <nav id="site-navigation" class="site-nav" aria-label="Primary navigation">
-{navigation.map(item => <a href={item.label === "Work" ? "/#work" : item.href} data-section={item.label === "Work" ? "work" : undefined} aria-current={current === item.label.toLowerCase() ? (item.label === 'Work' ? 'location' : 'page') : undefined}>{item.label}</a>)}
+{navigation.map(item => <a href={item.label === "Work" ? "/#work" : item.href} data-work-nav={item.label === 'Work' ? '' : undefined} data-section={item.label === "Work" ? "work" : undefined} aria-current={current === item.label.toLowerCase() ? (item.label === 'Work' ? 'location' : 'page') : undefined}>{item.label}</a>)}
 <a class="access-link" href="/login" data-astro-reload aria-current={current === 'login' ? 'page' : undefined}>Lab access</a>
-</nav></header>
+</nav><div class="version-switch" role="group" aria-label="Site version" hidden><button type="button" data-version="studio" aria-pressed="true">Studio</button><button type="button" data-version="terminal" aria-pressed="false">Terminal</button></div></header>

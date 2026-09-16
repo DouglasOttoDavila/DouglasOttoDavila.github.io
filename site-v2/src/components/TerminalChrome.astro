@@ -1,0 +1,28 @@
+---
+import Icon from './Icon.astro';
+import { site } from '../data/site';
+interface Props { title: string }
+const route = Astro.url.pathname.replace(/\/$/, '') || '/';
+const entries = [
+  { href: '/', label: 'overview.md', icon: 'article' },
+  { href: '/work', label: 'work/', icon: 'briefcase' },
+  { href: '/experience', label: 'experience.md', icon: 'article' },
+  { href: '/writing', label: 'writing/', icon: 'article' },
+  { href: '/lab', label: 'lab/', icon: 'experiment' },
+  { href: '/about', label: 'about.md', icon: 'article' },
+] as const;
+const active = (href: string) => href === '/' ? route === '/' : route === href || route.startsWith(href + '/');
+const parts = route.split('/').filter(Boolean);
+const filename = route === '/' ? 'overview.md' : (parts.at(-1) || '404') + '.md';
+---
+<aside class="terminal-only terminal-explorer" aria-label="Portfolio explorer">
+  <p class="explorer-label">Portfolio</p>
+  <nav aria-label="Portfolio files">{entries.map(item => <a href={item.href} aria-current={active(item.href) ? 'page' : undefined} title={item.label}><Icon name={item.icon} size={21}/><span>{item.label}</span></a>)}</nav>
+  <a class="explorer-access" href="/login" data-astro-reload title="Lab access"><Icon name="shield" size={21}/><span>Lab access</span></a>
+  <p class="explorer-location"><Icon name="location" size={18}/><span>{site.location}</span></p>
+</aside>
+<div class="terminal-only terminal-document" aria-label="Current document">
+  <div class="document-tab"><Icon name="article" size={20}/><span>{filename}</span></div>
+  <nav class="document-breadcrumb" aria-label="Breadcrumb"><a href="/">douglas</a><span aria-hidden="true">/</span><a href="/">portfolio</a>{parts.map((part, i) => <><span aria-hidden="true">/</span>{i < parts.length - 1 && part !== 'auth' ? <a href={'/' + parts.slice(0, i + 1).join('/')}>{part}</a> : <span aria-current={i === parts.length - 1 ? "page" : undefined}>{part}</span>}</>)}{parts.length === 0 && <><span aria-hidden="true">/</span><span aria-current="page">overview</span></>}</nav>
+</div>
+<div class="terminal-only terminal-status"><span><Icon name="article" size={16}/>{route === '/' ? 'portfolio / overview' : 'portfolio' + route.replaceAll('/', ' / ')}</span><span>SDET · Quality engineering</span></div>

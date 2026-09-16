@@ -2,7 +2,8 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import LabApp from '../components/lab/LabApp';
 import '../styles/lab.css';
+import Icon from '../components/Icon.astro';
 ---
 <BaseLayout title="Explore the Lab — Douglas D'Avila" description="Sign in with Google to request access to the experiments." current="login">
-<div class="access-page section-shell"><a class="back-link" href="/lab">← Back to Lab</a><LabApp surface="login" client:load/><noscript><p>JavaScript is needed for Google sign-in. You can still <a href="/lab">browse the experiments</a>.</p></noscript></div>
+<div class="access-page section-shell"><a class="back-link" href="/lab">← Back to Lab</a><LabApp surface="login" client:load/><aside class="terminal-only terminal-access-flow"><p class="delivery-label">Access flow</p><ol>{[['Sign in','Use your Google account.'],['Request access','Request access to protected experiments.'],['Owner review','Owner approval is required.'],['Explore','Allowances are shared across protected tools.']].map(([label,description])=><li><Icon name="shield" size={25}/><div><h2>{label}</h2><p>{description}</p></div></li>)}</ol></aside><noscript><p>JavaScript is needed for Google sign-in. You can still <a href="/lab">browse the experiments</a>.</p></noscript></div>
 </BaseLayout>

@@ -1,0 +1,13 @@
+---
+import Icon from './Icon.astro';
+const stages = [
+  { label: 'Requirements', description: 'Clear, testable, and aligned', icon: 'article' },
+  { label: 'Automation', description: 'Reliable, maintainable, and useful', icon: 'nodes' },
+  { label: 'Evidence', description: 'Confidence through real results', icon: 'shield' },
+  { label: 'Engineering judgment', description: 'Context turns quality into value', icon: 'target' },
+] as const;
+---
+<aside class="terminal-only terminal-delivery" aria-label="Delivery flow">
+  <p class="delivery-label">Delivery flow <span aria-hidden="true">//</span></p>
+  <ol>{stages.map(stage => <li><span class="delivery-node"><Icon name={stage.icon} size={25}/></span><div><h2>{stage.label}</h2><p>{stage.description}</p></div></li>)}</ol>
+</aside>
