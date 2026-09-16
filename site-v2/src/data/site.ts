@@ -7,7 +7,7 @@ export const site = {
   timezone: 'BRT / UTC-3',
   linkedin: 'https://www.linkedin.com/in/douglasottodavila',
   github: 'https://github.com/DouglasOttoDavila',
-  calendar: 'https://cal.com/douglas-odavila',
+  calendar: 'https://calendar.app.google/JSDyNwJrwZkNpM9E9',
   resume: '/documents/douglas-davila-resume.pdf'
 } as const;
 
