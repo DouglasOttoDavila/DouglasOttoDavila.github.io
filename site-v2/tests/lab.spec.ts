@@ -239,3 +239,14 @@ test('model preference persists while graph override remains local to visit', as
  await page.goto('/settings');await expect(page.getByLabel('Default assistant model')).toHaveValue('meta/llama-3.2-11b-vision-instruct');
  await page.goto('/lab/context-graph');await page.locator('.graph-node').first().waitFor();await page.getByRole('button',{name:'Assistant',exact:true}).click();await expect(page.getByLabel('Model for this graph')).toHaveValue('');
 });
+
+
+test('retired legacy pages fall back to home and entity bookmarks retain their parameter', async ({ page }) => {
+  await setup(page, { signedIn: false });
+  await page.goto('/legacy/index.html');
+  await expect(page).toHaveURL(/\/$/);
+  await page.goto('/legacy/index.html#unknown-page');
+  await expect(page).toHaveURL(/\/$/);
+  await page.goto('/legacy/index.html#/relationship-entity?entity=sample%20entity');
+  await expect(page).toHaveURL(/\/lab\/context-graph\/entity\?entity=sample%20entity/);
+});

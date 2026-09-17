@@ -127,6 +127,7 @@ test("workflow is keyboard selectable without hiding the evidence", async ({
   page,
 }) => {
   await page.goto("/");
+  await page.getByRole("button", { name: "Studio", exact: true }).click();
   const risk = page.getByRole("button", { name: "Risk", exact: true });
   await risk.focus();
   await page.keyboard.press("Enter");

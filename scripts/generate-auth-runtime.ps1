@@ -1,6 +1,6 @@
 param(
   [string]$EnvPath = ".env",
-  [string]$OutPath = "content/auth.runtime.json"
+  [string]$OutPath = "site-v2/config/auth.runtime.json"
 )
 
 Set-StrictMode -Version Latest
@@ -97,7 +97,7 @@ if (-not $supabaseUrl -or -not $supabaseAnonKey) {
 }
 
 $expectedSupabaseUrl = ""
-$configPath = "content/auth.config.json"
+$configPath = "site-v2/config/auth.config.json"
 if (Test-Path -LiteralPath $configPath) {
   $config = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
   $expectedSupabaseUrl = [string]$config.supabase.url

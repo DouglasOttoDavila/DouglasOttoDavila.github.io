@@ -1,5 +1,7 @@
 # DouglasOttoDavila.github.io
 
+The current Astro site lives in [site-v2](site-v2/README.md). Its build, authentication configuration, and public graph data no longer depend on the legacy root site. The architecture description below documents the retained legacy implementation.
+
 Portfolio site for **Douglas D'Avila** (QA Architect / QA Automation Lead / AI Solutions for QA), published via **GitHub Pages**. The site is intentionally built as a **static, no-build-step SPA** to demonstrate pragmatic engineering under real-world constraints: client-side routing, config-driven feature flags, SSO-based gated areas, and a documented AI-assisted delivery workflow.
 
 Live: https://douglasottodavila.github.io
@@ -46,8 +48,8 @@ Live: https://douglasottodavila.github.io
 4. **Protected routes**
    - `content/protected-pages.json` defines which routes require authentication and whether they should be hidden while logged out.
 5. **Auth provider configuration**
-   - `content/auth.config.json` defines auth provider + UX defaults (provider = Supabase).
-   - `content/auth.runtime.json` is an optional runtime overlay (generated from secrets for local/dev or CI deploy).
+   - `site-v2/config/auth.config.json` defines auth provider + UX defaults (provider = Supabase).
+   - `site-v2/config/auth.runtime.json` is an optional runtime overlay (generated from secrets for local/dev or CI deploy).
 
 ## RPI Prompt Strategy (Research, Plan, Implement)
 
@@ -147,7 +149,7 @@ Recommended:
 
 ### Local Auth Runtime (Optional)
 
-To avoid committing credentials, local auth config can be generated into `content/auth.runtime.json` (gitignored):
+To avoid committing credentials, local auth config can be generated into `site-v2/config/auth.runtime.json` (gitignored):
 
 1. Create a local `.env` with:
    - `SUPABASE_URL`
@@ -158,22 +160,22 @@ To avoid committing credentials, local auth config can be generated into `conten
 powershell -ExecutionPolicy Bypass -File scripts/generate-auth-runtime.ps1
 ```
 
-`content/auth.config.json` pins the public Supabase project URL. The generator validates that your local `SUPABASE_URL` and `SUPABASE_ANON_KEY` both target that same project before writing `content/auth.runtime.json`.
+`site-v2/config/auth.config.json` pins the public Supabase project URL. The generator validates that your local `SUPABASE_URL` and `SUPABASE_ANON_KEY` both target that same project before writing `site-v2/config/auth.runtime.json`.
 
 ## Deployment (GitHub Pages)
 
 - Workflow: `.github/workflows/pages.yml`
 - Trigger: push to `main` (and manual `workflow_dispatch`)
 - Deploy model:
-  - A CI step generates `content/auth.runtime.json` from GitHub Actions secrets (so credentials are not committed).
-  - The entire repo is uploaded as the Pages artifact and deployed.
+  - A CI step generates `site-v2/config/auth.runtime.json` from GitHub Actions secrets (so credentials are not committed).
+  - The Astro build in `site-v2/dist` is uploaded as the Pages artifact and deployed.
 
 Required GitHub Actions secrets:
 
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
 
-The workflow validates that both secrets target the Supabase project pinned in `content/auth.config.json`. If they drift, the deploy fails instead of publishing a broken OAuth flow.
+The workflow validates that both secrets target the Supabase project pinned in `site-v2/config/auth.config.json`. If they drift, the deploy fails instead of publishing a broken OAuth flow.
 
 ## Project Structure
 

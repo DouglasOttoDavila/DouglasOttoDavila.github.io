@@ -65,7 +65,7 @@ jobs:
             exit 1
           fi
 
-          mkdir -p content
+          mkdir -p site-v2/config
 
           # This file is public in the deployed site (GitHub Pages is static hosting).
           # It is used to avoid committing credentials to the repo history.
@@ -74,7 +74,7 @@ jobs:
 
           const supabaseUrl = process.env.SUPABASE_URL || '';
           const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
-          const authConfigPath = 'content/auth.config.json';
+          const authConfigPath = 'site-v2/config/auth.config.json';
 
           function getProjectRefFromUrl(url) {
             const match = String(url).trim().match(/^https:\/\/([^.]+)\.supabase\.co\/?$/i);
@@ -122,8 +122,8 @@ jobs:
             }
           };
 
-          fs.writeFileSync('content/auth.runtime.json', JSON.stringify(payload, null, 2) + '\n', 'utf8');
-          console.log('Wrote content/auth.runtime.json');
+          fs.writeFileSync('site-v2/config/auth.runtime.json', JSON.stringify(payload, null, 2) + '\n', 'utf8');
+          console.log('Wrote site-v2/config/auth.runtime.json');
           NODE
 
       - name: Build Astro Pages artifact
@@ -137,6 +137,10 @@ jobs:
           # Protected content sources must never enter the static artifact.
           test ! -d site-v2/dist/private_pages
           test ! -d site-v2/dist/legacy/docs
+          test ! -d site-v2/dist/legacy/content
+          test ! -d site-v2/dist/legacy/js
+          test ! -d site-v2/dist/legacy/css
+          test ! -d site-v2/dist/legacy/assets
 
       - name: Browser acceptance tests
         working-directory: site-v2

@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "provider": "supabase",
+  "supabase": {
+    "url": "https://zlixsxbovbshsyptxymp.supabase.co",
+    "anonKey": "",
+    "oauthProviders": [
+      "github",
+      "google"
+    ]
+  }
+}

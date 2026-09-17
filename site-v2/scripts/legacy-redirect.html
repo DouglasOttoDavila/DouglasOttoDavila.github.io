@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>Portfolio moved</title>
+  <script>
+    const routes = { 'relationship-graph': '/lab/context-graph', 'relationship-entity': '/lab/context-graph/entity', 'user-story-analyzer': '/lab/user-story-analyzer', 'neural-test-signal-classifier': '/lab/neural-test-signal-classifier', login: '/login', profile: '/settings' };
+    const [route, query] = location.hash.replace(/^#\/?/, '').split('?');
+    const destination = Object.prototype.hasOwnProperty.call(routes, route) ? routes[route] : '/';
+    const entity = new URLSearchParams(query || location.search).get('entity');
+    location.replace(destination + (destination !== '/' && entity ? '?entity=' + encodeURIComponent(entity) : ''));
+  </script>
+</head>
+<body><p>This portfolio has moved. <a href="/">Continue to the current site</a>.</p></body>
+</html>

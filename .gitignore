@@ -25,7 +25,7 @@ content/auth.runtime.json
 /.github/hooks/impeccable.json
 /site-v2/public/legacy/
 /site-v2/public/auth.runtime.json
-/site-v2/public/lab-data/
+/site-v2/config/auth.runtime.json
 /site-v2/node_modules/
 /site-v2/dist/
 /site-v2/.astro/

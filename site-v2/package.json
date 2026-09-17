@@ -4,8 +4,8 @@
   "type": "module",
   "scripts": {
     "test:e2e": "playwright test",
-    "dev": "node scripts/copy-legacy.mjs public && astro dev",
-    "build": "astro check && node scripts/copy-legacy.mjs public && astro build",
+    "dev": "node scripts/prepare-public.mjs public && astro dev",
+    "build": "astro check && node scripts/prepare-public.mjs public && astro build",
     "preview": "astro preview",
     "check": "astro check"
   },
