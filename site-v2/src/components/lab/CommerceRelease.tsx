@@ -24,6 +24,7 @@ import {
   type Mission,
   type Stage,
 } from "../../../../supabase/functions/_shared/commerce/domain";
+import type { Edge } from "../../../../supabase/functions/_shared/twin/schema";
 import {
   validateAdvice,
   type Advice,
@@ -839,7 +840,7 @@ export default function CommerceRelease() {
                   content.
                 </p>
                 <ol className="cr-trace">
-                  {[impactPath[0]?.source, ...impactPath.map((e) => e.target)]
+                  {[impactPath[0]?.source, ...impactPath.map((e: Edge) => e.target)]
                     .filter(Boolean)
                     .map((id, i) => (
                       <li key={id}>
@@ -862,7 +863,7 @@ export default function CommerceRelease() {
                 </ol>
                 <details>
                   <summary>Relationship provenance</summary>
-                  {impactPath.map((e) => (
+                        {impactPath.map((e: Edge) => (
                     <p key={e.id}>
                       <code>
                         {e.source} → {e.target}
