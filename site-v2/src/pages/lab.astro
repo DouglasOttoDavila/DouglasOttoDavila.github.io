@@ -4,11 +4,25 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import ProjectPreview from '../components/ProjectPreview.astro';
 import LabApp from '../components/lab/LabApp';
 import '../styles/lab.css';
-const order=['user-story-evaluator','context-graph','neural-test-signal-classifier','ai-document-generator'];
-const projects=(await getCollection('projects')).sort((a,b)=>order.indexOf(a.id)-order.indexOf(b.id));
+const order=['quality-digital-twin','user-story-evaluator','context-graph','neural-test-signal-classifier','ai-document-generator'];
+const projects=(await getCollection('projects')).filter(p=>p.id!=='commerce-release').sort((a,b)=>order.indexOf(a.id)-order.indexOf(b.id));
 ---
 <BaseLayout title="Lab — Douglas D'Avila" description="Practical prototypes for quality and delivery, with inspectable decisions." current="lab">
 <header class="page-hero lab-hero section-shell"><div><p class="section-context">Lab</p><h1>Small experiments.<br/>Inspectable decisions.</h1><p>Explore practical prototypes for quality and delivery.</p></div><LabApp surface="index" client:load/></header>
+<section class="lab-flagship section-shell" aria-label="Featured interactive mission"><div><span class="status-badge">Executable commerce sandbox</span><h2>Ship the change. Prove the release.</h2><p>Take a checkout change from requirement to release evidence. Reproduce the defect, inspect the AI advice, and verify the fix.</p><div class="experiment-actions"><a class="button button-primary" href="/lab/commerce-release" data-astro-reload>Open Commerce Release Lab →</a><a class="text-link" href="/work/commerce-release">Explore the engineering →</a></div><p class="lab-muted">Public guided mission · No sign-in required · Optional live NVIDIA analysis</p></div><div class="lab-flagship-evidence" aria-label="Illustrative mission preview"><p>checkout / authorization</p><div><span>$100.00 order</span><span>$60.00 authorized</span></div><strong>Can a partial payment become a confirmed order?</strong><ol><li>Inspect the change</li><li>Reproduce the failure</li><li>Prove the fix</li></ol></div></section>
 <section class="lab-grid section-shell" aria-label="Interactive experiments">{projects.map(project=><article class="experiment"><span class:list={['status-badge',{'is-prototype':project.data.status==='prototype'}]}>{project.data.status}</span><h2>{project.data.title}</h2><p>{project.data.description}</p><ProjectPreview id={project.id}/><div class="experiment-actions"><a class="text-link" href={`/work/${project.id}`}>Read context →</a>{project.data.labUrl?<a class="button button-primary" href={project.data.labUrl} data-astro-reload>Open experiment →</a>:<a class="button button-primary" href={project.data.externalUrl} target="_blank" rel="noreferrer">View source ↗</a>}</div></article>)}</section>
 <p class="catalog-note section-shell">Portfolio prototypes with documented limitations.</p>
 </BaseLayout>
+<style>
+  .lab-flagship{display:grid;grid-template-columns:1.4fr 1fr;gap:40px;margin-bottom:48px;padding-top:28px;padding-bottom:28px;border-block:1px solid var(--line-strong);background:var(--artifact)}
+  .lab-flagship h2{font-size:clamp(26px,3vw,38px);line-height:1.2;margin:16px 0}
+  .lab-flagship p{color:var(--text-soft);max-width:60ch}
+  .lab-flagship-evidence{border-left:1px solid var(--line);padding:8px 0 8px 28px;font-family:var(--font-technical);font-size:13px}
+  .lab-flagship-evidence>p{color:var(--action)}
+  .lab-flagship-evidence>div{display:flex;justify-content:space-between;gap:16px;padding-block:20px;border-bottom:1px solid var(--line);margin-bottom:20px}
+  .lab-flagship-evidence>div>span:last-child{color:var(--danger)}
+  .lab-flagship-evidence strong{font-weight:500;font-size:16px}
+  .lab-flagship-evidence ol{padding-left:20px;color:var(--text-soft)}
+  .lab-flagship-evidence li{padding-block:5px}
+  @media(max-width:800px){.lab-flagship{grid-template-columns:1fr;gap:20px}.lab-flagship-evidence{border-left:0;border-top:1px solid var(--line);padding:20px 0 0}}
+</style>

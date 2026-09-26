@@ -1,0 +1,8 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import CommerceRelease from '../../components/lab/CommerceRelease';
+---
+<BaseLayout title="Commerce Release Lab — Douglas D'Avila" description="Ship a checkout change. Reproduce the regression, inspect the evidence, and verify the fix in an executable commerce sandbox." current="lab">
+  <CommerceRelease client:load />
+  <noscript><div class="section-shell"><h1>Commerce Release Lab</h1><p>This executable checkout mission needs JavaScript. <a href="/work/commerce-release">Read the project and engineering boundaries</a>.</p></div></noscript>
+</BaseLayout>

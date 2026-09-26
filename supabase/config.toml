@@ -6,3 +6,7 @@ verify_jwt = false
 verify_jwt = false
 [functions.lab-notifications]
 verify_jwt = false
+[functions.quality-twin-analyst]
+verify_jwt = false
+[functions.commerce-release-analyst]
+verify_jwt = false

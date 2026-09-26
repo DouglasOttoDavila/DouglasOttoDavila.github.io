@@ -128,6 +128,8 @@ jobs:
 
       - name: Build Astro Pages artifact
         shell: bash
+        env:
+          PUBLIC_COMMERCE_AI_ENABLED: ${{ vars.PUBLIC_COMMERCE_AI_ENABLED || 'true' }}
         run: |
           set -euo pipefail
 
@@ -193,6 +195,9 @@ jobs:
 
       - name: Apply model preference schema
         run: node scripts/deploy-model-preferences.mjs
+
+      - name: Apply commerce release quota allowlist
+        run: node scripts/deploy-commerce-release.mjs --apply
 
       - name: Deploy Supabase Edge Functions
         shell: bash

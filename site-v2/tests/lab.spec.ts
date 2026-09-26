@@ -43,7 +43,7 @@ test('signed-out deep links expose sign-in, not tool controls; no legacy links',
   await expect(page.getByRole('button', { name: 'Continue with Google' })).toBeVisible();
   await expect(page.getByLabel('User story and acceptance criteria')).toHaveCount(0);
   await page.goto('/lab'); await expect(page.locator('a[href*="/legacy/"]')).toHaveCount(0);
-  await expect(page.getByRole('link', { name: 'Open experiment' })).toHaveCount(3);
+  await expect(page.getByRole('link', { name: 'Open experiment' })).toHaveCount(4);
 });
 test('pending approval and revoked users cannot access tool controls', async ({ page }) => {
   const state = await setup(page, { state: 'pending' }); await page.goto('/lab/user-story-analyzer');

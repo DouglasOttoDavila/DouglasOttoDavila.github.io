@@ -33,3 +33,5 @@ content/auth.runtime.json
 /site-v2/playwright-report/
 /supabase/tests/.postgres-*/
 !/supabase/migrations/202609140001_model_preferences.sql
+!/supabase/migrations/202609190001_quality_twin.sql
+!/supabase/migrations/202609260001_commerce_release.sql

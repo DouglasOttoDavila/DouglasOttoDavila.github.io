@@ -48,3 +48,9 @@ The current build is self-contained in `site-v2`. `scripts/prepare-public.mjs` p
 Run `powershell -ExecutionPolicy Bypass -File scripts/generate-auth-runtime.ps1` from the repository root to generate local configuration from `.env`. CI uses `site-v2/config/auth.config.json` to validate the project and writes the runtime alongside it.
 
 The root `index.html`, `content/`, `css/`, `js/`, and `assets/` remain for later removal. The optional `private_pages/` upload and Supabase backend are separate from this static-site migration.
+
+## Quality Digital Twin
+
+The public `/lab/quality-digital-twin` experiment has 92 synthetic artifacts, 123 directed relationships, three reproducible scenarios, in-memory what-if forks and a versioned JSON export. Its canonical domain lives in `../supabase/functions/_shared/twin`, independently of React and AI providers. See the [architecture, fixture reconciliation, AI setup and consumer contract](../supabase/functions/_shared/twin/README.md). Live AI is disabled unless explicitly configured; authored replay requires no credentials.
+
+The [experience review](../docs/quality-digital-twin-review.md) records the guided explorer improvements, desktop/mobile verification, screenshots and remaining live-AI checks.

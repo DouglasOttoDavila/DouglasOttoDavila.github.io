@@ -5,6 +5,8 @@ const { id } = Astro.props;
 <div class="terminal-only work-terminal-preview">
   <p>Illustration</p>
   <svg class="mini-schematic" viewBox="0 0 280 94" role="img" aria-label={`${id.replaceAll('-', ' ')} concept diagram`}>
+    {id === 'commerce-release' && <><path d="M25 35h230"/><rect x="10" y="20" width="70" height="30" rx="3"/><rect x="105" y="20" width="70" height="30" rx="3"/><rect x="200" y="20" width="70" height="30" rx="3"/><text x="18" y="40">Change</text><text x="115" y="40">Checks</text><text x="209" y="40">Review</text><text x="20" y="78">Reproduce → Fix → Verify</text></>}
+    {id === 'quality-digital-twin' && <><path d="M30 38h220"/><circle cx="30" cy="38" r="9"/><circle cx="140" cy="38" r="9"/><circle cx="250" cy="38" r="9"/><text x="8" y="70">Baseline</text><text x="114" y="70">Events</text><text x="219" y="70">Fork</text></>}
     {id === 'user-story-evaluator' && <>
       <rect x="8" y="6" width="80" height="80" rx="4"/><path d="M22 24h48M22 35h36M22 46h42M22 57h28M88 46h25"/>
       <path d="m122 22 4 4 8-9m-12 34 4 4 8-9m-12 34 4 4 8-9"/>
