@@ -1,12 +1,41 @@
-import {
-  getSnapshot,
-  getEntity,
-  tracePath,
-  type Entity,
-} from "../twin/domain.ts";
+type Entity = {
+  id: string;
+  type: string;
+  title: string;
+  content: string;
+  provenance: string;
+  status?: string;
+};
+type Relationship = {
+  id: string;
+  source: string;
+  target: string;
+  type: string;
+  provenance: string;
+  basis: "authored relationship";
+};
 
 export const VERSION = "commerce-sandbox/1";
-export const world = getSnapshot("A", null);
+// Browser-safe projection of the canonical Meridian records. The Edge Function
+// validates against the full twin corpus; this projection keeps the static
+// browser test/runtime independent from Deno's `.ts` import resolver.
+export const world = { fixtureRevision: "meridian-1" };
+const records: Entity[] = [
+  ["story-A", "story", "Buyer outcome A", "As a buyer, an under-authorized order remains unpaid and stock is released."],
+  ["ac-A", "criterion", "Acceptance A", "Partial authorization must never become a captured payment."],
+  ["inv-A", "invariant", "Invariant A", "Partial authorization must never become a captured payment."],
+  ["pr-A1", "pr", "payment change 1", "- if (auth.amount === order.total) capture(auth);\n+ if (auth.amount > 0) capture(auth);"],
+  ["file-A1", "file", "services/payment/handler.ts", "Bounded synthetic source excerpt for the payment guard."],
+  ["payment", "service", "payment", "Authorization and capture adapter"],
+  ["api-payment", "api", "payment contract", "POST /v1/payment; tenant-scoped JSON contract."],
+  ["cap-A", "capability", "Partial authorization", "Checkout payment capability."],
+  ["checkout", "service", "checkout", "Order orchestration"],
+  ["test-A1", "test", "Partial auth 60/100 causes zero captures", "0"],
+  ["test-A2", "test", "Full auth captures once", "1"],
+  ["test-A3", "test", "Provider partial status maps to unpaid", "unpaid"],
+  ["test-A4", "test", "Checkout partial auth releases stock", "released"],
+].map(([id, type, title, content]) => ({ id, type, title, content, provenance: "authored-fixture:meridian-1", status: type === "test" ? "not_run" : undefined }));
+const getRecord = (id: string) => records.find((record) => record.id === id);
 export const stages = [
   "Requirement",
   "Change",
@@ -316,9 +345,16 @@ export const limitations = [
   "The local acknowledgment is not an organizational approval or release sign-off.",
 ];
 export function artifact(id: string): Entity | undefined {
-  return getEntity(id, world);
+  return getRecord(id);
 }
-export const impactPath = tracePath("pr-A1", "test-A1", world);
+export const impactPath: Relationship[] = [
+  { id: "pr-A1:changes:file-A1", source: "pr-A1", target: "file-A1", type: "changes", provenance: "authored-fixture:meridian-1", basis: "authored relationship" },
+  { id: "file-A1:implements:payment", source: "file-A1", target: "payment", type: "implements", provenance: "authored-fixture:meridian-1", basis: "authored relationship" },
+  { id: "payment:exposes:api-payment", source: "payment", target: "api-payment", type: "exposes", provenance: "authored-fixture:meridian-1", basis: "authored relationship" },
+  { id: "api-payment:enables:cap-A", source: "api-payment", target: "cap-A", type: "enables", provenance: "authored-fixture:meridian-1", basis: "authored relationship" },
+  { id: "cap-A:constrains:inv-A", source: "cap-A", target: "inv-A", type: "constrains", provenance: "authored-fixture:meridian-1", basis: "authored relationship" },
+  { id: "inv-A:verifies:test-A1", source: "inv-A", target: "test-A1", type: "verifies", provenance: "authored-fixture:meridian-1", basis: "authored relationship" },
+];
 export const sourceIds = [
   "story-A",
   "ac-A",
