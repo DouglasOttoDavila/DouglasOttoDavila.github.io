@@ -16,7 +16,7 @@ From `site-v2`, run `npm run dev -- --host 127.0.0.1`. The demo works without cr
 - Authored guide text is clearly labeled. The guide executes baseline checks at frame 4 and patched checks at frame 7. Back/next restores cached frame snapshots. Manual interaction takes control. The guide never consumes AI quota or grants acknowledgment.
 - Planning costs are illustrative minutes. Runtime metadata measures local synchronous execution and makes no claim about CI savings.
 - Four mandatory checks cover partial authorization, full authorization, decline, and inventory compensation. Optional checks cover provider partial semantics, excess authorization, zero total, and sequential idempotency. Distributed concurrency and capture timeout behavior remain unverified.
-- Output IDs (`exec-*`) are distinct from canonical twin `test-*` and `ci-*` records. Canonical data is imported from `twin/domain.ts`; it is never overwritten or presented as a new CI run. Original source IDs and directed provenance are included in exports.
+- Output IDs (`exec-*`) are distinct from canonical twin `test-*` and `ci-*` records. Both runtimes use `commerce/fixture.json`, generated from `twin/domain.ts` by `deno run --allow-read --allow-write scripts/generate-commerce-fixture.ts`. CI checks the projection against the canonical snapshot with `--check`. Source data is never overwritten or presented as a new CI run. Original source IDs and directed provenance are included in exports.
 
 ## AI enablement
 

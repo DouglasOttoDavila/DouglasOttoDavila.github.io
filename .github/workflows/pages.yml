@@ -144,6 +144,16 @@ jobs:
           test ! -d site-v2/dist/legacy/css
           test ! -d site-v2/dist/legacy/assets
 
+      - name: Setup Deno for canonical evidence verification
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Verify Commerce evidence against canonical twin
+        run: |
+          deno run --allow-read scripts/generate-commerce-fixture.ts --check
+          node --test scripts/deploy-commerce-release.test.mjs
+
       - name: Browser acceptance tests
         working-directory: site-v2
         run: |

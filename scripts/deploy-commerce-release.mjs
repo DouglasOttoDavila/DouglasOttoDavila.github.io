@@ -22,13 +22,6 @@ async function main() {
     .replace(/^\uFEFF/, "")
     .replace(/\r\n/g, "\n");
   const checksum = createHash("sha256").update(migration).digest("hex");
-  // The first manual rollout stored the equivalent reviewed SQL with a
-  // different newline/formatting checksum. Keep that known checksum valid so
-  // CI does not attempt to reapply the versioned migration.
-  const acceptedChecksums = new Set([
-    checksum,
-    "90c3aa013a3312b083474dd29a50ef0b65112ab12c2344c5972477515c5e7ad5",
-  ]);
   async function query(sql) {
     const response = await fetch(
       `https://api.supabase.com/v1/projects/${project}/database/query`,
@@ -52,10 +45,20 @@ async function main() {
     "select checksum from public.lab_schema_migrations where version='202609260001'",
   );
   if (rows.length) {
-    if (!acceptedChecksums.has(rows[0].checksum))
-      throw new Error(
-        "Applied commerce migration differs from the checked-in version. Add a new migration.",
-      );
+    if (rows[0].checksum !== checksum) {
+      // A historical checksum alone cannot establish SQL equivalence. Check
+      // the actual installed body and security settings before reconciling it.
+      const [installed] = await query("select prosrc, prosecdef, proconfig, pg_get_function_result(oid) as result, (select lanname from pg_language where oid=prolang) as language from pg_proc where oid='public.lab_reserve(uuid,uuid,text,text)'::regprocedure");
+      const expectedBody = migration.split("$$")[1];
+      if (!expectedBody || installed?.prosrc?.replace(/\r\n/g, "\n").trim() !== expectedBody.trim() ||
+          installed.prosecdef !== true || installed.result !== "jsonb" || installed.language !== "plpgsql" ||
+          JSON.stringify(installed.proconfig) !== JSON.stringify(["search_path=public"]))
+        throw new Error("Applied commerce SQL differs from the reviewed migration. Add a new migration.");
+      if (process.argv.includes("--apply")) {
+        await query(`update public.lab_schema_migrations set checksum='${checksum}' where version='202609260001' and checksum='${rows[0].checksum.replace(/'/g, "''")}'`);
+      }
+      console.log("Installed commerce SQL verified against the reviewed migration.");
+    }
     console.log("Commerce release migration already applied.");
     return;
   }

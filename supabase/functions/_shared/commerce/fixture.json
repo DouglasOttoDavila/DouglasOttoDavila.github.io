@@ -1,0 +1,169 @@
+{
+  "fixtureRevision": "meridian-1",
+  "entities": [
+    {
+      "id": "story-A",
+      "type": "story",
+      "title": "Buyer outcome A",
+      "content": "As a buyer, an under-authorized order remains unpaid and stock is released.",
+      "provenance": "authored-fixture:meridian-1",
+      "scenario": "A"
+    },
+    {
+      "id": "ac-A",
+      "type": "criterion",
+      "title": "Acceptance A",
+      "content": "Partial authorization must never become a captured payment.",
+      "provenance": "authored-fixture:meridian-1",
+      "scenario": "A"
+    },
+    {
+      "id": "pr-A1",
+      "type": "pr",
+      "title": "payment change 1",
+      "content": "- if (auth.amount === order.total) capture(auth);\n+ if (auth.amount > 0) capture(auth);",
+      "provenance": "authored-fixture:meridian-1",
+      "scenario": "A",
+      "status": "open"
+    },
+    {
+      "id": "file-A1",
+      "type": "file",
+      "title": "services/payment/handler.ts",
+      "content": "Bounded synthetic source excerpt:\n- if (auth.amount === order.total) capture(auth);\n+ if (auth.amount > 0) capture(auth);",
+      "provenance": "authored-fixture:meridian-1",
+      "scenario": "A"
+    },
+    {
+      "id": "payment",
+      "type": "service",
+      "title": "payment",
+      "content": "Meridian B2B industrial supplies: Authorization and capture adapter",
+      "provenance": "authored-fixture:meridian-1"
+    },
+    {
+      "id": "api-payment",
+      "type": "api",
+      "title": "payment contract",
+      "content": "POST /v1/payment; tenant-scoped JSON contract; correlation-id required.",
+      "provenance": "authored-fixture:meridian-1"
+    },
+    {
+      "id": "cap-A",
+      "type": "capability",
+      "title": "Partial authorization",
+      "content": "As a buyer, an under-authorized order remains unpaid and stock is released.",
+      "provenance": "authored-fixture:meridian-1",
+      "scenario": "A"
+    },
+    {
+      "id": "inv-A",
+      "type": "invariant",
+      "title": "Invariant A",
+      "content": "Partial authorization must never become a captured payment.",
+      "provenance": "authored-fixture:meridian-1",
+      "scenario": "A"
+    },
+    {
+      "id": "test-A1",
+      "type": "test",
+      "title": "Partial auth 60/100 causes zero captures",
+      "content": "Assert: Partial auth 60/100 causes zero captures. Synthetic tenant meridian-demo, fixed request key sample-42.",
+      "provenance": "authored-fixture:meridian-1",
+      "scenario": "A",
+      "status": "not_run",
+      "testType": "unit",
+      "durationMs": 310
+    },
+    {
+      "id": "test-A2",
+      "type": "test",
+      "title": "Full auth captures once",
+      "content": "Assert: Full auth captures once. Synthetic tenant meridian-demo, fixed request key sample-42.",
+      "provenance": "authored-fixture:meridian-1",
+      "scenario": "A",
+      "status": "not_run",
+      "testType": "api",
+      "durationMs": 540
+    },
+    {
+      "id": "test-A3",
+      "type": "test",
+      "title": "Provider partial status maps to unpaid",
+      "content": "Assert: Provider partial status maps to unpaid. Synthetic tenant meridian-demo, fixed request key sample-42.",
+      "provenance": "authored-fixture:meridian-1",
+      "scenario": "A",
+      "status": "not_run",
+      "testType": "contract",
+      "durationMs": 770
+    },
+    {
+      "id": "test-A4",
+      "type": "test",
+      "title": "Checkout partial auth releases stock",
+      "content": "Assert: Checkout partial auth releases stock. Synthetic tenant meridian-demo, fixed request key sample-42.",
+      "provenance": "authored-fixture:meridian-1",
+      "scenario": "A",
+      "status": "not_run",
+      "testType": "e2e",
+      "durationMs": 1000
+    },
+    {
+      "id": "checkout",
+      "type": "service",
+      "title": "checkout",
+      "content": "Meridian B2B industrial supplies: Order orchestration",
+      "provenance": "authored-fixture:meridian-1"
+    },
+    {
+      "id": "inventory",
+      "type": "service",
+      "title": "inventory",
+      "content": "Meridian B2B industrial supplies: Stock reservation",
+      "provenance": "authored-fixture:meridian-1"
+    },
+    {
+      "id": "pr-A2",
+      "type": "pr",
+      "title": "payment change 2",
+      "content": "- return decline;\n+ await reservations.release(orderId); return decline;",
+      "provenance": "authored-fixture:meridian-1",
+      "scenario": "A",
+      "status": "open"
+    }
+  ],
+  "relationships": [
+    {
+      "id": "pr-A1:fulfills:story-A",
+      "source": "pr-A1",
+      "type": "fulfills",
+      "target": "story-A",
+      "provenance": "authored-fixture:meridian-1",
+      "basis": "authored relationship"
+    },
+    {
+      "id": "story-A:accepts:ac-A",
+      "source": "story-A",
+      "type": "accepts",
+      "target": "ac-A",
+      "provenance": "authored-fixture:meridian-1",
+      "basis": "authored relationship"
+    },
+    {
+      "id": "ac-A:formalizes:inv-A",
+      "source": "ac-A",
+      "type": "formalizes",
+      "target": "inv-A",
+      "provenance": "authored-fixture:meridian-1",
+      "basis": "authored relationship"
+    },
+    {
+      "id": "inv-A:verifies:test-A1",
+      "source": "inv-A",
+      "type": "verifies",
+      "target": "test-A1",
+      "provenance": "authored-fixture:meridian-1",
+      "basis": "authored relationship"
+    }
+  ]
+}

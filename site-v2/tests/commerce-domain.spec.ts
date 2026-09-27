@@ -15,6 +15,8 @@ import {
   markdownReport,
   world,
   impactPath,
+  artifact,
+  sourceIds,
 } from "../../supabase/functions/_shared/commerce/domain";
 import {
   contextFor,
@@ -22,6 +24,20 @@ import {
   validateAdvice,
   policy,
 } from "../../supabase/functions/_shared/commerce/analyst";
+
+test("every exported artifact and accepted AI citation resolves to canonical evidence", () => {
+  for (const id of sourceIds) expect(artifact(id)?.id).toBe(id);
+  const report = evidenceReport(initialMission());
+  expect(report.sourceArtifacts).toHaveLength(sourceIds.length);
+  expect(report.sourceArtifacts.every(Boolean)).toBe(true);
+  expect(markdownReport(initialMission())).not.toContain("undefined");
+  const context = JSON.parse(contextFor({stage: "Impact", branch: "baseline", budget: MAX_BUDGET, reviewed: false, hasRun: false}));
+  expect(context.artifacts.every(Boolean)).toBe(true);
+  for (const edge of impactPath) {
+    expect(artifact(edge.source)).toBeDefined();
+    expect(artifact(edge.target)).toBeDefined();
+  }
+});
 
 test("the actual checkout reproduces the regression and the patch fixes boundaries", () => {
   expect(checkout(sample, "baseline")).toMatchObject({
