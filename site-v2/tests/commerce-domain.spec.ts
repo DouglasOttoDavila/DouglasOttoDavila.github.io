@@ -153,6 +153,9 @@ test("AI input reconstructs evidence and rejects malformed input, fabricated IDs
     expect(() => validateRequest({ ...input, ...patch })).toThrow();
   const advice = {
     summary: "The amount guard is too permissive.",
+    risk: "Partial orders may be fulfilled without full authorization.",
+    tourTip: "Compare the regressed guard with the exact-amount repair.",
+    checkReasons: [],
     claims: [
       {
         text: "The invariant requires the full amount.",

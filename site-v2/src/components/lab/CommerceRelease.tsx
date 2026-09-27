@@ -30,6 +30,8 @@ import {
   type AnalysisRequest,
 } from "../../../../supabase/functions/_shared/commerce/analyst";
 import { callLab, getClient, type LabStatus } from "../../lib/lab-client";
+import type { ModelCatalog } from "./ModelPreference";
+import TourCoach from "./commerce/TourCoach";
 import "../../styles/commerce-release.css";
 
 type LiveAdvice = Advice & {
@@ -37,6 +39,7 @@ type LiveAdvice = Advice & {
   generatedAt: string;
   input: AnalysisRequest;
   aiUsage?: LabStatus["usage"];
+  metrics?: { providerMs: number; promptTokens?: number; completionTokens?: number; totalTokens?: number; roundTripMs?: number };
 };
 const money = (cents: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
@@ -108,10 +111,20 @@ export default function CommerceRelease() {
   const [aiError, setAiError] = useState("");
   const [access, setAccess] = useState<LabStatus | null>(null);
   const [accessMessage, setAccessMessage] = useState(
-    "Sign in with approved Lab access to run live AI.",
+    "Checking your Lab session…",
   );
   const [accessLoading, setAccessLoading] = useState(false);
-  const [accessLoaded, setAccessLoaded] = useState(false);
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  const [catalog, setCatalog] = useState<ModelCatalog | null>(null);
+  const [model, setModel] = useState("");
+  const [modelError, setModelError] = useState("");
+  const [autoAnalyze, setAutoAnalyze] = useState(false);
+  const [tipsEnabled, setTipsEnabled] = useState(true);
+  const adviceCache = useRef(new Map<string, LiveAdvice>());
+  const attempted = useRef(new Set<string>());
+  const inFlight = useRef(false);
+  const sessionEpoch = useRef(0);
+  const authUser = useRef<string | null>(null);
   const [sourceOpen, setSourceOpen] = useState(false);
   const [mobileEvidence, setMobileEvidence] = useState(false);
   const [focusGuide, setFocusGuide] = useState(false);
@@ -137,8 +150,46 @@ export default function CommerceRelease() {
     hasRun: !!current && current.budget === m.budget,
   };
   const signature = JSON.stringify(input);
-  const stale = !!live && JSON.stringify(live.input) !== signature;
+  const cacheKey = `${model}:${signature}`;
+  const cachedAdvice = adviceCache.current.get(cacheKey);
+  const activeAdvice = cachedAdvice || (live && JSON.stringify(live.input) === signature && live.model === model ? live : null);
+  const stale = !!live && (JSON.stringify(live.input) !== signature || live.model !== model);
   const aiEnabled = import.meta.env.PUBLIC_COMMERCE_AI_ENABLED === "true";
+  const canAnalyze = aiEnabled && signedIn && access?.access.state === "approved" && catalog?.models.some(v => v.id === model) && !modelError && !accessLoading && !access.usage.paused && access.usage.lifetime_remaining > 0 && access.usage.daily_remaining > 0;
+
+  useEffect(() => { if (cachedAdvice) setLive(cachedAdvice); }, [cachedAdvice]);
+
+  useEffect(() => {
+    let subscription: { unsubscribe: () => void } | undefined;
+    let disposed = false;
+    void getClient().then(client => {
+      if (disposed) return;
+      subscription = client.auth.onAuthStateChange((_event, session) => {
+        const nextUser = session?.user.id || null;
+        if (authUser.current !== nextUser) {
+          authUser.current = nextUser;
+          sessionEpoch.current++;
+          adviceCache.current.clear();
+          attempted.current.clear();
+          setLive(null);
+          setAccess(null);
+          setCatalog(null);
+          setModel("");
+          setAutoAnalyze(false);
+        }
+        setSignedIn(!!session);
+        // Defer Supabase calls outside its auth callback lock.
+        if (session) setTimeout(() => { if (!disposed) void refreshAccess(); }, 0);
+      }).data.subscription;
+    }).catch(() => { if (!disposed) setAccessMessage("Could not check your session. Refresh access to retry."); });
+    return () => { disposed = true; subscription?.unsubscribe(); };
+  }, []);
+
+  useEffect(() => {
+    if (!autoAnalyze || !canAnalyze || working || activeAdvice || attempted.current.has(cacheKey)) return;
+    const timer = setTimeout(() => { void analyze(false); }, 800);
+    return () => clearTimeout(timer);
+  }, [autoAnalyze, canAnalyze, working, cacheKey, activeAdvice]);
 
   useEffect(() => {
     alive.current = true;
@@ -159,12 +210,13 @@ export default function CommerceRelease() {
     history.replaceState(null, "", url);
   }, [m.stage, ready]);
   useEffect(() => {
-    if (!playing || guideIndex === null) return;
+    if (!playing || guideIndex === null || working || (autoAnalyze && canAnalyze && !activeAdvice && !attempted.current.has(cacheKey))) return;
     if (guideIndex === tour.length - 1) {
       setPlaying(false);
       return;
     }
-    const timer = setTimeout(() => moveGuide(guideIndex + 1), 11000);
+    const words = (activeAdvice?.tourTip || tour[guideIndex].text).split(/\s+/).length;
+    const timer = setTimeout(() => moveGuide(guideIndex + 1), Math.max(18000, words * 350));
     const pause = () => {
       if (document.hidden) setPlaying(false);
     };
@@ -173,7 +225,7 @@ export default function CommerceRelease() {
       clearTimeout(timer);
       document.removeEventListener("visibilitychange", pause);
     };
-  }, [playing, guideIndex]);
+  }, [playing, guideIndex, working, autoAnalyze, canAnalyze, activeAdvice, cacheKey]);
   useEffect(() => {
     if (!mobileEvidence) return;
     const background = Array.from(
@@ -323,9 +375,12 @@ export default function CommerceRelease() {
     );
   }
   async function refreshAccess() {
+    const epoch = sessionEpoch.current;
     setAccessLoading(true);
     try {
       const { data } = await (await getClient()).auth.getSession();
+      if (!alive.current || epoch !== sessionEpoch.current) return;
+      setSignedIn(!!data.session);
       if (!data.session) {
         if (alive.current) {
           setAccess(null);
@@ -336,16 +391,30 @@ export default function CommerceRelease() {
       const status = await callLab<LabStatus>("lab-access", {
         action: "status",
       });
-      if (alive.current) {
+      if (alive.current && epoch === sessionEpoch.current) {
         setAccess(status);
         setAccessMessage(
           status.access.state === "approved"
-            ? "Uses your saved model and shared Lab allowance."
+            ? "Signed in · choose a model for this visit."
             : `Lab access is ${status.access.state}. Live analysis requires approval.`,
         );
+        if (status.access.state === "approved" && aiEnabled) {
+          try {
+            const next = await callLab<ModelCatalog>("model-catalog", { action: "list" });
+            if (!alive.current || epoch !== sessionEpoch.current) return;
+            setCatalog(next);
+            setModel(v => next.models.some(item => item.id === v) ? v : next.defaultModel);
+            setModelError("");
+          } catch {
+            if (alive.current && epoch === sessionEpoch.current) {
+              setCatalog(null);
+              setModelError("Models could not be loaded. Refresh access to retry.");
+            }
+          }
+        }
       }
     } catch (error) {
-      if (alive.current) {
+      if (alive.current && epoch === sessionEpoch.current) {
         setAccess(null);
         setAccessMessage(
           error instanceof Error
@@ -354,39 +423,50 @@ export default function CommerceRelease() {
         );
       }
     } finally {
-      if (alive.current) {
+      if (alive.current && epoch === sessionEpoch.current) {
         setAccessLoading(false);
-        setAccessLoaded(true);
       }
     }
   }
-  async function analyze() {
-    setPlaying(false);
+  async function analyze(manual = true) {
+    if (!canAnalyze || inFlight.current) return;
+    inFlight.current = true;
+    if (manual) setPlaying(false);
     setWorking(true);
     setAiError("");
     const submitted = { ...input };
+    const submittedModel = model;
+    const submittedKey = cacheKey;
+    const epoch = sessionEpoch.current;
+    attempted.current.add(submittedKey);
+    const started = performance.now();
     try {
       const result = await callLab<LiveAdvice>("commerce-release-analyst", {
         ...submitted,
+        model: submittedModel,
         request_id: crypto.randomUUID(),
       });
       const advice = validateAdvice(result);
-      if (alive.current) {
-        setLive({ ...result, ...advice, input: submitted });
+      if (alive.current && epoch === sessionEpoch.current) {
+        const next = { ...result, ...advice, input: submitted, metrics: { ...result.metrics!, roundTripMs: Math.round(performance.now() - started) } };
+        adviceCache.current.set(submittedKey, next);
+        if (adviceCache.current.size > 30) adviceCache.current.delete(adviceCache.current.keys().next().value!);
+        setLive(next);
         if (result.aiUsage)
           setAccess((v) => (v ? { ...v, usage: result.aiUsage! } : v));
       }
     } catch (error) {
-      if (alive.current)
+      if (alive.current && epoch === sessionEpoch.current)
         setAiError(
           error instanceof Error
             ? error.message
             : "Live AI failed. Retry explicitly.",
         );
     } finally {
+      inFlight.current = false;
       if (alive.current) {
         setWorking(false);
-        void refreshAccess();
+        if (epoch === sessionEpoch.current) void refreshAccess();
       }
     }
   }
@@ -402,7 +482,7 @@ export default function CommerceRelease() {
         : markdownReport(m) +
           (live
             ? `\n\n## Live AI commentary\n\nModel: ${live.model} · ${live.generatedAt} · stale relative to current state: ${stale}\n\n${live.summary}\n\n${live.claims.map((c) => `- ${c.kind}: ${c.text} [${c.citations.join(", ")}]`).join("\n")}\n\nNext action: ${live.nextAction}`
-            : "\n\nAI mode: authored guidance; no live analysis in this session.");
+            : "\n\nAI mode: reference fallback; no live analysis in this session.");
     const url = URL.createObjectURL(
       new Blob([value], {
         type:
@@ -427,6 +507,13 @@ export default function CommerceRelease() {
       ))}
     </div>
   );
+  function aiField(field: "summary" | "risk" | "nextAction" | "tourTip", fallback: string, label = "AI analysis") {
+    return <div className="cr-ai-field" aria-busy={working}>
+      <div className="cr-ai-field-label"><span>{label}</span><Badge value={activeAdvice ? "Live AI" : working ? "Generating" : "Fallback"} /></div>
+      <p>{activeAdvice?.[field] || fallback}</p>
+      {!activeAdvice && <small>{working ? "Generating an explanation for this state…" : aiError ? "AI unavailable · reference fallback shown." : "Reference fallback · analyze this stage for live guidance."}</small>}
+    </div>;
+  }
   const diffView = (
     <section className="cr-code" aria-label="Payment guard diff">
       <div className="cr-subtitle">
@@ -745,6 +832,8 @@ export default function CommerceRelease() {
               </h2>
               <Badge value={m.branch} />
             </div>
+            {m.stage !== "Impact" && m.stage !== "Diagnose" && aiField("summary", guidance[m.stage].text, `AI ${m.stage.toLowerCase()} review`)}
+            {aiField("nextAction", "Inspect the evidence and execute the current checks before making a release decision.", "AI next action")}
             {m.stage === "Requirement" && (
               <div className="cr-requirement">
                 <div className="cr-story">
@@ -763,11 +852,7 @@ export default function CommerceRelease() {
                   </div>
                   <div className="cr-business">
                     <h3>What is at stake?</h3>
-                    <p>
-                      A confirmed order can trigger fulfillment without enough
-                      authorized payment. Quality engineering connects that
-                      business consequence to a precise, executable assertion.
-                    </p>
+                    {aiField("risk", "A confirmed order can trigger fulfillment without enough authorized payment. Connect that consequence to an executable assertion.", "AI business impact")}
                   </div>
                   <button
                     className="cr-button cr-primary"
@@ -795,7 +880,7 @@ export default function CommerceRelease() {
                     <li>Apply and verify the prepared fix.</li>
                   </ol>
                   <p>
-                    About 90 seconds guided.
+                    About 3 minutes guided, plus AI response time.
                     <br />
                     About 5 minutes to explore.
                   </p>
@@ -820,12 +905,7 @@ export default function CommerceRelease() {
                 {m.stage === "Diagnose" && (
                   <div className="cr-diagnosis">
                     <h3>Follow the contradiction</h3>
-                    <p>
-                      <code>60 &gt; 0</code> accepts the partial authorization;{" "}
-                      <code>60 === 100</code> rejects it. The prepared patch
-                      restores the original contract. Changing the code does not
-                      change earlier execution results.
-                    </p>
+                    {aiField("summary", guidance.Diagnose.text, "AI diagnosis")}
                     {citations(["pr-A1", "test-A1", "inv-A"])}
                   </div>
                 )}
@@ -833,11 +913,7 @@ export default function CommerceRelease() {
             )}
             {m.stage === "Impact" && (
               <div className="cr-impact">
-                <p>
-                  Follow an explicit, directed path from the changed line to its
-                  assertion. Select any artifact to inspect its original
-                  content.
-                </p>
+                {aiField("summary", guidance.Impact.text, "AI impact analysis")}
                 <ol className="cr-trace">
                   {[impactPath[0]?.source, ...impactPath.map((e) => e.target)]
                     .filter(Boolean)
@@ -874,11 +950,7 @@ export default function CommerceRelease() {
                 </details>
                 <div className="cr-dependencies">
                   <h3>Potential service propagation</h3>
-                  <p>
-                    Checkout depends on payment and inventory. These authored
-                    dependencies describe where to investigate; they do not
-                    establish causation.
-                  </p>
+                  {aiField("risk", "Checkout depends on payment and inventory. Dependencies identify where to investigate; they do not prove causation.", "AI propagation risk")}
                   {citations(["checkout", "payment", "inventory", "pr-A2"])}
                 </div>
                 <button
@@ -935,7 +1007,8 @@ export default function CommerceRelease() {
                           : "Excluded — budget"}{" "}
                         · {c.cost} planning min
                       </span>
-                      <p>{c.reason}</p>
+                      <p>{activeAdvice?.checkReasons.find(reason => reason.id === c.id)?.reason || c.reason}</p>
+                      <small>{activeAdvice?.checkReasons.some(reason => reason.id === c.id) ? "AI rationale" : "Reference fallback"}</small>
                     </div>
                   ))}
                 </details>
@@ -1126,97 +1199,34 @@ export default function CommerceRelease() {
                 </>
               )}
             </details>
-            <section className="cr-advice">
-              <div className="cr-subtitle">Engineering guidance</div>
-              <p>{guidance[m.stage].text}</p>
-              {citations(guidance[m.stage].citations)}
-              <small>Authored explanation · no live AI call</small>
-            </section>
-            <details
-              className="cr-ai"
-              onToggle={(e) => {
-                if (
-                  e.currentTarget.open &&
-                  aiEnabled &&
-                  !accessLoaded &&
-                  !accessLoading
-                )
-                  void refreshAccess();
-              }}
-            >
+            <details className="cr-ai" open>
               <summary>Analyze with NVIDIA AI</summary>
-              <p>
-                Ask for{" "}
-                {m.stage === "Requirement"
-                  ? "requirement clarity and acceptance criteria"
-                  : m.stage === "Tests"
-                    ? "a test strategy with evidence gaps"
-                    : m.stage === "Diagnose"
-                      ? "an evidence-grounded diagnosis"
-                      : m.stage === "Verify"
-                        ? "a release review summary"
-                        : m.stage === "Impact"
-                          ? "change impact interpretation"
-                          : "semantic change interpretation"}
-                .
-              </p>
-              {!aiEnabled ? (
-                <p>
-                  Live AI is not enabled in this build. The executable sandbox
-                  and authored guidance remain available.
-                </p>
-              ) : (
-                <>
-                  <p>{accessMessage}</p>
-                  {access?.access.state === "approved" && (
-                    <p>
-                      {access.usage.lifetime_remaining} personal /{" "}
-                      {access.usage.daily_remaining} shared daily calls
-                      remaining.
-                    </p>
-                  )}
-                  <div className="cr-ai-actions">
-                    <button
-                      className="cr-button"
-                      disabled={
-                        accessLoading ||
-                        working ||
-                        access?.access.state !== "approved" ||
-                        access.usage.paused ||
-                        access.usage.lifetime_remaining < 1 ||
-                        access.usage.daily_remaining < 1
-                      }
-                      onClick={analyze}
-                    >
-                      {working
-                        ? "Analyzing…"
-                        : live
-                          ? "Analyze again"
-                          : "Run live analysis"}
-                    </button>
-                    <button
-                      className="cr-link"
-                      disabled={accessLoading}
-                      onClick={() => void refreshAccess()}
-                    >
-                      {accessLoading ? "Checking access…" : "Refresh access"}
-                    </button>
-                    <a
-                      href="/login?next=%2Flab%2Fcommerce-release"
-                      data-astro-reload
-                    >
-                      Sign in
-                    </a>
-                    <a href="/settings" data-astro-reload>
-                      Model settings
-                    </a>
-                  </div>
-                  <small>
-                    Each dispatched call uses the shared allowance, including
-                    provider failures. Tour playback never calls AI.
-                  </small>
-                </>
-              )}
+              <p>{accessMessage}</p>
+              {signedIn && <label className="cr-model-select">
+                Analysis model
+                <select aria-label="Analysis model" value={model} disabled={!catalog || working} onChange={e => { setModel(e.target.value); setAiError(""); }}>
+                  {!catalog && <option value="">Loading available models…</option>}
+                  {catalog?.models.map(item => <option value={item.id} key={item.id}>{item.label}</option>)}
+                </select>
+              </label>}
+              {modelError && <p role="alert" className="cr-error">{modelError}</p>}
+              {access?.access.state === "approved" && <p>{access.usage.lifetime_remaining} personal / {access.usage.daily_remaining} shared daily calls remaining.</p>}
+              <div className="cr-ai-actions">
+                <button className="cr-button cr-primary" disabled={!canAnalyze || working} onClick={() => void analyze()}>
+                  {working ? "Analyzing…" : activeAdvice ? "Analyze again" : "Run live analysis"}
+                </button>
+                <button className="cr-link" disabled={accessLoading || working} onClick={() => void refreshAccess()}>
+                  {accessLoading ? "Checking access…" : "Refresh access"}
+                </button>
+                {signedIn === false && <a href="/login?next=%2Flab%2Fcommerce-release" data-astro-reload>Sign in</a>}
+              </div>
+              {signedIn && <div className="cr-model-scope"><small>Model applies to this visit.</small> <a href="/settings" data-astro-reload>Model settings</a></div>}
+              <label className="cr-auto-analysis">
+                <input type="checkbox" checked={autoAnalyze} disabled={!canAnalyze && !autoAnalyze} onChange={e => setAutoAnalyze(e.target.checked)} />
+                Analyze as I explore
+              </label>
+              <small>One call per new stage or evidence state. Cached explanations are reused. Each dispatched call consumes allowance, including failures. Automatic calls stop when access or allowance is unavailable.</small>
+              {!aiEnabled && <p>Live AI is unavailable in this build. Reference fallbacks are shown.</p>}
               {aiError && (
                 <p className="cr-error" role="alert">
                   {aiError}
@@ -1228,6 +1238,7 @@ export default function CommerceRelease() {
                   <small>
                     {live.model} · {new Date(live.generatedAt).toLocaleString()}
                   </small>
+                  {live.metrics && <small className="cr-ai-metrics">{((live.metrics.roundTripMs || live.metrics.providerMs) / 1000).toFixed(1)}s response · {live.metrics.totalTokens ?? "—"} tokens</small>}
                   {stale && (
                     <p>
                       Inputs changed. This analysis belongs to{" "}
@@ -1236,6 +1247,7 @@ export default function CommerceRelease() {
                     </p>
                   )}
                   <p>{live.summary}</p>
+                  <p>{live.risk}</p>
                   {live.claims.map((c, i) => (
                     <div key={i}>
                       <Badge value={c.kind} />
@@ -1259,11 +1271,13 @@ export default function CommerceRelease() {
             </strong>
             <p>
               {guideIndex === null
-                ? guidance[m.stage].text
-                : tour[guideIndex].text}
+                ? activeAdvice?.nextAction || "Choose a stage, inspect its evidence, and run AI analysis for contextual guidance."
+                : activeAdvice?.tourTip || tour[guideIndex].text}
             </p>
+            {guideIndex !== null && <small>{activeAdvice ? "AI guidance" : "Reference fallback"} · {working ? "Waiting for AI…" : playing ? "Advances after at least 18 seconds" : "Paused — read at your pace"}</small>}
           </div>
           <div className="cr-guide-controls">
+            <label className="cr-tip-toggle"><input type="checkbox" checked={tipsEnabled} onChange={e => setTipsEnabled(e.target.checked)} /> Show tip cards</label>
             {guideIndex !== null ? (
               <>
                 <button
@@ -1325,6 +1339,7 @@ export default function CommerceRelease() {
             )}
           </div>
         </section>
+        {guideIndex !== null && tipsEnabled && !mobileEvidence && <TourCoach index={guideIndex} text={activeAdvice?.tourTip || tour[guideIndex].text} live={!!activeAdvice} playing={playing} working={working} onPause={() => setPlaying(false)} onPlay={() => setPlaying(true)} onHide={() => setTipsEnabled(false)} onNext={() => { setPlaying(false); moveGuide(guideIndex + 1); }} />}
         <details className="cr-activity">
           <summary>
             <span>ACTIVITY</span>

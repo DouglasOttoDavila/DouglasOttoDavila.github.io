@@ -9,7 +9,7 @@ import {
   LabError,
   serviceRpc,
 } from "../_shared/lab.ts";
-import { models, DEFAULT_MODEL } from "../_shared/models.ts";
+import { models, DEFAULT_MODEL, assertModel } from "../_shared/models.ts";
 import {
   contextFor,
   policy,
@@ -48,9 +48,11 @@ Deno.serve(async (request) => {
     const preference = await serviceRpc("lab_model_preference", {
       p_user_id: access.user.id,
     });
-    const model = models.some((m) => m.id === preference)
-      ? preference
-      : DEFAULT_MODEL;
+    let model = models.some((m) => m.id === preference) ? preference : DEFAULT_MODEL;
+    if (payload.model !== undefined) {
+      try { model = assertModel(payload.model); }
+      catch { throw new LabError("Select an available model. No execution consumed.", 400); }
+    }
     const reservation = await reserveAiInteraction(
       token,
       "commerce-release-analyst",
@@ -62,6 +64,7 @@ Deno.serve(async (request) => {
     if (reservation.replay) return reservation.replay;
     logId = reservation.reservation.log_id;
     await dispatchAiInteraction(logId!);
+    const started = performance.now();
     const response = await fetch(
       "https://integrate.api.nvidia.com/v1/chat/completions",
       {
@@ -92,9 +95,17 @@ Deno.serve(async (request) => {
         502,
       );
     let advice;
+    let providerUsage;
     try {
       const body = await response.json();
       advice = validateAdvice(JSON.parse(body.choices[0].message.content));
+      if (input.stage === "Tests" && advice.checkReasons.length !== 8)
+        throw new Error("Incomplete check explanations");
+      providerUsage = body.usage ? {
+        promptTokens: body.usage.prompt_tokens,
+        completionTokens: body.usage.completion_tokens,
+        totalTokens: body.usage.total_tokens,
+      } : undefined;
     } catch {
       throw new LabError(
         "AI response rejected: malformed output or unsupported citations. Execution counted.",
@@ -108,6 +119,7 @@ Deno.serve(async (request) => {
       input,
       mode: "live",
       aiUsage: reservation.reservation.usage,
+      metrics: { providerMs: Math.round(performance.now() - started), ...providerUsage },
     };
     await completeAiInteraction(token, logId!, result, "completed");
     return jsonResponse(result);

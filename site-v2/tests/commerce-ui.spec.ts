@@ -1,6 +1,24 @@
 import { test, expect, type Page } from "@playwright/test";
 import { readFile, mkdir } from "node:fs/promises";
 
+test("tour tips follow changes, pause for reading, and can be disabled", async ({page}) => {
+  await page.goto("/lab/commerce-release");
+  await page.getByRole("button", {name:"Watch the story"}).click();
+  const tip = page.getByRole("complementary", {name:"Guided step tip"});
+  await expect(tip).toContainText("Define the business rule");
+  await expect(page.locator(".cr-rule")).toHaveAttribute("data-tour-active", "true");
+  await tip.hover();
+  await expect(tip).toContainText("Paused");
+  await tip.getByRole("button",{name:"Next step"}).click();
+  await expect(tip).toContainText("Read the change");
+  await expect(page.locator(".cr-code")).toHaveAttribute("data-tour-active", "true");
+  await tip.getByRole("button",{name:"Hide tip cards"}).click();
+  await expect(tip).toHaveCount(0);
+  await expect(page.getByRole("checkbox",{name:"Show tip cards"})).not.toBeChecked();
+  await page.getByRole("checkbox",{name:"Show tip cards"}).check();
+  await expect(tip).toBeVisible();
+});
+
 async function stage(page: Page, name: string) {
   await page
     .getByRole("navigation", { name: "Mission stages" })
